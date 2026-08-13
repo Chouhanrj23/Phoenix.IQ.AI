@@ -16,12 +16,6 @@
   --accent: 200 100% 96%; /* light Cobalt tint */
   --accent-foreground: 218 100% 28%;
   --radius: 0.5rem;
-
-  /* KPMG-specific tokens for surfaces that need the exact brand hues
-     (sidebar, logo lockup, accents) rather than the semantic theme tokens. */
-  --kpmg-blue: 218 100% 28%; /* #00338D */
-  --kpmg-cobalt: 200 100% 43%; /* #0091DA */
-  --kpmg-navy: 210 100% 12%; /* #001E3C */
 }
 
 body {
