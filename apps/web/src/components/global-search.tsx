@@ -16,9 +16,16 @@ export function GlobalSearch(): JSX.Element {
 
   useEffect(() => {
     let cancelled = false;
-    buildSearchIndex(dataProvider).then((entries) => {
-      if (!cancelled) setIndex(entries);
-    });
+    buildSearchIndex(dataProvider)
+      .then((entries) => {
+        if (!cancelled) setIndex(entries);
+      })
+      .catch(() => {
+        // Search is non-critical chrome, not a Phase 1 data page — if the
+        // backend is unreachable or slow, degrade to "no results" instead
+        // of an unhandled rejection. `index` already starts at [], so this
+        // is a no-op beyond preventing the console/page error.
+      });
     return () => {
       cancelled = true;
     };

@@ -16,11 +16,14 @@ This app never imports the mock or API data source directly — every page consu
 - **`mock` (default)** — runs entirely in the browser against fixture data for a fictional
   system, "Aurora Commerce" (`src/data/mock/`). No backend required; this is what you want
   for a standalone demo (`pnpm build` output is a static site you can deploy anywhere).
-- **`api`** — calls a running `@phoenix-ai/api` instance (`src/data/api/apiProvider.ts`). The
-  endpoints it expects don't exist on `@phoenix-ai/api` yet beyond `/health` — wire them up as
-  `@phoenix-ai/knowledge-graph` / `@phoenix-ai/okf-renderers` / `@phoenix-ai/review-loop` grow real
-  implementations. Match each endpoint's response shape to the types in `src/data/types.ts`
-  and the UI needs zero changes.
+- **`api`** — calls a running `@phoenix-ai/api` instance (`src/data/api/apiProvider.ts`). As of
+  Phase 1, `@phoenix-ai/api` serves real routes for System Summary, Architecture, Domain Model,
+  Integrations, Deployment/NFR, and Review/Gaps/Drift (backed by static seed data). Execution
+  Flows, Personas & Journeys, Backlog, and the Graph Explorer still have no backend route — those
+  pages will error in `api` mode until later phases wire them up over
+  `@phoenix-ai/knowledge-graph` / `@phoenix-ai/okf-renderers` / `@phoenix-ai/review-loop`. Match
+  each new endpoint's response shape to the types in `src/data/types.ts` (re-exported from
+  `@phoenix-ai/shared`) and the UI needs zero changes.
 
 ## Pages
 

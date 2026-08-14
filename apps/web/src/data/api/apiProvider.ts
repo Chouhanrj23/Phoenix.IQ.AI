@@ -1,4 +1,6 @@
 import type { C4Level, OkfDataProvider } from '../types.js';
+import { mockProviderFor } from '../mock/mockProvider.js';
+import { DEFAULT_COMPANY } from '../companies.js';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
@@ -11,29 +13,44 @@ async function getJson<T>(path: string): Promise<T> {
 }
 
 /**
- * Real backend implementation of OkfDataProvider.
+ * DEMO/FALLBACK DATA — not real backend data.
  *
- * TODO: these endpoints don't exist on @phoenix-ai/api yet — only /health does.
- * Wire each of these up as apps/api grows real routes over
- * @phoenix-ai/knowledge-graph, @phoenix-ai/okf-renderers, and @phoenix-ai/review-loop.
- * The shape returned by each endpoint should match the types in
- * apps/web/src/data/types.ts exactly so the UI needs zero changes when this
- * provider replaces the mock one.
+ * @phoenix-ai/api has no route yet for execution flows, personas, journeys,
+ * epics, or the full graph (later-phase work over @phoenix-ai/knowledge-graph /
+ * @phoenix-ai/okf-renderers / @phoenix-ai/review-loop / a real drift engine —
+ * see docs/phase-1/README.md). Rather than letting the pages that need them
+ * 404 in `api` mode, those five methods fall back to the mock provider's
+ * fixture data below. apiProvider has no concept of company selection (the
+ * backend only ever serves the Aurora dataset), so the fallback is pinned to
+ * DEFAULT_COMPANY rather than whatever company is selected in the UI, to
+ * avoid mixing live Aurora API data with a different company's fixtures.
+ */
+const fallback = mockProviderFor(DEFAULT_COMPANY);
+
+/**
+ * Real backend implementation of OkfDataProvider — REAL BACKEND DATA.
+ *
+ * Phase 1 (P1-03–P1-08) wired up real @phoenix-ai/api routes for System
+ * Summary, Architecture, Domain Model, Integrations, Deployment/NFR, and
+ * Review/Gaps/Drift; P1-09 connected them here. getSystemSummary through
+ * getDriftHistory below hit those routes directly. The shape returned by
+ * each matches the types in apps/web/src/data/types.ts (sourced from
+ * @phoenix-ai/shared) exactly, so the UI needs zero changes to consume them.
  */
 export const apiProvider: OkfDataProvider = {
   getSystemSummary: () => getJson('/api/system-summary'),
   getArchitecture: (level: C4Level) => getJson(`/api/architecture?level=${level}`),
   getDomains: () => getJson('/api/domains'),
-  getExecutionFlows: () => getJson('/api/execution-flows'),
+  getExecutionFlows: () => fallback.getExecutionFlows(),
   getReviewItems: () => getJson('/api/review-items'),
   getDriftAlerts: () => getJson('/api/drift-alerts'),
-  getPersonas: () => getJson('/api/personas'),
-  getJourneys: () => getJson('/api/journeys'),
-  getEpics: () => getJson('/api/epics'),
+  getPersonas: () => fallback.getPersonas(),
+  getJourneys: () => fallback.getJourneys(),
+  getEpics: () => fallback.getEpics(),
   getDeploymentTopology: () => getJson('/api/deployment-topology'),
   getNonFunctionalRequirements: () => getJson('/api/nfrs'),
   getIntegrations: () => getJson('/api/integrations'),
   getGapItems: () => getJson('/api/gap-items'),
   getDriftHistory: () => getJson('/api/drift-history'),
-  getFullGraph: () => getJson('/api/graph'),
+  getFullGraph: () => fallback.getFullGraph(),
 };

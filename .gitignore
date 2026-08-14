@@ -40,3 +40,4 @@ data/
 artifacts/
 *.graphdb
 !apps/web/src/data/
+!apps/api/src/data/
