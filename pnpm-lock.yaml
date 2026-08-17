@@ -193,7 +193,13 @@ importers:
       '@phoenix-ai/shared':
         specifier: workspace:*
         version: link:../shared
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
     devDependencies:
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.1
       vitest:
         specifier: ^2.1.4
         version: 2.1.9(@types/node@22.20.1)

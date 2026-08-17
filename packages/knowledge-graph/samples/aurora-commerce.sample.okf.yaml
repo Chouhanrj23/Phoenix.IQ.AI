@@ -1,0 +1,811 @@
+okfVersion: 2026-08-p2-02
+systemId: aurora-commerce
+generatedAt: 2026-08-17T00:00:00.000Z
+sources:
+  - id: repo://aurora-commerce
+    label: aurora-commerce (root repo)
+    type: source-code
+  - id: repo://aurora-commerce/services/checkout
+    label: aurora-commerce/services/checkout
+    type: source-code
+  - id: repo://aurora-commerce/services/payments-adapter
+    label: aurora-commerce/services/payments-adapter
+    type: source-code
+  - id: repo://aurora-commerce/services/order-orchestrator
+    label: aurora-commerce/services/order-orchestrator
+    type: source-code
+  - id: docs/architecture-2024.pdf
+    label: 2024 architecture document
+    type: technical-doc
+  - id: data-model://aurora-schema.sql
+    label: Aurora primary schema
+    type: data-model
+  - id: docs/personas.md
+    label: Persona research doc
+    type: business-doc
+  - id: openapi://aurora-commerce/payments-authorization.yaml
+    label: Illustrative Payments Authorization API definition (no real Phase 1 equivalent -- see docs/okf/sample.md)
+    type: data-model
+objects:
+  - identity:
+      id: ctx-aurora
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: architecture.system
+    label: Aurora Commerce Platform
+    attributes:
+      description: "The system under analysis: storefront, checkout, payments, fraud, fulfillment."
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.97
+    evidence: []
+    confidenceDetail:
+      basis: observed
+  - identity:
+      id: ctr-checkout
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: architecture.container
+    label: Checkout Service
+    attributes:
+      responsibility: Orchestrates cart validation, order creation, and payment/fraud calls.
+      technology: Node.js
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/checkout
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.92
+    evidence:
+      - id: ev-checkout-entrypoint
+        sourceId: repo://aurora-commerce/services/checkout
+        excerpt: export const app = createCheckoutServer()
+        locator: src/index.ts:1
+    confidenceDetail:
+      basis: observed
+  - identity:
+      id: ctr-payments
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: architecture.container
+    label: Payments Gateway Adapter
+    attributes:
+      responsibility: Adapts checkout requests to the Meridian Pay API.
+      technology: Node.js/Express (disputed)
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/payments-adapter
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+        - sourceId: docs/architecture-2024.pdf
+          sourceType: technical-doc
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: low
+        score: 0.45
+        rationale: Source code shows Node.js/Express; the 2024 architecture doc describes it as a Java/Spring service. Not yet reconciled -- a real, unresolved disagreement carried over from Phase 1 fixture data, not invented for this sample.
+    evidence:
+      - id: ev-payments-package-json
+        sourceId: repo://aurora-commerce/services/payments-adapter
+        excerpt: '"express": "^4.19.0"'
+        locator: package.json
+      - id: ev-payments-arch-doc
+        sourceId: docs/architecture-2024.pdf
+        excerpt: "Payments Gateway Adapter: Java/Spring Boot service"
+        locator: section 3.2
+    confidenceDetail:
+      basis: derived
+      calculation:
+        method: source-conflict-flagging
+        calculatedAt: 2026-08-17T00:00:00.000Z
+        inputs:
+          conflictingSources: 2
+  - identity:
+      id: cmp-cart-validator
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: architecture.component
+    label: Cart Validator
+    attributes:
+      responsibility: Checks stock and price consistency before order creation.
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/checkout
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: inferred
+        score: 0.35
+        rationale: Illustrative component-level decomposition of Checkout Service for this sample; Phase 1 has no real component-level extraction to draw from (see docs/okf/sample.md).
+    evidence: []
+    confidenceDetail:
+      basis: derived
+  - identity:
+      id: dom-ordering
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: domain.domain
+    label: Ordering
+    attributes:
+      description: Shopping cart through order placement and lifecycle state.
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/checkout
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.91
+    evidence: []
+    confidenceDetail:
+      basis: derived
+      calculation:
+        method: boundary-heuristic
+        calculatedAt: 2026-08-17T00:00:00.000Z
+        inputs:
+          relatedContainers: 1
+  - identity:
+      id: agg-order
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: domain.aggregate
+    label: Order
+    attributes:
+      description: "The order aggregate: Order, OrderLine, OrderStatusHistory."
+    metadata:
+      provenance:
+        - sourceId: data-model://aurora-schema.sql
+          sourceType: data-model
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.96
+    evidence: []
+  - identity:
+      id: ent-order
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: domain.entity
+    label: Order
+    attributes:
+      description: A placed order and its lifecycle state.
+      fields:
+        - type: uuid
+          name: id
+          required: true
+        - type: string
+          name: status
+          required: true
+    metadata:
+      provenance:
+        - sourceId: data-model://aurora-schema.sql
+          sourceType: data-model
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: medium
+        score: 0.6
+        rationale: Illustrative field-level detail for this sample -- Phase 1 only records aggregate-level entity name strings, never per-field schema (see docs/okf/sample.md and ADR 0006).
+    evidence: []
+  - identity:
+      id: state-order-pending
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: domain.entity-state
+    label: Pending
+    attributes:
+      description: A newly created order, not yet confirmed.
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+        rationale: 'Grounded in real Aurora flow-step text: "Persists a new Order in PENDING status."'
+    evidence: []
+  - identity:
+      id: state-order-confirmed
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: domain.entity-state
+    label: Confirmed
+    attributes:
+      description: An order that has completed payment authorization and stock reservation.
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+        rationale: 'Grounded in real Aurora flow-step text: "Marks the order CONFIRMED and publishes OrderPlaced."'
+    evidence: []
+  - identity:
+      id: persona-returning-shopper
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: journey.persona
+    label: Returning Shopper
+    attributes:
+      goals:
+        - Reorder favourite items quickly
+        - Track shipment status without contacting support
+      painPoints:
+        - Checkout occasionally times out during payment authorization
+        - Return policy is not clearly surfaced before purchase
+      role: Customer
+    metadata:
+      provenance:
+        - sourceId: docs/personas.md
+          sourceType: business-doc
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: medium
+        score: 0.65
+        rationale: Persona synthesised from a personas doc plus patterns in support tickets; not verified with real users.
+    evidence: []
+    confidenceDetail:
+      basis: derived
+  - identity:
+      id: journey-browse-to-purchase
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: process
+    kind: journey.journey
+    label: Browse to Purchase
+    attributes:
+      purpose: From landing on the storefront through a confirmed order -- the primary revenue-generating journey.
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.84
+    evidence: []
+  - identity:
+      id: flow-checkout
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: process
+    kind: journey.flow
+    label: Checkout & Payment Flow
+    attributes:
+      description: From cart submission through order confirmation.
+      triggerScreen: Checkout Screen
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/checkout
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.87
+    evidence: []
+  - identity:
+      id: step-2
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: journey.action
+    label: Create Order
+    attributes:
+      description: Persists a new Order in PENDING status.
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.92
+    evidence:
+      - id: ev-step2-create-order
+        sourceId: repo://aurora-commerce/services/order-orchestrator
+        excerpt: 'const order = await Order.create({ status: "PENDING", ...cart })'
+        locator: src/orders/create.ts:18
+  - identity:
+      id: step-6
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: journey.action
+    label: Confirm Order
+    attributes:
+      description: Marks the order CONFIRMED and publishes OrderPlaced.
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+    evidence:
+      - id: ev-step6-confirm-order
+        sourceId: repo://aurora-commerce/services/order-orchestrator
+        excerpt: 'await order.update({ status: "CONFIRMED" }); eventBus.publish("OrderPlaced", order)'
+        locator: src/orders/confirm.ts:9
+  - identity:
+      id: int-meridian-pay
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: integration.integration
+    label: Meridian Pay
+    attributes:
+      counterpartDescription: External payment processor
+      interactionType: outbound
+      protocol: REST/HTTPS (synchronous)
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/payments-adapter
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+    evidence: []
+    confidenceDetail:
+      basis: observed
+  - identity:
+      id: dataflow-meridian-authorization
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: integration.dataflow
+    label: Authorization Request/Response
+    attributes:
+      data: Card token, amount, currency, order reference -> authorization/capture result
+      direction: outbound
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/payments-adapter
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+    evidence: []
+  - identity:
+      id: api-payments-auth
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: integration.api
+    label: Payments Authorization API (illustrative)
+    attributes:
+      description: Illustrative internal API through which Checkout Service calls Payments Gateway Adapter -- no real Phase 1 equivalent (see docs/okf/sample.md).
+      operations:
+        - description: Authorizes a card payment for an order.
+          name: authorizePayment
+    metadata:
+      provenance:
+        - sourceId: openapi://aurora-commerce/payments-authorization.yaml
+          sourceType: data-model
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: inferred
+        score: 0.3
+        rationale: "Illustrative: Phase 1 has no API concept at all (see ADR 0008); modeled here only to demonstrate the OKF schema, not asserted as a real, documented API."
+    evidence: []
+    confidenceDetail:
+      basis: derived
+  - identity:
+      id: iface-payments-auth
+      systemId: aurora-commerce
+      createdAt: 2026-08-17T00:00:00.000Z
+      updatedAt: 2026-08-17T00:00:00.000Z
+      schemaVersion: 2026-08-p2-02
+    category: entity
+    kind: integration.interface
+    label: Payment Authorization Interface (illustrative)
+    attributes:
+      description: The contract Payments Gateway Adapter exposes and Checkout Service consumes to authorize a payment.
+      protocol: REST/HTTPS (synchronous)
+    metadata:
+      provenance:
+        - sourceId: openapi://aurora-commerce/payments-authorization.yaml
+          sourceType: data-model
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: inferred
+        score: 0.3
+        rationale: Illustrative, same rationale as the API it realizes.
+    evidence: []
+    confidenceDetail:
+      basis: derived
+relationships:
+  - id: rel-system-contains-checkout
+    category: composition
+    kind: contains
+    sourceObjectId: ctx-aurora
+    targetObjectId: ctr-checkout
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.95
+  - id: rel-system-contains-payments
+    category: composition
+    kind: contains
+    sourceObjectId: ctx-aurora
+    targetObjectId: ctr-payments
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.95
+  - id: rel-checkout-contains-cart-validator
+    category: composition
+    kind: contains
+    sourceObjectId: ctr-checkout
+    targetObjectId: cmp-cart-validator
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/checkout
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: inferred
+        score: 0.35
+  - id: rel-checkout-communicates-payments
+    category: interaction
+    kind: communicatesWith
+    sourceObjectId: ctr-checkout
+    targetObjectId: ctr-payments
+    attributes:
+      description: authorize payment
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.88
+        rationale: "Simplified for this sample: the real Aurora fixtures route this call through an Order Orchestrator container, omitted here for brevity."
+    evidence:
+      - id: ev-checkout-calls-payments
+        sourceId: repo://aurora-commerce/services/checkout
+        excerpt: await paymentsAdapter.authorize(order)
+        locator: src/checkout/finalize.ts:42
+  - id: rel-ordering-contains-order-entity
+    category: composition
+    kind: contains
+    sourceObjectId: dom-ordering
+    targetObjectId: ent-order
+    metadata:
+      provenance:
+        - sourceId: data-model://aurora-schema.sql
+          sourceType: data-model
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: medium
+        score: 0.6
+  - id: rel-order-aggregate-root
+    category: composition
+    kind: aggregateRoot
+    sourceObjectId: agg-order
+    targetObjectId: ent-order
+    metadata:
+      provenance:
+        - sourceId: data-model://aurora-schema.sql
+          sourceType: data-model
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.96
+  - id: rel-order-has-state-pending
+    category: association
+    kind: hasState
+    sourceObjectId: ent-order
+    targetObjectId: state-order-pending
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+  - id: rel-order-has-state-confirmed
+    category: association
+    kind: hasState
+    sourceObjectId: ent-order
+    targetObjectId: state-order-confirmed
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+  - id: rel-order-pending-to-confirmed
+    category: interaction
+    kind: transitionsTo
+    sourceObjectId: state-order-pending
+    targetObjectId: state-order-confirmed
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.88
+  - id: rel-journey-has-persona
+    category: association
+    kind: hasPersona
+    sourceObjectId: journey-browse-to-purchase
+    targetObjectId: persona-returning-shopper
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.84
+  - id: rel-flow-supports-journey
+    category: realization
+    kind: supports
+    sourceObjectId: flow-checkout
+    targetObjectId: journey-browse-to-purchase
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/checkout
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.87
+  - id: rel-flow-contains-step2
+    category: composition
+    kind: contains
+    sourceObjectId: flow-checkout
+    targetObjectId: step-2
+    attributes:
+      order: 2
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.92
+  - id: rel-flow-contains-step6
+    category: composition
+    kind: contains
+    sourceObjectId: flow-checkout
+    targetObjectId: step-6
+    attributes:
+      order: 6
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+  - id: rel-step2-writes-order
+    category: interaction
+    kind: writesEntity
+    sourceObjectId: step-2
+    targetObjectId: ent-order
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.92
+  - id: rel-step6-writes-order
+    category: interaction
+    kind: writesEntity
+    sourceObjectId: step-6
+    targetObjectId: ent-order
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+  - id: rel-step2-triggers-pending
+    category: interaction
+    kind: triggersTransition
+    sourceObjectId: step-2
+    targetObjectId: state-order-pending
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+  - id: rel-step6-triggers-confirmed
+    category: interaction
+    kind: triggersTransition
+    sourceObjectId: step-6
+    targetObjectId: state-order-confirmed
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/order-orchestrator
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.88
+  - id: rel-payments-has-integration
+    category: association
+    kind: hasIntegration
+    sourceObjectId: ctr-payments
+    targetObjectId: int-meridian-pay
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/payments-adapter
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+  - id: rel-integration-carries-dataflow
+    category: composition
+    kind: carries
+    sourceObjectId: int-meridian-pay
+    targetObjectId: dataflow-meridian-authorization
+    metadata:
+      provenance:
+        - sourceId: repo://aurora-commerce/services/payments-adapter
+          sourceType: source-code
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: high
+        score: 0.9
+  - id: rel-api-realizes-interface
+    category: realization
+    kind: realizes
+    sourceObjectId: api-payments-auth
+    targetObjectId: iface-payments-auth
+    metadata:
+      provenance:
+        - sourceId: openapi://aurora-commerce/payments-authorization.yaml
+          sourceType: data-model
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: inferred
+        score: 0.3
+  - id: rel-payments-exposes-interface
+    category: interaction
+    kind: exposes
+    sourceObjectId: ctr-payments
+    targetObjectId: iface-payments-auth
+    metadata:
+      provenance:
+        - sourceId: openapi://aurora-commerce/payments-authorization.yaml
+          sourceType: data-model
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: inferred
+        score: 0.3
+  - id: rel-checkout-consumes-interface
+    category: interaction
+    kind: consumes
+    sourceObjectId: ctr-checkout
+    targetObjectId: iface-payments-auth
+    metadata:
+      provenance:
+        - sourceId: openapi://aurora-commerce/payments-authorization.yaml
+          sourceType: data-model
+          derivedBy: phoenix-sample-author
+          derivedAt: 2026-08-17T00:00:00.000Z
+      confidence:
+        level: inferred
+        score: 0.3

@@ -12,12 +12,15 @@
     "lint": "eslint src",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
+    "generate:sample": "tsx samples/generate-sample.ts",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@phoenix-ai/shared": "workspace:*"
+    "@phoenix-ai/shared": "workspace:*",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
+    "tsx": "^4.19.2",
     "vitest": "^2.1.4"
   }
 }
