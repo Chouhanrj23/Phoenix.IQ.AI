@@ -4,6 +4,7 @@ import {
   extractJavaCallGraph,
   extractJavaHttp,
   extractJavaPersistence,
+  extractConfigReferences,
   extractJavaProject,
   extractJavaStructure,
   bridgeJpaEntity,
@@ -21,6 +22,7 @@ describe('extraction-engine barrel export', () => {
     expect(typeof bridgeSpringController).toBe('function');
     expect(typeof extractJavaPersistence).toBe('function');
     expect(typeof bridgeJpaEntity).toBe('function');
+    expect(typeof extractConfigReferences).toBe('function');
     expect(typeof extractJavaProject).toBe('function');
   });
 });

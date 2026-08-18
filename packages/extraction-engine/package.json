@@ -18,7 +18,8 @@
     "@phoenix-ai/shared": "workspace:*",
     "@phoenix-ai/ingestion-connectors": "workspace:*",
     "@phoenix-ai/knowledge-graph": "workspace:*",
-    "java-parser": "3.0.1"
+    "java-parser": "3.0.1",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

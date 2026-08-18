@@ -20,8 +20,10 @@ P3-05 in
 [`docs/architecture/adr/0017-java-call-dependency-graph.md`](../architecture/adr/0017-java-call-dependency-graph.md),
 P3-06 in
 [`docs/architecture/adr/0018-java-rest-api-extraction.md`](../architecture/adr/0018-java-rest-api-extraction.md),
-and P3-07 in
-[`docs/architecture/adr/0019-java-persistence-extraction.md`](../architecture/adr/0019-java-persistence-extraction.md);
+P3-07 in
+[`docs/architecture/adr/0019-java-persistence-extraction.md`](../architecture/adr/0019-java-persistence-extraction.md),
+and P3-08 in
+[`docs/architecture/adr/0020-java-configuration-extraction.md`](../architecture/adr/0020-java-configuration-extraction.md);
 this document is the narrative status record, not a duplicate of those ADRs.
 
 P3-03 onward is a family of tickets, all in `packages/extraction-engine`, each adding one piece of
@@ -275,17 +277,48 @@ No new dependencies. Proven with 5 new tests (46 total in the package), includin
 `EntityObject` validated with the real `validateEntityObject` and an end-to-end assertion that
 `objects` now contains both an `EntityObject` and an `ApiObject` together. See ADR 0019.
 
+## P3-08 — Java Configuration Extraction
+
+**Status: Complete. The Java extraction family (P3-03 through P3-08) is now complete.**
+
+`packages/extraction-engine/src/java-config.ts` — the last ticket in the family, and the one module
+that reads more than one other pass's output together. `extractPropertiesConfig`/`extractYamlConfig`
+parse `application.properties`/`.yml` into flat key→value facts, each with a line number (YAML via
+the `yaml` package's `parseDocument`, specifically because it preserves source ranges a plain
+`parse()` would lose; nested keys flatten with `.`, list items with `[index]`, matching Spring Boot's
+own relaxed-binding convention). `extractConfigReferences` cross-references P3-04's structural facts
+(`@Value("${key:default}")`/`@ConfigurationProperties(prefix=...)` annotation sites) and P3-05's call
+graph (`System.getenv`/`System.getProperty` call sites, via a small `firstStringArgument` addition to
+`JavaCallFact`) to say WHERE a configuration key or environment variable is actually consumed.
+
+`extractJavaProject` reaches its final form for this family: discover → parse → structural facts →
+call/type-dependency graph → HTTP + persistence extraction → configuration extraction → bridge to
+`ApiObject`/`EntityObject`. Neither config facts nor config references bridge to a canonical object —
+no existing kind fits either, so both stay facts for a later module.
+
+Proven end to end: `tests/extract-java.test.ts`'s final growth assembles the bridged
+`EntityObject`/`ApiObject` into a real `CanonicalKnowledgeBundle`, validated with the real
+`validateCanonicalKnowledgeBundle`/`validateSourceReferences`, plus a byte-stability assertion
+(FR-DET-07) diffing two runs of identical input. New dependency: `yaml` (matching
+`packages/knowledge-graph`'s existing pin). 6 new tests (52 total in the package, across 11 files).
+See ADR 0020.
+
 ## Remaining Phase 3 work
 
 Not started:
 
-- P3-08 (configuration extraction) — the last ticket in the Java extraction family, building on
-  every prior ticket's facts.
 - Connectors for the other source kinds in this package's remit (documentation, project/issue
   systems, log stores, gateways) — each adds its own descriptor narrowing; the `SourceConnector`
   interface does not change.
 - Extraction for any language other than Java.
-- Raw SQL migration (Flyway/Liquibase) and MyBatis support within the Java extraction engine.
+- JAX-RS, MyBatis, and raw SQL migration (Flyway/Liquibase) support within the Java extraction
+  engine.
+- Cross-object relationship bridging (e.g. Controller "handles" Entity) — `JavaExtractionResult.
+relationships` is always empty across the whole family; correctly constructing one requires
+  resolving exactly the call/type graph P3-05 documents as deliberately shallow.
+- `packages/inference-engine` turning this family's raw facts (call graph, type-dependency graph,
+  repositories, configuration) into semantic interpretation (bounded contexts, Component boundaries)
+  — explicitly out of scope for deterministic extraction (FR-SEM-01).
 - Reconciling the P2-11 sample's three non-conforming `Source` ids with `SOURCE_LOCATOR_PATTERN`.
 - The Deployment/NFR and Review/Gap/Drift `kind` vocabularies
   ([`docs/okf/ui-validation.md`](../okf/ui-validation.md) recommendations 1–3) — still open, and
@@ -295,6 +328,6 @@ Not started:
 
 Unaffected. Phase 1 (P1-01 through P1-12) is closed — see [`docs/phase-1/README.md`](../phase-1/README.md).
 Phase 2 (P2-01 through P2-12) is closed — see [`docs/phase-2/README.md`](../phase-2/README.md).
-P3-01 through P3-07 added new package content and documentation only; all 264
+P3-01 through P3-08 added new package content and documentation only; all 264
 `packages/knowledge-graph` tests pass unmodified, and `git status` confirms no changes to `apps/api`,
 `apps/web`, or `packages/shared`.

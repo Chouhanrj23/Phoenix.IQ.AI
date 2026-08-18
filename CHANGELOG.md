@@ -246,6 +246,19 @@ persistence.ts`'s `bridgeJpaEntity` maps an entity directly to a real, validated
   bridging in alongside HTTP. No new dependencies. Proven with 5 new tests (46 total), including an
   assertion that bridged output now contains both an `EntityObject` and an `ApiObject` together. See
   ADR 0019.
+- **Phase 3 — P3-08 (Java configuration extraction):** `packages/extraction-engine/src/java-config.ts`
+  — the last ticket in the Java extraction family (P3-03 through P3-08, now complete).
+  `extractPropertiesConfig`/`extractYamlConfig` parse `application.properties`/`.yml` into flat
+  key→value facts with line numbers (YAML via the `yaml` package's `parseDocument`, which preserves
+  source ranges a plain `parse()` would lose); `extractConfigReferences` is the one module in this
+  family that reads more than one other pass's output together, cross-referencing P3-04's structural
+  facts (`@Value`/`@ConfigurationProperties` annotation sites) and P3-05's call graph
+  (`System.getenv`/`System.getProperty` call sites, via a small `firstStringArgument` addition to
+  `JavaCallFact`). `extractJavaProject` reaches its final form for this family. Neither config facts
+  nor references bridge to a canonical object (no existing kind fits). New dependency: `yaml`
+  (matching `packages/knowledge-graph`'s existing pin). Proven with 6 new tests (52 total across 11
+  files), including the full end-to-end assembly into a validated `CanonicalKnowledgeBundle` and a
+  byte-stability assertion (FR-DET-07) across two runs of identical input. See ADR 0020.
 
 ### Changed
 

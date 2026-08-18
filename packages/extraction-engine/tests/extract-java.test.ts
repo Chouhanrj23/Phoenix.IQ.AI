@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { extractJavaProject, type JavaExtractionOptions } from '../src/extract-java.js';
+import {
+  validateCanonicalKnowledgeBundle,
+  validateSourceReferences,
+  type CanonicalKnowledgeBundle,
+  type Source,
+} from '@phoenix-ai/knowledge-graph';
 import type { RawArtifact } from '@phoenix-ai/ingestion-connectors';
 
 const SOURCE_ID = 'repo://aurora-commerce/services/checkout';
@@ -83,6 +89,8 @@ public class CheckoutController {
 }
 `;
 
+const APPLICATION_YML = `server:\n  port: 8080\nspring:\n  application:\n    name: checkout\n`;
+
 const ARTIFACTS: RawArtifact[] = [
   artifact('services/checkout/pom.xml', POM_XML),
   artifact('services/checkout/src/main/java/com/aurora/checkout/CheckoutItem.java', ENTITY_JAVA),
@@ -94,6 +102,7 @@ const ARTIFACTS: RawArtifact[] = [
     'services/checkout/src/main/java/com/aurora/checkout/CheckoutItemRepository.java',
     REPOSITORY_JAVA,
   ),
+  artifact('services/checkout/src/main/resources/application.yml', APPLICATION_YML),
 ];
 
 describe('extractJavaProject -- discovery + parsing + structural facts', () => {
@@ -188,5 +197,50 @@ describe('extractJavaProject -- database interaction extraction and bridging', (
     expect(result.objects).toHaveLength(2);
     const kinds = result.objects.map((o) => o.kind).sort();
     expect(kinds).toEqual(['domain.entity', 'integration.api']);
+  });
+});
+
+describe('extractJavaProject -- configuration extraction', () => {
+  it('extracts application.yml config facts', () => {
+    const result = extractJavaProject(ARTIFACTS, OPTIONS);
+
+    expect(result.config).toContainEqual({
+      path: 'services/checkout/src/main/resources/application.yml',
+      line: 2,
+      key: 'server.port',
+      value: '8080',
+    });
+  });
+});
+
+describe('extractJavaProject -- end to end', () => {
+  it('bridges into real canonical objects that assemble into a valid, source-referenced OKF bundle', () => {
+    const result = extractJavaProject(ARTIFACTS, OPTIONS);
+
+    const source: Source = {
+      id: SOURCE_ID,
+      type: 'source-code',
+      label: 'aurora-commerce/services/checkout',
+      locator: SOURCE_ID,
+      version: 'abc1234',
+    };
+
+    const bundle: CanonicalKnowledgeBundle = {
+      systemId: 'aurora-commerce',
+      generatedAt: '2026-08-18T00:00:00.000Z',
+      sources: [source],
+      objects: result.objects,
+      relationships: result.relationships,
+    };
+
+    expect(validateCanonicalKnowledgeBundle(bundle)).toEqual({ valid: true, errors: [] });
+    expect(validateSourceReferences(bundle)).toEqual({ valid: true, errors: [] });
+  });
+
+  it('produces byte-identical objects across two runs over identical input (FR-DET-07)', () => {
+    const first = extractJavaProject(ARTIFACTS, OPTIONS);
+    const second = extractJavaProject(ARTIFACTS, OPTIONS);
+    expect(JSON.stringify(first.objects)).toBe(JSON.stringify(second.objects));
+    expect(JSON.stringify(first.calls)).toBe(JSON.stringify(second.calls));
   });
 });
