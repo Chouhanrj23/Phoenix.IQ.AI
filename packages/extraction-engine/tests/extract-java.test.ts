@@ -33,9 +33,25 @@ const POM_XML = `<?xml version="1.0"?>
 
 const ENTITY_JAVA = `package com.aurora.checkout;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "checkout_items")
 public class CheckoutItem {
+  @Id
   private Long id;
   private String sku;
+}
+`;
+
+const REPOSITORY_JAVA = `package com.aurora.checkout;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CheckoutItemRepository extends JpaRepository<CheckoutItem, Long> {
+  CheckoutItem findBySku(String sku);
 }
 `;
 
@@ -74,6 +90,10 @@ const ARTIFACTS: RawArtifact[] = [
     'services/checkout/src/main/java/com/aurora/checkout/CheckoutController.java',
     CONTROLLER_JAVA,
   ),
+  artifact(
+    'services/checkout/src/main/java/com/aurora/checkout/CheckoutItemRepository.java',
+    REPOSITORY_JAVA,
+  ),
 ];
 
 describe('extractJavaProject -- discovery + parsing + structural facts', () => {
@@ -89,7 +109,7 @@ describe('extractJavaProject -- discovery + parsing + structural facts', () => {
       packaging: 'jar',
     });
 
-    expect(result.files).toHaveLength(2);
+    expect(result.files).toHaveLength(3);
     const item = result.files.find((f) => f.path.endsWith('CheckoutItem.java'));
     expect(item?.types[0]?.qualifiedName).toBe('com.aurora.checkout.CheckoutItem');
     expect(item?.types[0]?.fields.map((f) => f.name)).toEqual(['id', 'sku']);
@@ -105,7 +125,7 @@ describe('extractJavaProject -- discovery + parsing + structural facts', () => {
     expect(result.parseFailures).toHaveLength(1);
     expect(result.parseFailures[0]?.path).toBe(broken.path);
     expect(result.files.some((f) => f.path === broken.path)).toBe(false);
-    expect(result.files).toHaveLength(2);
+    expect(result.files).toHaveLength(3);
   });
 });
 
@@ -147,7 +167,26 @@ describe('extractJavaProject -- REST/API extraction and bridging', () => {
   it('bridges the controller into a real ApiObject', () => {
     const result = extractJavaProject(ARTIFACTS, OPTIONS);
 
-    expect(result.objects).toHaveLength(1);
-    expect(result.objects[0]?.kind).toBe('integration.api');
+    expect(result.objects.filter((o) => o.kind === 'integration.api')).toHaveLength(1);
+  });
+});
+
+describe('extractJavaProject -- database interaction extraction and bridging', () => {
+  it('extracts the JPA entity and the Spring Data repository', () => {
+    const result = extractJavaProject(ARTIFACTS, OPTIONS);
+
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0]?.tableName).toBe('checkout_items');
+
+    expect(result.repositories).toHaveLength(1);
+    expect(result.repositories[0]?.entityTypeArgument).toBe('CheckoutItem');
+  });
+
+  it('bridges the entity into a real EntityObject alongside the ApiObject', () => {
+    const result = extractJavaProject(ARTIFACTS, OPTIONS);
+
+    expect(result.objects).toHaveLength(2);
+    const kinds = result.objects.map((o) => o.kind).sort();
+    expect(kinds).toEqual(['domain.entity', 'integration.api']);
   });
 });

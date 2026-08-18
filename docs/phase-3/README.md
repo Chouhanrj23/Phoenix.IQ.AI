@@ -18,8 +18,10 @@ P3-04 in
 [`docs/architecture/adr/0016-java-structural-facts.md`](../architecture/adr/0016-java-structural-facts.md),
 P3-05 in
 [`docs/architecture/adr/0017-java-call-dependency-graph.md`](../architecture/adr/0017-java-call-dependency-graph.md),
-and P3-06 in
-[`docs/architecture/adr/0018-java-rest-api-extraction.md`](../architecture/adr/0018-java-rest-api-extraction.md);
+P3-06 in
+[`docs/architecture/adr/0018-java-rest-api-extraction.md`](../architecture/adr/0018-java-rest-api-extraction.md),
+and P3-07 in
+[`docs/architecture/adr/0019-java-persistence-extraction.md`](../architecture/adr/0019-java-persistence-extraction.md);
 this document is the narrative status record, not a duplicate of those ADRs.
 
 P3-03 onward is a family of tickets, all in `packages/extraction-engine`, each adding one piece of
@@ -252,17 +254,38 @@ New dependency: `@phoenix-ai/knowledge-graph` (for `ApiObject` and its real vali
 12 new tests (39 total in the package), including `joinPaths`' normalization rules tested in
 isolation and the bridged `ApiObject` validated with the real `validateApiObject`. See ADR 0018.
 
+## P3-07 — Java Database Interaction Extraction (JPA/Spring Data)
+
+**Status: Complete.**
+
+`packages/extraction-engine/src/java-persistence.ts` — `extractJavaPersistence` (FR-DET-02's ORM
+half), a pure function over P3-04's structural facts, matching P3-06's shape: a type with a
+type-level `@Entity` annotation becomes a `JavaJpaEntityFact` (`@Table` for the table name, `@Id`
+fields, `@Column` names, `@OneToMany`/`@ManyToOne`/`@OneToOne`/`@ManyToMany` associations with their
+generic collection type unwrapped); an interface extending a `*Repository` type becomes a
+`JavaRepositoryFact`, its generic type arguments recovered with a small targeted regex over the
+already-extracted `extendsTypes` text (not a second CST pass).
+
+`bridge-persistence.ts`'s `bridgeJpaEntity` maps an entity directly to a real, validated
+`EntityObject` (`domain.entity`), reusing P3-06's `bridge-shared.ts` plumbing unchanged. Repositories
+themselves do NOT bridge to a canonical object (no existing kind fits one, and conflating it with its
+entity would lose information) — they stay a fact in `JavaExtractionResult.repositories`.
+
+No new dependencies. Proven with 5 new tests (46 total in the package), including the bridged
+`EntityObject` validated with the real `validateEntityObject` and an end-to-end assertion that
+`objects` now contains both an `EntityObject` and an `ApiObject` together. See ADR 0019.
+
 ## Remaining Phase 3 work
 
 Not started:
 
-- P3-07 (database interaction extraction) and P3-08 (configuration extraction) — the rest of the
-  Java extraction family, each building on P3-06's controller/route extraction and canonical-object
-  bridge.
+- P3-08 (configuration extraction) — the last ticket in the Java extraction family, building on
+  every prior ticket's facts.
 - Connectors for the other source kinds in this package's remit (documentation, project/issue
   systems, log stores, gateways) — each adds its own descriptor narrowing; the `SourceConnector`
   interface does not change.
 - Extraction for any language other than Java.
+- Raw SQL migration (Flyway/Liquibase) and MyBatis support within the Java extraction engine.
 - Reconciling the P2-11 sample's three non-conforming `Source` ids with `SOURCE_LOCATOR_PATTERN`.
 - The Deployment/NFR and Review/Gap/Drift `kind` vocabularies
   ([`docs/okf/ui-validation.md`](../okf/ui-validation.md) recommendations 1–3) — still open, and
@@ -272,6 +295,6 @@ Not started:
 
 Unaffected. Phase 1 (P1-01 through P1-12) is closed — see [`docs/phase-1/README.md`](../phase-1/README.md).
 Phase 2 (P2-01 through P2-12) is closed — see [`docs/phase-2/README.md`](../phase-2/README.md).
-P3-01 through P3-06 added new package content and documentation only; all 264
+P3-01 through P3-07 added new package content and documentation only; all 264
 `packages/knowledge-graph` tests pass unmodified, and `git status` confirms no changes to `apps/api`,
 `apps/web`, or `packages/shared`.

@@ -234,6 +234,18 @@ All notable changes to this project will be documented in this file. Format foll
   `confidenceDetail: { basis: 'observed' }`. `extractJavaProject` gains its `options`
   (`systemId`/`sourceId`/`generatedAt`) parameter here, the first stage that needs one. New
   dependency: `@phoenix-ai/knowledge-graph`. Proven with 12 new tests (39 total). See ADR 0018.
+- **Phase 3 — P3-07 (Java database interaction extraction):**
+  `packages/extraction-engine/src/java-persistence.ts` — `extractJavaPersistence` (FR-DET-02's ORM
+  half), a pure function over P3-04's structural facts reading JPA `@Entity` classes
+  (table/id/column/association facts, generic association types unwrapped) and Spring Data
+  repository interfaces (type arguments recovered via a small targeted regex over already-extracted
+  text, not a second CST pass; declared query methods with `@Query` text). New `bridge-
+persistence.ts`'s `bridgeJpaEntity` maps an entity directly to a real, validated `EntityObject`
+  (`domain.entity`), reusing P3-06's `bridge-shared.ts` plumbing unchanged; repositories themselves
+  do not bridge to a canonical object. `extractJavaProject` now wires persistence extraction and
+  bridging in alongside HTTP. No new dependencies. Proven with 5 new tests (46 total), including an
+  assertion that bridged output now contains both an `EntityObject` and an `ApiObject` together. See
+  ADR 0019.
 
 ### Changed
 

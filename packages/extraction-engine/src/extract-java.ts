@@ -1,25 +1,22 @@
 /**
- * P3-06 -- the Java extraction orchestrator, now including REST/API
- * extraction and its bridge into a real canonical object.
+ * P3-07 -- the Java extraction orchestrator, now including database
+ * interaction extraction and its bridge into a real canonical object.
  *
  * Wires the passes that exist so far: discover project structure -> parse
  * each main-source `.java` file (collecting per-file parse failures
  * non-throwingly, mirroring `ArtifactCollection.failures` in
  * `@phoenix-ai/ingestion-connectors` -- one unparseable file must not abort
  * a whole extraction run) -> structural facts -> the call graph and
- * type-dependency graph -> Spring MVC controllers/routes -> bridge each
- * controller into a real `ApiObject`.
+ * type-dependency graph -> Spring MVC controllers/routes -> JPA entities and
+ * Spring Data repositories -> bridge each controller and entity into a real
+ * canonical object.
  *
- * `options` (systemId/sourceId/generatedAt) is introduced in THIS ticket,
- * not earlier, because it is only needed once there is a canonical-object
- * bridge to stamp it onto -- P3-03 through P3-05 had nothing that needed a
- * system/source identity. `generatedAt` is resolved ONCE here (defaulted
- * only when the caller omits it) and threaded through the bridge rather than
- * re-stamped per-object -- the determinism discipline FR-DET-07 requires.
+ * `options` (systemId/sourceId/generatedAt, introduced in P3-06) is threaded
+ * through both bridges from one resolved `generatedAt` -- the determinism
+ * discipline FR-DET-07 requires.
  *
- * Later Java extraction tickets (P3-07 onward) extend this same function
- * with persistence extraction and configuration -- see
- * `docs/phase-3/README.md` for the sequence.
+ * Later Java extraction tickets (P3-08) extend this same function with
+ * configuration extraction -- see `docs/phase-3/README.md` for the sequence.
  *
  * Only `.java` files under each module's MAIN source root are parsed --
  * test sources are discovered (`layout`) but not parsed, since none of this
@@ -37,7 +34,13 @@ import {
   type JavaTypeDependencyFact,
 } from './java-calls.js';
 import { extractJavaHttp, type JavaControllerFact } from './java-http.js';
+import {
+  extractJavaPersistence,
+  type JavaJpaEntityFact,
+  type JavaRepositoryFact,
+} from './java-persistence.js';
 import { bridgeSpringController } from './bridge-http.js';
+import { bridgeJpaEntity } from './bridge-persistence.js';
 import type { BridgeOptions } from './bridge-shared.js';
 import type { CstNode } from 'java-parser';
 
@@ -55,7 +58,9 @@ export interface JavaExtractionResult {
   calls: JavaCallFact[];
   typeDependencies: JavaTypeDependencyFact[];
   controllers: JavaControllerFact[];
-  /** Bridged `ApiObject`s so far -- see `bridge-http.ts` for what does and does not bridge. */
+  entities: JavaJpaEntityFact[];
+  repositories: JavaRepositoryFact[];
+  /** Bridged `ApiObject`s/`EntityObject`s so far -- see `bridge-http.ts`/`bridge-persistence.ts` for what does and does not bridge. */
   objects: CanonicalKnowledgeObject[];
 }
 
@@ -99,10 +104,22 @@ export function extractJavaProject(
 
   const { calls, typeDependencies } = extractJavaCallGraph(files, cstsByPath, sourcesByPath);
   const controllers = extractJavaHttp(files);
+  const { entities, repositories } = extractJavaPersistence(files);
 
-  const objects: CanonicalKnowledgeObject[] = controllers.map((controller) =>
-    bridgeSpringController(controller, bridgeOptions),
-  );
+  const objects: CanonicalKnowledgeObject[] = [
+    ...controllers.map((controller) => bridgeSpringController(controller, bridgeOptions)),
+    ...entities.map((entity) => bridgeJpaEntity(entity, bridgeOptions)),
+  ];
 
-  return { layout, files, parseFailures, calls, typeDependencies, controllers, objects };
+  return {
+    layout,
+    files,
+    parseFailures,
+    calls,
+    typeDependencies,
+    controllers,
+    entities,
+    repositories,
+    objects,
+  };
 }

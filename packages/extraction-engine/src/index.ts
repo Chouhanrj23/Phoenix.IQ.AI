@@ -19,6 +19,10 @@
  * the first canonical-object bridge (a controller -> `ApiObject`). See
  * `docs/architecture/adr/0018-java-rest-api-extraction.md`.
  *
+ * P3-07: JPA entities and Spring Data repositories, and their bridge (an
+ * entity -> `EntityObject`). See
+ * `docs/architecture/adr/0019-java-persistence-extraction.md`.
+ *
  *   - `java-parser-adapter.ts` -- the one call site wrapping `java-parser`'s
  *     throw-only `parse()` into a non-throwing result.
  *   - `cst-utils.ts` -- rule-agnostic CST helpers (`sourceTextOf`,
@@ -27,9 +31,11 @@
  *   - `java-calls.ts` -- the type-dependency graph and the call graph.
  *   - `java-http.ts` -- Spring MVC controllers, routes, HTTP methods, and
  *     parameter metadata.
+ *   - `java-persistence.ts` -- JPA entities and Spring Data repositories.
  *   - `bridge-shared.ts` -- shared plumbing (deterministic ids, evidence)
  *     for every canonical-object bridge in this family.
  *   - `bridge-http.ts` -- bridges a Spring controller into an `ApiObject`.
+ *   - `bridge-persistence.ts` -- bridges a JPA entity into an `EntityObject`.
  *   - `extract-java.ts` -- `extractJavaProject`, the top-level orchestrator,
  *     grown incrementally by each ticket in this family.
  *
@@ -42,6 +48,8 @@ export * from './java-parser-adapter.js';
 export * from './java-structure.js';
 export * from './java-calls.js';
 export * from './java-http.js';
+export * from './java-persistence.js';
 export * from './bridge-shared.js';
 export * from './bridge-http.js';
+export * from './bridge-persistence.js';
 export * from './extract-java.js';

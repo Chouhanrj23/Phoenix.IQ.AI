@@ -3,8 +3,10 @@ import {
   discoverJavaProject,
   extractJavaCallGraph,
   extractJavaHttp,
+  extractJavaPersistence,
   extractJavaProject,
   extractJavaStructure,
+  bridgeJpaEntity,
   bridgeSpringController,
   parseJavaSource,
 } from '../src/index.js';
@@ -17,6 +19,8 @@ describe('extraction-engine barrel export', () => {
     expect(typeof extractJavaCallGraph).toBe('function');
     expect(typeof extractJavaHttp).toBe('function');
     expect(typeof bridgeSpringController).toBe('function');
+    expect(typeof extractJavaPersistence).toBe('function');
+    expect(typeof bridgeJpaEntity).toBe('function');
     expect(typeof extractJavaProject).toBe('function');
   });
 });
