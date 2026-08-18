@@ -271,6 +271,21 @@ persistence.ts`'s `bridgeJpaEntity` maps an entity directly to a real, validated
   tests against a real `extractJavaProject` run, including a full round-trip through the real
   `parseAndValidateOkfYaml`. This completes the Java extraction family (P3-03 through P3-09). See
   ADR 0021.
+- **Phase 3 — P3-10 (Java extraction fact provenance):** `packages/extraction-engine/src/
+fact-provenance.ts` — attaches `FactProvenance` (which source, which revision, derived by what,
+  when) to every fact this family returns, not just the two bridged canonical object kinds.
+  `stampFactProvenance` is a generic, recursive post-processing enrichment applied once by
+  `extractJavaProject` after every other pass has run (it recognizes a fact by its `path: string`
+  property at any depth, so it touches none of `java-structure.ts`/`java-calls.ts`/`java-http.ts`/
+  `java-persistence.ts`/`java-config.ts`'s own logic); provenance lands wherever a fact's location
+  already lives, including on a nested `span` for call/type-dependency facts whose own identity
+  isn't itself a location. `JavaExtractionOptions` gains `sourceVersion?` (one caller-supplied value
+  for the whole run, matching how `systemId`/`sourceId` already work); `BridgeOptions.sourceVersion?`
+  now flows into every bridged object's `Evidence.sourceVersion`, fixing a real, pre-existing gap
+  (that field has existed since P2-09 but nothing populated it until now). No new dependencies.
+  Proven with 7 new tests for the generic stamper in isolation plus grown end-to-end coverage in
+  `extract-java.test.ts`/`bridge-http.test.ts`/`bridge-persistence.test.ts` (69 tests total in the
+  package). See ADR 0022.
 
 ### Changed
 

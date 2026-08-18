@@ -73,4 +73,24 @@ describe('bridgeSpringController', () => {
     const second = bridgeSpringController(controllers[0]!, options);
     expect(first.identity.id).toBe(second.identity.id);
   });
+
+  it('carries sourceVersion onto Evidence when given, and omits it entirely when not (P3-10)', () => {
+    const controllers = extractJavaHttp([
+      structureOf('CheckoutController.java', CONTROLLER_SOURCE),
+    ]);
+    const withVersion = bridgeSpringController(controllers[0]!, {
+      systemId: 'aurora-commerce',
+      sourceId: 'repo://aurora-commerce/services/checkout',
+      generatedAt: '2026-08-18T00:00:00.000Z',
+      sourceVersion: 'abc1234',
+    });
+    expect(withVersion.evidence[0]?.sourceVersion).toBe('abc1234');
+
+    const withoutVersion = bridgeSpringController(controllers[0]!, {
+      systemId: 'aurora-commerce',
+      sourceId: 'repo://aurora-commerce/services/checkout',
+      generatedAt: '2026-08-18T00:00:00.000Z',
+    });
+    expect(withoutVersion.evidence[0]).not.toHaveProperty('sourceVersion');
+  });
 });

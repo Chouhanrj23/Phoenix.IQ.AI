@@ -24,6 +24,7 @@
  */
 
 import type { CstNode as JavaParserCstNode, IToken as JavaParserIToken } from 'java-parser';
+import type { FactProvenance } from './fact-provenance.js';
 
 export interface CstNodeLocationLike {
   startOffset: number;
@@ -112,6 +113,16 @@ export interface SourceSpan {
   path: string;
   startLine: number;
   endLine?: number;
+  /**
+   * Which source/revision this fact was extracted from, and when -- stamped
+   * once, after every extraction pass runs, by `extractJavaProject`'s P3-10
+   * enrichment (`fact-provenance.ts`), never by `spanOf`/the structural
+   * facts modules themselves. Absent on a `SourceSpan` built directly via a
+   * module's own tests (e.g. `extractJavaStructure` called outside
+   * `extractJavaProject`), which is a deliberate, harmless default -- see
+   * `docs/architecture/adr/0022-java-fact-provenance.md`.
+   */
+  provenance?: FactProvenance;
 }
 
 export function spanOf(path: string, node: AnyCstNode): SourceSpan {

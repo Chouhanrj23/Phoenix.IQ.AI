@@ -57,4 +57,22 @@ describe('bridgeJpaEntity', () => {
     const second = bridgeJpaEntity(entities[0]!, options);
     expect(first.identity.id).toBe(second.identity.id);
   });
+
+  it('carries sourceVersion onto Evidence when given, and omits it entirely when not (P3-10)', () => {
+    const { entities } = extractJavaPersistence([structureOf('CheckoutItem.java', ENTITY_SOURCE)]);
+    const withVersion = bridgeJpaEntity(entities[0]!, {
+      systemId: 'aurora-commerce',
+      sourceId: 'repo://aurora-commerce/services/checkout',
+      generatedAt: '2026-08-18T00:00:00.000Z',
+      sourceVersion: 'abc1234',
+    });
+    expect(withVersion.evidence[0]?.sourceVersion).toBe('abc1234');
+
+    const withoutVersion = bridgeJpaEntity(entities[0]!, {
+      systemId: 'aurora-commerce',
+      sourceId: 'repo://aurora-commerce/services/checkout',
+      generatedAt: '2026-08-18T00:00:00.000Z',
+    });
+    expect(withoutVersion.evidence[0]).not.toHaveProperty('sourceVersion');
+  });
 });

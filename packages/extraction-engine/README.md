@@ -7,14 +7,15 @@
 
 Extracts exact facts from normalised artifacts using parsing, not model inference.
 
-## Status — Phase 3 (Source Connectors), P3-03 through P3-09: Java Extraction (complete)
+## Status — Phase 3 (Source Connectors), P3-03 through P3-10: Java Extraction (complete)
 
 `src/` turns Java `RawArtifact`s (from `@phoenix-ai/ingestion-connectors`, e.g. its git connector)
 into deterministic facts — source discovery, structural facts, the call graph and type-dependency
 graph, Spring MVC controllers/routes, JPA entities/Spring Data repositories, and application
 configuration — bridges the parts that need no interpretation into real
-`@phoenix-ai/knowledge-graph` objects, and wraps the result into a real OKF document/YAML string. The
-whole Java extraction family (P3-03 through P3-09) is complete.
+`@phoenix-ai/knowledge-graph` objects, wraps the result into a real OKF document/YAML string, and
+stamps every fact with the provenance of the run that produced it. The whole Java extraction family
+(P3-03 through P3-10) is complete.
 
 - `discoverJavaProject` (`java-project.ts`) — filesystem/build-file discovery ONLY, no parsing:
   classifies `.java` artifacts into Maven/Gradle modules by nearest ancestor build file, splits
@@ -51,6 +52,11 @@ position? }`, mirroring `ArtifactReadResult`'s convention from `ingestion-connec
   into a real `CanonicalKnowledgeBundle`/`OkfDocument`/OKF YAML string, reusing P2-10's
   `toOkfDocument`/`serializeOkfYaml` completely unmodified. No new canonical mapping is invented
   here — see ADR 0021.
+- `stampFactProvenance`/`FactProvenance` (`fact-provenance.ts`) — attaches which source, which
+  revision, derived by what, and when to every fact this family returns (not just the bridged
+  objects), as a generic post-processing enrichment `extractJavaProject` applies once, after every
+  other pass has run. `BridgeOptions.sourceVersion?` also now flows into every bridged object's
+  `Evidence.sourceVersion` — see ADR 0022.
 
 **The load-bearing decision:** only JPA entities and Spring controllers bridge to canonical objects.
 Grouping classes into architectural Components or bounded contexts is semantic inference (the FRD's
@@ -70,8 +76,9 @@ Design rationale, one ADR per ticket:
 `docs/architecture/adr/0017-java-call-dependency-graph.md` (P3-05),
 `docs/architecture/adr/0018-java-rest-api-extraction.md` (P3-06),
 `docs/architecture/adr/0019-java-persistence-extraction.md` (P3-07),
-`docs/architecture/adr/0020-java-configuration-extraction.md` (P3-08), and
-`docs/architecture/adr/0021-java-okf-mapping.md` (P3-09). Status tracker:
+`docs/architecture/adr/0020-java-configuration-extraction.md` (P3-08),
+`docs/architecture/adr/0021-java-okf-mapping.md` (P3-09), and
+`docs/architecture/adr/0022-java-fact-provenance.md` (P3-10). Status tracker:
 `docs/phase-3/README.md`. The canonical objects this package bridges into, and the OKF schema
 `okf-mapping.ts` reuses: `packages/knowledge-graph/README.md`.
 

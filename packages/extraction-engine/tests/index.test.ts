@@ -12,6 +12,7 @@ import {
   buildJavaCanonicalBundle,
   mapJavaExtractionToOkfDocument,
   serializeJavaExtractionToOkfYaml,
+  stampFactProvenance,
   parseJavaSource,
 } from '../src/index.js';
 
@@ -30,5 +31,6 @@ describe('extraction-engine barrel export', () => {
     expect(typeof buildJavaCanonicalBundle).toBe('function');
     expect(typeof mapJavaExtractionToOkfDocument).toBe('function');
     expect(typeof serializeJavaExtractionToOkfYaml).toBe('function');
+    expect(typeof stampFactProvenance).toBe('function');
   });
 });

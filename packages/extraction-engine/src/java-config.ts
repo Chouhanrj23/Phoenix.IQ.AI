@@ -28,12 +28,15 @@ import {
   type SourceSpan,
 } from './java-structure.js';
 import type { JavaCallFact } from './java-calls.js';
+import type { FactProvenance } from './fact-provenance.js';
 
 export interface JavaConfigFact {
   path: string;
   line: number;
   key: string;
   value: string;
+  /** Stamped by `extractJavaProject`'s P3-10 enrichment -- see `SourceSpan.provenance`'s doc comment (`cst-utils.ts`). */
+  provenance?: FactProvenance;
 }
 
 export type JavaConfigReferenceKind =

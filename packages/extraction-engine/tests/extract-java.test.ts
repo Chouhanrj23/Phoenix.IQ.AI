@@ -14,6 +14,7 @@ const OPTIONS: JavaExtractionOptions = {
   systemId: 'aurora-commerce',
   sourceId: SOURCE_ID,
   generatedAt: '2026-08-18T00:00:00.000Z',
+  sourceVersion: 'abc1234',
 };
 
 function artifact(path: string, content: string): RawArtifact {
@@ -204,12 +205,64 @@ describe('extractJavaProject -- configuration extraction', () => {
   it('extracts application.yml config facts', () => {
     const result = extractJavaProject(ARTIFACTS, OPTIONS);
 
-    expect(result.config).toContainEqual({
-      path: 'services/checkout/src/main/resources/application.yml',
-      line: 2,
-      key: 'server.port',
-      value: '8080',
-    });
+    expect(result.config).toContainEqual(
+      expect.objectContaining({
+        path: 'services/checkout/src/main/resources/application.yml',
+        line: 2,
+        key: 'server.port',
+        value: '8080',
+      }),
+    );
+  });
+});
+
+describe('extractJavaProject -- fact provenance (P3-10)', () => {
+  const EXPECTED_PROVENANCE = {
+    sourceId: SOURCE_ID,
+    sourceVersion: 'abc1234',
+    derivedBy: 'extraction-engine',
+    derivedAt: '2026-08-18T00:00:00.000Z',
+  };
+
+  it('stamps every top-level fact array with the run-level provenance', () => {
+    const result = extractJavaProject(ARTIFACTS, OPTIONS);
+
+    // calls/typeDependencies carry their location on a nested `span`, not a top-level `path` --
+    // provenance is stamped there, not on the fact itself.
+    expect(result.calls[0]?.span.provenance).toEqual(EXPECTED_PROVENANCE);
+    expect(result.typeDependencies[0]?.span.provenance).toEqual(EXPECTED_PROVENANCE);
+    expect(result.controllers[0]?.provenance).toEqual(EXPECTED_PROVENANCE);
+    expect(result.entities[0]?.provenance).toEqual(EXPECTED_PROVENANCE);
+    expect(result.repositories[0]?.provenance).toEqual(EXPECTED_PROVENANCE);
+    expect(result.config[0]?.provenance).toEqual(EXPECTED_PROVENANCE);
+  });
+
+  it('stamps nested facts too -- fields, methods, and routes, not just their owning file/type', () => {
+    const result = extractJavaProject(ARTIFACTS, OPTIONS);
+
+    const item = result.files.find((f) => f.path.endsWith('CheckoutItem.java'));
+    expect(item?.types[0]?.provenance).toEqual(EXPECTED_PROVENANCE);
+    expect(item?.types[0]?.fields[0]?.provenance).toEqual(EXPECTED_PROVENANCE);
+
+    const controller = result.controllers[0];
+    expect(controller?.routes[0]?.provenance).toEqual(EXPECTED_PROVENANCE);
+  });
+
+  it('carries the source revision through to the bridged objects Evidence.sourceVersion', () => {
+    const result = extractJavaProject(ARTIFACTS, OPTIONS);
+
+    for (const object of result.objects) {
+      expect(object.evidence[0]?.sourceVersion).toBe('abc1234');
+    }
+  });
+
+  it('omits sourceVersion from facts and evidence entirely when the caller does not track one', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to omit it
+    const { sourceVersion: _sourceVersion, ...optionsWithoutVersion } = OPTIONS;
+    const result = extractJavaProject(ARTIFACTS, optionsWithoutVersion);
+
+    expect(result.controllers[0]?.provenance).not.toHaveProperty('sourceVersion');
+    expect(result.objects[0]?.evidence[0]).not.toHaveProperty('sourceVersion');
   });
 });
 
@@ -242,5 +295,8 @@ describe('extractJavaProject -- end to end', () => {
     const second = extractJavaProject(ARTIFACTS, OPTIONS);
     expect(JSON.stringify(first.objects)).toBe(JSON.stringify(second.objects));
     expect(JSON.stringify(first.calls)).toBe(JSON.stringify(second.calls));
+    // Stamped provenance (P3-10) must not introduce any per-run variance either.
+    expect(JSON.stringify(first.controllers)).toBe(JSON.stringify(second.controllers));
+    expect(JSON.stringify(first.config)).toBe(JSON.stringify(second.config));
   });
 });

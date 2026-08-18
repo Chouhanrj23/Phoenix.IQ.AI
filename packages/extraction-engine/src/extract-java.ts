@@ -1,8 +1,7 @@
 /**
- * P3-08 -- the Java extraction orchestrator, in its final (for this family)
- * form: discovery, parsing, structural facts, the call/type-dependency
- * graph, HTTP and persistence extraction, application configuration, and
- * the canonical-object bridge, all in one call.
+ * P3-10 -- the Java extraction orchestrator, now stamping provenance onto
+ * every returned fact and passing a source revision through to the
+ * canonical-object bridges' evidence.
  *
  * Wires every pass this family built: discover project structure -> parse
  * each main-source `.java` file (collecting per-file parse failures
@@ -13,13 +12,15 @@
  * Spring Data repositories -> application config
  * (`application*.properties`/`.yml` artifacts) plus config
  * cross-references -> bridge each controller and entity into a real
- * canonical object.
+ * canonical object -> stamp `FactProvenance` onto every fact (P3-10,
+ * `fact-provenance.ts`).
  *
- * `options` (systemId/sourceId/generatedAt, introduced in P3-06) is
- * resolved ONCE here (`generatedAt` defaulted only when the caller omits
- * it) and threaded through every bridge call rather than re-stamped
- * per-object -- the determinism discipline FR-DET-07 requires: two runs
- * over identical input must produce a byte-identical result.
+ * `options` (systemId/sourceId/generatedAt, introduced in P3-06; now also
+ * `sourceVersion`, P3-10) is resolved ONCE here (`generatedAt` defaulted
+ * only when the caller omits it) and threaded through every bridge call and
+ * every stamped fact rather than re-stamped per-object -- the determinism
+ * discipline FR-DET-07 requires: two runs over identical input must produce
+ * a byte-identical result.
  *
  * Only `.java` files under each module's MAIN source root are parsed --
  * test sources are discovered (`layout`) but not parsed, since none of this
@@ -55,6 +56,7 @@ import {
 import { bridgeSpringController } from './bridge-http.js';
 import { bridgeJpaEntity } from './bridge-persistence.js';
 import type { BridgeOptions } from './bridge-shared.js';
+import { stampFactProvenance, type FactProvenance } from './fact-provenance.js';
 import type { CstNode } from 'java-parser';
 
 export interface JavaExtractionOptions {
@@ -62,6 +64,8 @@ export interface JavaExtractionOptions {
   sourceId: string;
   /** ISO-8601. Defaults to the current time when omitted -- pass explicitly for byte-stable output across runs. */
   generatedAt?: string;
+  /** The source's revision (e.g. a git SHA), when the caller tracks one. Stamped onto every returned fact's `provenance` and every bridged object's `Evidence.sourceVersion`. */
+  sourceVersion?: string;
 }
 
 export interface JavaExtractionResult {
@@ -87,7 +91,7 @@ function isApplicationConfigPath(path: string): boolean {
   return APPLICATION_CONFIG_PATTERN.test(path);
 }
 
-/** Extracts every deterministic Java fact this package produces, plus the canonical objects that bridge directly. */
+/** Extracts every deterministic Java fact this package produces, plus the canonical objects that bridge directly -- every fact carrying its own extraction provenance. */
 export function extractJavaProject(
   artifacts: readonly RawArtifact[],
   options: JavaExtractionOptions,
@@ -97,6 +101,13 @@ export function extractJavaProject(
     systemId: options.systemId,
     sourceId: options.sourceId,
     generatedAt,
+    ...(options.sourceVersion === undefined ? {} : { sourceVersion: options.sourceVersion }),
+  };
+  const factProvenance: FactProvenance = {
+    sourceId: options.sourceId,
+    ...(options.sourceVersion === undefined ? {} : { sourceVersion: options.sourceVersion }),
+    derivedBy: 'extraction-engine',
+    derivedAt: generatedAt,
   };
 
   const byPath = new Map(artifacts.map((artifact) => [artifact.path, artifact]));
@@ -145,15 +156,15 @@ export function extractJavaProject(
 
   return {
     layout,
-    files,
-    parseFailures,
-    calls,
-    typeDependencies,
-    controllers,
-    entities,
-    repositories,
-    config,
-    configReferences,
+    files: stampFactProvenance(files, factProvenance),
+    parseFailures: stampFactProvenance(parseFailures, factProvenance),
+    calls: stampFactProvenance(calls, factProvenance),
+    typeDependencies: stampFactProvenance(typeDependencies, factProvenance),
+    controllers: stampFactProvenance(controllers, factProvenance),
+    entities: stampFactProvenance(entities, factProvenance),
+    repositories: stampFactProvenance(repositories, factProvenance),
+    config: stampFactProvenance(config, factProvenance),
+    configReferences: stampFactProvenance(configReferences, factProvenance),
     objects,
     relationships: [],
   };

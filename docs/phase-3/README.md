@@ -24,14 +24,17 @@ P3-07 in
 [`docs/architecture/adr/0019-java-persistence-extraction.md`](../architecture/adr/0019-java-persistence-extraction.md),
 P3-08 in
 [`docs/architecture/adr/0020-java-configuration-extraction.md`](../architecture/adr/0020-java-configuration-extraction.md),
-and P3-09 in
-[`docs/architecture/adr/0021-java-okf-mapping.md`](../architecture/adr/0021-java-okf-mapping.md);
+P3-09 in
+[`docs/architecture/adr/0021-java-okf-mapping.md`](../architecture/adr/0021-java-okf-mapping.md),
+and P3-10 in
+[`docs/architecture/adr/0022-java-fact-provenance.md`](../architecture/adr/0022-java-fact-provenance.md);
 this document is the narrative status record, not a duplicate of those ADRs.
 
 P3-03 onward is a family of tickets, all in `packages/extraction-engine`, each adding one piece of
 deterministic Java extraction on top of the last: P3-03 (source discovery) → P3-04 (structural facts)
 → P3-05 (call/dependency graph) → P3-06 (REST/API) → P3-07 (persistence) → P3-08 (configuration) →
-P3-09 (OKF mapping). Each has its own ADR, its own commit, and its own section below.
+P3-09 (OKF mapping) → P3-10 (fact provenance). Each has its own ADR, its own commit, and its own
+section below.
 
 ## P3-01 — Common Connector Contract for Source Repositories
 
@@ -328,6 +331,34 @@ real `validateCanonicalKnowledgeBundle`/`validateSourceReferences`, the OKF docu
 the real `validateOkfDocument`, and the serialized YAML round-tripped through the real
 `parseAndValidateOkfYaml`. No new dependencies. See ADR 0021.
 
+## P3-10 — Java Extraction Fact Provenance
+
+**Status: Complete.**
+
+`packages/extraction-engine/src/fact-provenance.ts` — attaches `FactProvenance` (which source,
+which revision, derived by what, when) to every fact this family returns, not just the two bridged
+canonical object kinds. `stampFactProvenance` is a generic, recursive post-processing enrichment
+applied once by `extractJavaProject` after every other pass has already run — it recognizes "this is
+a fact" by the presence of a `path: string` property at any depth, so it needs no maintenance when a
+future ticket adds a new fact shape, and it touches NONE of `java-structure.ts`/`java-calls.ts`/
+`java-http.ts`/`java-persistence.ts`/`java-config.ts`'s own logic. `JavaExtractionOptions` gains a
+`sourceVersion?` field (a single, caller-supplied value for the whole run, matching how `systemId`/
+`sourceId` already work); `BridgeOptions.sourceVersion?` flows straight into `Evidence.sourceVersion`
+too, fixing a real, pre-existing gap in P3-06/P3-07's bridges (`Evidence.sourceVersion` has existed
+since P2-09 but nothing populated it until now).
+
+Provenance lands wherever a fact's own location already lives, which is not uniform across this
+family: a fact extending `SourceSpan` directly gets `provenance` as a sibling of its own `path`; a
+call/type-dependency fact, whose location lives on a nested `span` (its own identity is
+caller/callee, not a location), gets `provenance` on `span` instead — the generic rule finds it
+there, correctly, and a dedicated test asserts both shapes.
+
+Proven with 7 new tests for the generic stamper in isolation plus 4 new end-to-end tests (`files`/
+`calls`/`controllers`/`entities`/`repositories`/`config` all carrying the run's provenance in the
+right place, nested facts stamped too, `Evidence.sourceVersion` set from `options.sourceVersion`,
+and everything correctly omitted when the caller does not track a revision) plus one test each in
+`bridge-http.test.ts`/`bridge-persistence.test.ts`. No new dependencies. See ADR 0022.
+
 ## Remaining Phase 3 work
 
 Not started:
@@ -353,6 +384,6 @@ relationships` is always empty across the whole family; correctly constructing o
 
 Unaffected. Phase 1 (P1-01 through P1-12) is closed — see [`docs/phase-1/README.md`](../phase-1/README.md).
 Phase 2 (P2-01 through P2-12) is closed — see [`docs/phase-2/README.md`](../phase-2/README.md).
-P3-01 through P3-09 added new package content and documentation only; all 264
+P3-01 through P3-10 added new package content and documentation only; all 264
 `packages/knowledge-graph` tests pass unmodified, and `git status` confirms no changes to `apps/api`,
 `apps/web`, or `packages/shared`.

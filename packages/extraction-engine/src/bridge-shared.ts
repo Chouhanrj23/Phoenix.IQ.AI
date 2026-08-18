@@ -18,6 +18,11 @@
  * `packages/ingestion-connectors/src/reference-connector.ts`'s own
  * `sha256()` helper, required so identical input produces a byte-stable
  * bundle across runs (FR-DET-07, FR-KG-04).
+ *
+ * P3-10 adds `sourceVersion` (a source's revision, e.g. a git SHA) onto the
+ * `Evidence` this file already builds -- `Evidence.sourceVersion` existed
+ * since P2-09 for exactly this purpose, but nothing populated it here until
+ * now; see `docs/architecture/adr/0022-java-fact-provenance.md`.
  */
 
 import { createHash } from 'node:crypto';
@@ -30,6 +35,8 @@ export interface BridgeOptions {
   sourceId: string;
   /** ISO-8601, flows in from the caller rather than being stamped internally -- see the file header on determinism. */
   generatedAt: string;
+  /** The source's revision (e.g. a git SHA), when the caller tracks one -- becomes `Evidence.sourceVersion`. */
+  sourceVersion?: string;
 }
 
 /** A stable, content-derived identifier -- never a random UUID. */
@@ -61,5 +68,6 @@ export function evidenceFor(
     sourceId: options.sourceId,
     locator: locatorFor(span),
     capturedAt: options.generatedAt,
+    ...(options.sourceVersion === undefined ? {} : { sourceVersion: options.sourceVersion }),
   };
 }

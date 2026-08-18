@@ -13,8 +13,13 @@
  * P2-10's schema/serialization exactly rather than inventing a second one.
  * See `docs/architecture/adr/0021-java-okf-mapping.md`.
  *
+ * P3-10: stamps `FactProvenance` (which source/revision, derived by what,
+ * when) onto every fact this family returns, and adds `sourceVersion` to
+ * every bridged object's `Evidence`. See
+ * `docs/architecture/adr/0022-java-fact-provenance.md`.
+ *
  * See `docs/phase-3/README.md` for the full status record and each
- * ticket's own ADR (`docs/architecture/adr/0015` through `0021`).
+ * ticket's own ADR (`docs/architecture/adr/0015` through `0022`).
  *
  *   - `java-project.ts` -- filesystem/build-file discovery (Maven/Gradle
  *     module boundaries, POM/Gradle coordinates, main/test source roots).
@@ -23,6 +28,9 @@
  *     throw-only `parse()` into a non-throwing result (P3-04).
  *   - `cst-utils.ts` -- rule-agnostic CST helpers (`sourceTextOf`,
  *     `resolveLiteral`, ...) every other CST-touching module shares.
+ *   - `fact-provenance.ts` -- `FactProvenance` and `stampFactProvenance`,
+ *     the generic post-processing enrichment `extract-java.ts` applies to
+ *     every returned fact (P3-10).
  *   - `java-structure.ts` -- structural facts: package, imports, and every
  *     type declaration with its modifiers, annotations, extends/implements,
  *     fields, methods, and nested types (P3-04).
@@ -52,6 +60,7 @@
  */
 
 export * from './java-project.js';
+export * from './fact-provenance.js';
 export * from './cst-utils.js';
 export * from './java-parser-adapter.js';
 export * from './java-structure.js';
