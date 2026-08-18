@@ -504,6 +504,10 @@ model work (Deployment/NFR, Review/Gaps/Drift, per P2-12's recommendations) or P
 work is new, separately-scoped work, not a "remaining Phase 2 ticket" in the P2-01–P2-12 sequence
 this document has tracked.
 
+Phase 3 has since started and is tracked separately in [`docs/phase-3/README.md`](../phase-3/README.md);
+P3-01 (the common source connector contract) added new content to `packages/ingestion-connectors`
+only, and changed nothing in `packages/knowledge-graph`.
+
 ## Phase 1 status
 
 Unaffected. Phase 1 (P1-01 through P1-12) is closed — see `docs/phase-1/README.md`. Phase 2's

@@ -139,8 +139,70 @@ All notable changes to this project will be documented in this file. Format foll
   six concrete, documented-but-not-implemented recommendations for closing it. Proven with
   `packages/knowledge-graph/tests/ui-coverage.test.ts` (20 tests) against the P2-11 sample and the
   real closed `kind` vocabularies. New documentation: `docs/okf/ui-validation.md`.
+- **Phase 3 — P3-01 (Common connector contract for source repositories):**
+  `packages/ingestion-connectors/src/` — the contract every source connector implements, replacing
+  that package's placeholder scaffold. `SourceConnector`/`ConnectorSession`/`ConnectorCapabilities`
+  with an `open → list → read → close` lifecycle (`connector.ts`, plus `collectArtifacts`/
+  `withConnectorSession`/`selectConnector`); `SourceDescriptor` and its first source-specific
+  narrowing `SourceRepositoryDescriptor` (`descriptor.ts`), with `CredentialReference` (a reference,
+  never a secret — inline `token`/`password`/`apiKey`-style keys are rejected at any depth) and the
+  `<scheme>://<rest>` locator convention Phase 1's fixtures already used made a validated,
+  deterministic rule; `ArtifactRef`/`RawArtifact` — the common intermediate representation — plus a
+  non-throwing `ArtifactReadResult`/`ArtifactFailure` partial-failure model (`artifact.ts`);
+  `ArtifactFilter` with ONE shared implementation of its glob semantics (`filter.ts`); and
+  `createInMemoryRepositoryConnector` (`reference-connector.ts`), a reference implementation and test
+  double that touches no filesystem, network, or git. Two bridges connect ingestion to the canonical
+  model without a second identifier space: `descriptorToSource` (to P2-07's `Source`) and
+  `artifactToEvidence` (to P2-09's `Evidence`). A connector emits raw artifacts, never
+  `CanonicalKnowledgeObject`s — extraction/inference remain separate stages. Adds
+  `@phoenix-ai/knowledge-graph` as a workspace dependency and `@types/node` as a devDependency (both
+  already in the monorepo's resolved dependency graph). Proven with
+  `packages/ingestion-connectors/tests/` (119 tests), including connector output assembled into a
+  bundle that passes the real `validateContainerObject`/`validateCanonicalKnowledgeBundle`/
+  `validateSourceReferences`/`validateOkfDocument` and round-trips through OKF YAML. New
+  documentation: `docs/phase-3/README.md`. See ADR 0013.
+- **Phase 3 — P3-02 (Git repository ingestion — metadata, revisions, source files):**
+  `packages/ingestion-connectors/src/git-connector.ts` — `createGitRepositoryConnector`, the first
+  REAL connector, reading a local checkout or a remote clone. The revision the descriptor asks for
+  (branch, tag, SHA, or `HEAD`) is resolved to an immutable full SHA **once at `open`** via
+  `git rev-parse`, and every read is addressed against it, so a branch moving mid-run cannot yield a
+  bundle mixing two revisions; that SHA becomes `Source.version` and every `Evidence.sourceVersion`.
+  Repository metadata (resolved/short SHA, committer date, subject, requested ref, default branch,
+  tags at HEAD, remote URL, shallowness, tracked file count) is surfaced on the new
+  `ConnectorSession.sourceMetadata`. Source files come from `git ls-tree -r -l -z <sha>` and
+  `git cat-file blob`, i.e. the tree AT the pinned revision — uncommitted edits and untracked files
+  are invisible by construction — with `contentHash` reported as git's own blob object id
+  (`git-blob-sha1`, verifiable with `git cat-file` outside Phoenix) and binary content base64-encoded
+  using git's own NUL-byte heuristic. Per-file history (`lastModifiedAt`,
+  `attributes.lastCommitRevision`) costs one `git log --name-only` pass for the whole repository, not
+  one call per file. `repository.subpaths` are pushed down to git as pathspecs. Commit **author
+  identity is opt-in** (`includeAuthorMetadata`, default off) because it is personal data and this
+  package sits upstream of `packages/redaction-hardening`; a non-`none` `credential.scheme` is
+  rejected outright, since authenticating git is git's own job (credential helper or SSH agent) and
+  Phoenix never handles the secret. New `packages/ingestion-connectors/src/git-command.ts` — the safe
+  invocation layer every git call goes through: `spawn` with an explicit argv array and no shell, plus
+  explicit rejection of option-shaped revisions/paths/remotes (`--upload-pack=<command>`-style
+  **argument** injection, which a shell-free spawn does not prevent), `protocol.ext.allow=never`,
+  `core.fsmonitor=false`, `GIT_TERMINAL_PROMPT=0`, per-command timeouts, an output ceiling, and
+  `GitCommandError` carrying argv/exit code/stderr. Requires the `git` binary on `PATH` — the
+  project's first environmental prerequisite beyond Node (`isGitAvailable`/`gitVersion` probe for it).
+  No new package dependencies. Proven with 57 new tests (178 total in the package) against a real git
+  repository built in a temp directory, including reading an older revision as it was, a shallow
+  clone reported as shallow, the temporary clone removed on `close`, and real git output assembled
+  into a bundle that round-trips through OKF YAML with every `Evidence.sourceVersion` equal to the
+  real SHA. See ADR 0014.
 
 ### Changed
+
+- **P3-01 contract amended additively by P3-02** (ADR 0014; no existing field changed meaning and all
+  119 P3-01 tests pass unmodified): `ConnectorSession.sourceMetadata` and `RawArtifact.attributes`
+  added, since P3-01 had nowhere to report observed source-level or per-artifact metadata;
+  `SourceConnector.sourceType` widened to `sourceTypes` (a set), because one git repository
+  legitimately holds source code, data models, tests, and documentation; and
+  `RepositoryCoordinates.workingTreePath` added, separating where a repository _is_ from what it _is_
+  so that pointing git at a local checkout no longer stamps that machine's absolute path into
+  `Source.locator` and every `Evidence.locator` (which would make OKF provenance differ per build
+  agent, contrary to ADR 0013 decision 9).
 
 - `apps/web/src/data/types.ts` now imports the six Phase 1 functional areas' types (and
   `GraphElementMetadata`) from `@phoenix-ai/shared` instead of redefining them locally, removing

@@ -80,7 +80,10 @@ UI compatibility validation: `docs/okf/ui-validation.md`.
 Not yet implemented: domain/journey/integration inference, schema discovery, architecture
 discovery/repository scanning/Java parsing/Neo4j, real API discovery, real source connectors
 (repository, documentation, project/issue system, configuration, inference engine), any confidence
-calculation engine, any persistence layer, and any real extraction source. `okf.ts`'s own runtime
+calculation engine, any persistence layer, and any real extraction source. Phase 3's P3-01 defined
+the connector _contract_ that will eventually populate `Source`/`Evidence` here — see
+`packages/ingestion-connectors/README.md` and `docs/architecture/adr/0013-source-connector-contract.md`
+— but no real connector exists yet, and nothing in this package changed for it. `okf.ts`'s own runtime
 API still has no file-system I/O — the one place this package touches disk is
 `samples/generate-sample.ts`, an opt-in dev script, not the package's build or runtime path.
 `apps/api` declares a dependency on this package but does not import from it yet — Phase 1's API

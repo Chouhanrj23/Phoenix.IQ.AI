@@ -20,7 +20,8 @@ See `docs/requirements/` for the full Business, Product, and Functional Requirem
 │   ├── ontology/              # Knowledge graph ontology reference
 │   ├── runbooks/               # Operational runbooks
 │   ├── phase-1/                 # Phase 1 status — what's done vs. what's still open
-│   └── phase-2/                  # Phase 2 status — canonical knowledge model progress
+│   ├── phase-2/                  # Phase 2 status — canonical knowledge model progress
+│   └── phase-3/                   # Phase 3 status — source connector progress
 ├── infra/                    # Docker / Kubernetes / deployment manifests
 └── scripts/                   # Repo automation
 ```

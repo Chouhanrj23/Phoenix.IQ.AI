@@ -15,9 +15,11 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
+    "@phoenix-ai/knowledge-graph": "workspace:*",
     "@phoenix-ai/shared": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^22.9.0",
     "vitest": "^2.1.4"
   }
 }
