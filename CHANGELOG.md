@@ -191,6 +191,18 @@ All notable changes to this project will be documented in this file. Format foll
   clone reported as shallow, the temporary clone removed on `close`, and real git output assembled
   into a bundle that round-trips through OKF YAML with every `Evidence.sourceVersion` equal to the
   real SHA. See ADR 0014.
+- **Phase 3 — P3-03 (Java source discovery and project structure):** `packages/extraction-engine/src/`
+  — replaces the package's placeholder scaffold with the first ticket of the Java extraction family
+  (P3-03 through P3-08). `discoverJavaProject` (`java-project.ts`) classifies `.java` artifacts into
+  Maven/Gradle modules by walking each path upward to its nearest ancestor `pom.xml`/
+  `build.gradle[.kts]`, splits main/test source by the `src/main/java`/`src/test/java` convention, and
+  reads POM/Gradle coordinates with a narrow, depth-tracking tag reader scoped to the root `<project>`
+  element's direct children — not a general XML parsing dependency, mirroring
+  `ingestion-connectors/src/filter.ts`'s own precedent. Deliberately performs no Java parsing at all;
+  that begins with P3-04. New dependency: `@phoenix-ai/ingestion-connectors` (for the `RawArtifact`
+  type this ticket classifies). Proven with 7 tests, including a `<parent>` POM fixture proving
+  inheritance is not wrongly picked up and a nested multi-module layout resolving to its nearest
+  ancestor build file. See ADR 0015.
 
 ### Changed
 

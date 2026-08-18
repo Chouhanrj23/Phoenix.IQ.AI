@@ -150,6 +150,9 @@ importers:
 
   packages/extraction-engine:
     dependencies:
+      '@phoenix-ai/ingestion-connectors':
+        specifier: workspace:*
+        version: link:../ingestion-connectors
       '@phoenix-ai/shared':
         specifier: workspace:*
         version: link:../shared

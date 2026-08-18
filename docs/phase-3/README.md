@@ -9,10 +9,17 @@ the three cross-cutting metadata models, and the OKF YAML schema are complete an
 that reads a real source. Phase 3's job is to populate them.
 
 Design rationale is recorded separately per ticket — P3-01 in
-[`docs/architecture/adr/0013-source-connector-contract.md`](../architecture/adr/0013-source-connector-contract.md)
-and P3-02 in
-[`docs/architecture/adr/0014-git-repository-connector.md`](../architecture/adr/0014-git-repository-connector.md);
+[`docs/architecture/adr/0013-source-connector-contract.md`](../architecture/adr/0013-source-connector-contract.md),
+P3-02 in
+[`docs/architecture/adr/0014-git-repository-connector.md`](../architecture/adr/0014-git-repository-connector.md),
+and P3-03 in
+[`docs/architecture/adr/0015-java-source-discovery.md`](../architecture/adr/0015-java-source-discovery.md);
 this document is the narrative status record, not a duplicate of those ADRs.
+
+P3-03 onward is a family of tickets, all in `packages/extraction-engine`, each adding one piece of
+deterministic Java extraction on top of the last: P3-03 (source discovery) → P3-04 (structural facts)
+→ P3-05 (call/dependency graph) → P3-06 (REST/API) → P3-07 (persistence) → P3-08 (configuration).
+Each has its own ADR, its own commit, and its own section below.
 
 ## P3-01 — Common Connector Contract for Source Repositories
 
@@ -149,16 +156,41 @@ itself via a helper or SSH agent), incremental _fetch_, and any change to `packa
 environmental dependency in this project beyond Node. `isGitAvailable`/`gitVersion` probe for it and
 fail clearly rather than with a cryptic spawn error. No new package dependencies.
 
+## P3-03 — Java Source Discovery and Project Structure
+
+**Status: Complete.**
+
+The first ticket in the Java extraction family (see the note above) — and deliberately the smallest:
+it performs no Java parsing at all. `packages/extraction-engine/src/java-project.ts` classifies Java
+`RawArtifact`s (from P3-02's git connector, or any other `SourceConnector`) into Maven/Gradle modules
+by walking each `.java` path upward to its nearest ancestor `pom.xml`/`build.gradle[.kts]` — the same
+shape a module boundary actually has — then splits each module's files into `main`/`test` by the
+`src/main/java`/`src/test/java` convention.
+
+POM coordinates (`groupId`/`artifactId`/`version`/`packaging`) are read with a narrow,
+depth-tracking tag reader scoped to the root `<project>` element's DIRECT children only — not a
+general XML parsing dependency, mirroring `ingestion-connectors/src/filter.ts`'s own precedent of a
+hand-rolled parser for a well-known, bounded grammar. The depth tracking is what stops a `<parent>`
+or `<dependency>` block's own `<groupId>` from being misread as the module's; `<parent>` inheritance
+itself is an honest, tested gap, not silently guessed. Gradle coordinates are read from top-level
+`group`/`version` assignments only.
+
+New dependency: `@phoenix-ai/ingestion-connectors` (for the `RawArtifact` type P3-03 classifies).
+Proven with 7 tests: nearest-ancestor module resolution for a nested multi-module layout, a
+`<parent>` POM fixture proving inheritance is not wrongly picked up, Gradle Groovy/Kotlin-DSL
+coordinate shorthand, and an unassigned `.java` file surfaced rather than dropped. See ADR 0015.
+
 ## Remaining Phase 3 work
 
 Not started:
 
+- P3-04 (structural facts: packages/classes/interfaces), P3-05 (method/call/dependency extraction),
+  P3-06 (REST/API extraction), P3-07 (database interaction extraction), and P3-08 (configuration
+  extraction) — the rest of the Java extraction family, each building on P3-03's discovery output.
 - Connectors for the other source kinds in this package's remit (documentation, project/issue
   systems, log stores, gateways) — each adds its own descriptor narrowing; the `SourceConnector`
   interface does not change.
-- `packages/extraction-engine` turning `RawArtifact`s into canonical objects — now able to work from
-  real Java files read out of a real repository, not just the in-memory reference connector's
-  fixtures.
+- Extraction for any language other than Java.
 - Reconciling the P2-11 sample's three non-conforming `Source` ids with `SOURCE_LOCATOR_PATTERN`.
 - The Deployment/NFR and Review/Gap/Drift `kind` vocabularies
   ([`docs/okf/ui-validation.md`](../okf/ui-validation.md) recommendations 1–3) — still open, and
@@ -168,6 +200,6 @@ Not started:
 
 Unaffected. Phase 1 (P1-01 through P1-12) is closed — see [`docs/phase-1/README.md`](../phase-1/README.md).
 Phase 2 (P2-01 through P2-12) is closed — see [`docs/phase-2/README.md`](../phase-2/README.md).
-P3-01 and P3-02 added new package content and documentation only; all 264
+P3-01 through P3-03 added new package content and documentation only; all 264
 `packages/knowledge-graph` tests pass unmodified, and `git status` confirms no changes to `apps/api`,
 `apps/web`, or `packages/shared`.

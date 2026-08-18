@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { MODULE_NAME, placeholder } from '../src/index.js';
+import { discoverJavaProject } from '../src/index.js';
 
-describe('extraction-engine scaffold', () => {
-  it('exposes its module name', () => {
-    expect(MODULE_NAME).toBe('extraction-engine');
-  });
-
-  it('placeholder returns a string', () => {
-    expect(typeof placeholder()).toBe('string');
+describe('extraction-engine barrel export', () => {
+  it('re-exports the package public API from a single entry point', () => {
+    expect(typeof discoverJavaProject).toBe('function');
   });
 });

@@ -15,7 +15,8 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@phoenix-ai/shared": "workspace:*"
+    "@phoenix-ai/shared": "workspace:*",
+    "@phoenix-ai/ingestion-connectors": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^2.1.4"
