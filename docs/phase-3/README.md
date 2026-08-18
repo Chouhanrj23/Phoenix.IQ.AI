@@ -14,8 +14,10 @@ P3-02 in
 [`docs/architecture/adr/0014-git-repository-connector.md`](../architecture/adr/0014-git-repository-connector.md),
 P3-03 in
 [`docs/architecture/adr/0015-java-source-discovery.md`](../architecture/adr/0015-java-source-discovery.md),
-and P3-04 in
-[`docs/architecture/adr/0016-java-structural-facts.md`](../architecture/adr/0016-java-structural-facts.md);
+P3-04 in
+[`docs/architecture/adr/0016-java-structural-facts.md`](../architecture/adr/0016-java-structural-facts.md),
+and P3-05 in
+[`docs/architecture/adr/0017-java-call-dependency-graph.md`](../architecture/adr/0017-java-call-dependency-graph.md);
 this document is the narrative status record, not a duplicate of those ADRs.
 
 P3-03 onward is a family of tickets, all in `packages/extraction-engine`, each adding one piece of
@@ -204,13 +206,35 @@ facts. New dependency: `java-parser` (pinned `3.0.1`) — the AST/CST library th
 rests on. Proven with 16 new tests (23 total in the package), including a dedicated nested-class
 recursion guard and a parse failure proven not to abort the run. See ADR 0016.
 
+## P3-05 — Java Method, Call, and Dependency Extraction
+
+**Status: Complete.**
+
+`packages/extraction-engine/src/java-calls.ts` — `extractJavaCallGraph`, finishing FR-DET-01's "call
+graph" requirement. Two independent passes:
+
+- The **type-dependency graph** is derived purely from P3-04's already-computed `JavaFileFacts` — no
+  second CST pass. `extends`/`implements`/field/parameter/return/throws type text, already captured
+  as strings, is resolved against a project-wide qualified-name index.
+- The **call graph** is a second, targeted CST walk per file, using a real
+  `BaseJavaCstVisitorWithDefaults` subclass (unlike P3-04's structural facts, which deliberately do
+  NOT use the visitor API — statement/expression nesting is not boundedly enumerable by hand the way
+  declarations are). Resolution is deliberately shallow: resolved only for a bare/`this` call or
+  `Type.method()` against a known project-local type; a call through an instance field is
+  `unresolved: true`, never guessed, since this package has no classpath or symbol table.
+
+`extractJavaProject` now wires the call/type-dependency graph in after structural facts. No new
+dependencies. Proven with 3 new tests plus a grown end-to-end assertion in `extract-java.test.ts`
+(27 tests total in the package), including a call through an instance field proven to stay
+unresolved rather than silently guessed. See ADR 0017.
+
 ## Remaining Phase 3 work
 
 Not started:
 
-- P3-05 (method/call/dependency extraction), P3-06 (REST/API extraction), P3-07 (database interaction
-  extraction), and P3-08 (configuration extraction) — the rest of the Java extraction family, each
-  building on P3-04's structural facts.
+- P3-06 (REST/API extraction), P3-07 (database interaction extraction), and P3-08 (configuration
+  extraction) — the rest of the Java extraction family, each building on P3-05's call/dependency
+  graph and P3-04's structural facts.
 - Connectors for the other source kinds in this package's remit (documentation, project/issue
   systems, log stores, gateways) — each adds its own descriptor narrowing; the `SourceConnector`
   interface does not change.
@@ -224,6 +248,6 @@ Not started:
 
 Unaffected. Phase 1 (P1-01 through P1-12) is closed — see [`docs/phase-1/README.md`](../phase-1/README.md).
 Phase 2 (P2-01 through P2-12) is closed — see [`docs/phase-2/README.md`](../phase-2/README.md).
-P3-01 through P3-04 added new package content and documentation only; all 264
+P3-01 through P3-05 added new package content and documentation only; all 264
 `packages/knowledge-graph` tests pass unmodified, and `git status` confirms no changes to `apps/api`,
 `apps/web`, or `packages/shared`.

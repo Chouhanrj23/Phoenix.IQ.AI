@@ -214,6 +214,16 @@ All notable changes to this project will be documented in this file. Format foll
   (`extract-java.ts`) now wires discovery through parsing through structural facts. New dependency:
   `java-parser`. Proven with 16 new tests (23 total), including a dedicated nested-class recursion
   guard. See ADR 0016.
+- **Phase 3 — P3-05 (Java method, call, and dependency extraction):**
+  `packages/extraction-engine/src/java-calls.ts` — `extractJavaCallGraph`, finishing FR-DET-01's
+  "call graph" requirement. The type-dependency graph is derived purely from P3-04's already-computed
+  structural facts (no second CST pass); the call graph is a second, targeted CST walk using a real
+  `BaseJavaCstVisitorWithDefaults` subclass (unlike P3-04's declaration-grammar extraction, which
+  deliberately avoids the visitor API), deliberately shallow — resolved only for a bare/`this` call
+  or `Type.method()` against a known project-local type, never guessing at a call through an instance
+  field (no classpath/symbol resolution). `extractJavaProject` now wires this graph in after
+  structural facts. No new dependencies. Proven with 3 new tests plus a grown end-to-end assertion
+  (27 tests total). See ADR 0017.
 
 ### Changed
 

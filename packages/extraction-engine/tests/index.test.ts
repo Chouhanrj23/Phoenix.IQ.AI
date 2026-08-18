@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   discoverJavaProject,
+  extractJavaCallGraph,
   extractJavaProject,
   extractJavaStructure,
   parseJavaSource,
@@ -11,6 +12,7 @@ describe('extraction-engine barrel export', () => {
     expect(typeof discoverJavaProject).toBe('function');
     expect(typeof parseJavaSource).toBe('function');
     expect(typeof extractJavaStructure).toBe('function');
+    expect(typeof extractJavaCallGraph).toBe('function');
     expect(typeof extractJavaProject).toBe('function');
   });
 });

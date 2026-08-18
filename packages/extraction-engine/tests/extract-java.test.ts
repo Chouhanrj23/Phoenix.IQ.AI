@@ -33,9 +33,33 @@ public class CheckoutItem {
 }
 `;
 
+const CONTROLLER_JAVA = `package com.aurora.checkout;
+
+public class CheckoutController {
+
+  private final CheckoutItem item;
+
+  public CheckoutController(CheckoutItem item) {
+    this.item = item;
+  }
+
+  public CheckoutItem getItem() {
+    return find();
+  }
+
+  private CheckoutItem find() {
+    return item;
+  }
+}
+`;
+
 const ARTIFACTS: RawArtifact[] = [
   artifact('services/checkout/pom.xml', POM_XML),
   artifact('services/checkout/src/main/java/com/aurora/checkout/CheckoutItem.java', ENTITY_JAVA),
+  artifact(
+    'services/checkout/src/main/java/com/aurora/checkout/CheckoutController.java',
+    CONTROLLER_JAVA,
+  ),
 ];
 
 describe('extractJavaProject -- discovery + parsing + structural facts', () => {
@@ -51,9 +75,10 @@ describe('extractJavaProject -- discovery + parsing + structural facts', () => {
       packaging: 'jar',
     });
 
-    expect(result.files).toHaveLength(1);
-    expect(result.files[0]?.types[0]?.qualifiedName).toBe('com.aurora.checkout.CheckoutItem');
-    expect(result.files[0]?.types[0]?.fields.map((f) => f.name)).toEqual(['id', 'sku']);
+    expect(result.files).toHaveLength(2);
+    const item = result.files.find((f) => f.path.endsWith('CheckoutItem.java'));
+    expect(item?.types[0]?.qualifiedName).toBe('com.aurora.checkout.CheckoutItem');
+    expect(item?.types[0]?.fields.map((f) => f.name)).toEqual(['id', 'sku']);
   });
 
   it('collects a parse failure without aborting the run, and excludes that file from structural facts', () => {
@@ -66,6 +91,27 @@ describe('extractJavaProject -- discovery + parsing + structural facts', () => {
     expect(result.parseFailures).toHaveLength(1);
     expect(result.parseFailures[0]?.path).toBe(broken.path);
     expect(result.files.some((f) => f.path === broken.path)).toBe(false);
-    expect(result.files).toHaveLength(1);
+    expect(result.files).toHaveLength(2);
+  });
+});
+
+describe('extractJavaProject -- call graph and type dependencies', () => {
+  it('resolves a bare same-class call and reports a resolved field-type dependency', () => {
+    const result = extractJavaProject(ARTIFACTS);
+
+    expect(
+      result.calls.some(
+        (c) => c.calleeQualifiedName === 'com.aurora.checkout.CheckoutController.find',
+      ),
+    ).toBe(true);
+
+    expect(result.typeDependencies).toContainEqual(
+      expect.objectContaining({
+        fromQualifiedName: 'com.aurora.checkout.CheckoutController',
+        relation: 'fieldType',
+        toQualifiedName: 'com.aurora.checkout.CheckoutItem',
+        unresolved: false,
+      }),
+    );
   });
 });
