@@ -16,8 +16,10 @@ P3-03 in
 [`docs/architecture/adr/0015-java-source-discovery.md`](../architecture/adr/0015-java-source-discovery.md),
 P3-04 in
 [`docs/architecture/adr/0016-java-structural-facts.md`](../architecture/adr/0016-java-structural-facts.md),
-and P3-05 in
-[`docs/architecture/adr/0017-java-call-dependency-graph.md`](../architecture/adr/0017-java-call-dependency-graph.md);
+P3-05 in
+[`docs/architecture/adr/0017-java-call-dependency-graph.md`](../architecture/adr/0017-java-call-dependency-graph.md),
+and P3-06 in
+[`docs/architecture/adr/0018-java-rest-api-extraction.md`](../architecture/adr/0018-java-rest-api-extraction.md);
 this document is the narrative status record, not a duplicate of those ADRs.
 
 P3-03 onward is a family of tickets, all in `packages/extraction-engine`, each adding one piece of
@@ -228,13 +230,35 @@ dependencies. Proven with 3 new tests plus a grown end-to-end assertion in `extr
 (27 tests total in the package), including a call through an instance field proven to stay
 unresolved rather than silently guessed. See ADR 0017.
 
+## P3-06 — Java REST/API Extraction (Spring MVC)
+
+**Status: Complete.**
+
+`packages/extraction-engine/src/java-http.ts` — `extractJavaHttp` (FR-DET-03), a pure function over
+P3-04's structural facts: a type with a type-level `@RestController`/`@Controller` annotation becomes
+a controller; its `@RequestMapping` class-level path(s) join with each handler method's
+`@GetMapping`/`@PostMapping`/`@PutMapping`/`@DeleteMapping`/`@PatchMapping` (or method-level
+`@RequestMapping`) via the independently-tested `joinPaths` normalizer; `@PathVariable`/
+`@RequestParam`/`@RequestBody`/`@RequestHeader`-annotated parameters become route parameter metadata.
+
+This is also the first ticket with a canonical-object bridge: `bridge-shared.ts` (deterministic
+`sha256`-based ids, evidence construction — shared plumbing every later bridge reuses) and
+`bridge-http.ts`'s `bridgeSpringController`, mapping a controller directly to a real, validated
+`ApiObject` (`integration.api`) with `confidenceDetail: { basis: 'observed' }`. `extractJavaProject`
+gains its `options` parameter (`systemId`/`sourceId`/`generatedAt`) here — the first stage that needs
+one.
+
+New dependency: `@phoenix-ai/knowledge-graph` (for `ApiObject` and its real validator). Proven with
+12 new tests (39 total in the package), including `joinPaths`' normalization rules tested in
+isolation and the bridged `ApiObject` validated with the real `validateApiObject`. See ADR 0018.
+
 ## Remaining Phase 3 work
 
 Not started:
 
-- P3-06 (REST/API extraction), P3-07 (database interaction extraction), and P3-08 (configuration
-  extraction) — the rest of the Java extraction family, each building on P3-05's call/dependency
-  graph and P3-04's structural facts.
+- P3-07 (database interaction extraction) and P3-08 (configuration extraction) — the rest of the
+  Java extraction family, each building on P3-06's controller/route extraction and canonical-object
+  bridge.
 - Connectors for the other source kinds in this package's remit (documentation, project/issue
   systems, log stores, gateways) — each adds its own descriptor narrowing; the `SourceConnector`
   interface does not change.
@@ -248,6 +272,6 @@ Not started:
 
 Unaffected. Phase 1 (P1-01 through P1-12) is closed — see [`docs/phase-1/README.md`](../phase-1/README.md).
 Phase 2 (P2-01 through P2-12) is closed — see [`docs/phase-2/README.md`](../phase-2/README.md).
-P3-01 through P3-05 added new package content and documentation only; all 264
+P3-01 through P3-06 added new package content and documentation only; all 264
 `packages/knowledge-graph` tests pass unmodified, and `git status` confirms no changes to `apps/api`,
 `apps/web`, or `packages/shared`.

@@ -224,6 +224,16 @@ All notable changes to this project will be documented in this file. Format foll
   field (no classpath/symbol resolution). `extractJavaProject` now wires this graph in after
   structural facts. No new dependencies. Proven with 3 new tests plus a grown end-to-end assertion
   (27 tests total). See ADR 0017.
+- **Phase 3 — P3-06 (Java REST/API extraction):** `packages/extraction-engine/src/java-http.ts` —
+  `extractJavaHttp` (FR-DET-03), a pure function over P3-04's structural facts reading Spring MVC
+  controllers/routes/HTTP methods/parameter metadata, with class- and method-level paths joined by
+  the independently-tested `joinPaths` normalizer. New `bridge-shared.ts` (deterministic `sha256`
+  ids, evidence construction -- shared plumbing for every bridge in this family) and
+  `bridge-http.ts`'s `bridgeSpringController`, this family's first canonical-object bridge: a
+  controller maps directly to a real, validated `ApiObject` (`integration.api`) with
+  `confidenceDetail: { basis: 'observed' }`. `extractJavaProject` gains its `options`
+  (`systemId`/`sourceId`/`generatedAt`) parameter here, the first stage that needs one. New
+  dependency: `@phoenix-ai/knowledge-graph`. Proven with 12 new tests (39 total). See ADR 0018.
 
 ### Changed
 

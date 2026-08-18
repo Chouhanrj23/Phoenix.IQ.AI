@@ -153,6 +153,9 @@ importers:
       '@phoenix-ai/ingestion-connectors':
         specifier: workspace:*
         version: link:../ingestion-connectors
+      '@phoenix-ai/knowledge-graph':
+        specifier: workspace:*
+        version: link:../knowledge-graph
       '@phoenix-ai/shared':
         specifier: workspace:*
         version: link:../shared
@@ -160,6 +163,9 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
     devDependencies:
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.20.1
       vitest:
         specifier: ^2.1.4
         version: 2.1.9(@types/node@22.20.1)

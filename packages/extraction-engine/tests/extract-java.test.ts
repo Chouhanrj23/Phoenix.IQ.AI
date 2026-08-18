@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { extractJavaProject } from '../src/extract-java.js';
+import { extractJavaProject, type JavaExtractionOptions } from '../src/extract-java.js';
 import type { RawArtifact } from '@phoenix-ai/ingestion-connectors';
 
 const SOURCE_ID = 'repo://aurora-commerce/services/checkout';
+
+const OPTIONS: JavaExtractionOptions = {
+  systemId: 'aurora-commerce',
+  sourceId: SOURCE_ID,
+  generatedAt: '2026-08-18T00:00:00.000Z',
+};
 
 function artifact(path: string, content: string): RawArtifact {
   return {
@@ -35,6 +41,13 @@ public class CheckoutItem {
 
 const CONTROLLER_JAVA = `package com.aurora.checkout;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/checkout")
 public class CheckoutController {
 
   private final CheckoutItem item;
@@ -43,7 +56,8 @@ public class CheckoutController {
     this.item = item;
   }
 
-  public CheckoutItem getItem() {
+  @GetMapping("/{id}")
+  public CheckoutItem getItem(@PathVariable String id) {
     return find();
   }
 
@@ -64,7 +78,7 @@ const ARTIFACTS: RawArtifact[] = [
 
 describe('extractJavaProject -- discovery + parsing + structural facts', () => {
   it('discovers the module and extracts structural facts for every main source file', () => {
-    const result = extractJavaProject(ARTIFACTS);
+    const result = extractJavaProject(ARTIFACTS, OPTIONS);
 
     expect(result.parseFailures).toEqual([]);
     expect(result.layout.modules).toHaveLength(1);
@@ -86,7 +100,7 @@ describe('extractJavaProject -- discovery + parsing + structural facts', () => {
       'services/checkout/src/main/java/com/aurora/checkout/Broken.java',
       'package com.aurora.checkout;\nclass Broken { void bad( }\n',
     );
-    const result = extractJavaProject([...ARTIFACTS, broken]);
+    const result = extractJavaProject([...ARTIFACTS, broken], OPTIONS);
 
     expect(result.parseFailures).toHaveLength(1);
     expect(result.parseFailures[0]?.path).toBe(broken.path);
@@ -97,7 +111,7 @@ describe('extractJavaProject -- discovery + parsing + structural facts', () => {
 
 describe('extractJavaProject -- call graph and type dependencies', () => {
   it('resolves a bare same-class call and reports a resolved field-type dependency', () => {
-    const result = extractJavaProject(ARTIFACTS);
+    const result = extractJavaProject(ARTIFACTS, OPTIONS);
 
     expect(
       result.calls.some(
@@ -113,5 +127,27 @@ describe('extractJavaProject -- call graph and type dependencies', () => {
         unresolved: false,
       }),
     );
+  });
+});
+
+describe('extractJavaProject -- REST/API extraction and bridging', () => {
+  it('extracts the controller and its route', () => {
+    const result = extractJavaProject(ARTIFACTS, OPTIONS);
+
+    expect(result.controllers).toHaveLength(1);
+    expect(result.controllers[0]?.routes).toEqual([
+      expect.objectContaining({
+        httpMethod: 'GET',
+        path: '/checkout/{id}',
+        handlerMethod: 'getItem',
+      }),
+    ]);
+  });
+
+  it('bridges the controller into a real ApiObject', () => {
+    const result = extractJavaProject(ARTIFACTS, OPTIONS);
+
+    expect(result.objects).toHaveLength(1);
+    expect(result.objects[0]?.kind).toBe('integration.api');
   });
 });

@@ -15,12 +15,21 @@
  * resolution, so an instance-field-qualified call is `unresolved: true`
  * rather than guessed). See `docs/architecture/adr/0017-java-call-dependency-graph.md`.
  *
+ * P3-06: Spring MVC controllers, routes, HTTP methods, and API metadata, and
+ * the first canonical-object bridge (a controller -> `ApiObject`). See
+ * `docs/architecture/adr/0018-java-rest-api-extraction.md`.
+ *
  *   - `java-parser-adapter.ts` -- the one call site wrapping `java-parser`'s
  *     throw-only `parse()` into a non-throwing result.
  *   - `cst-utils.ts` -- rule-agnostic CST helpers (`sourceTextOf`,
  *     `resolveLiteral`, ...) every other CST-touching module shares.
  *   - `java-structure.ts` -- structural facts.
  *   - `java-calls.ts` -- the type-dependency graph and the call graph.
+ *   - `java-http.ts` -- Spring MVC controllers, routes, HTTP methods, and
+ *     parameter metadata.
+ *   - `bridge-shared.ts` -- shared plumbing (deterministic ids, evidence)
+ *     for every canonical-object bridge in this family.
+ *   - `bridge-http.ts` -- bridges a Spring controller into an `ApiObject`.
  *   - `extract-java.ts` -- `extractJavaProject`, the top-level orchestrator,
  *     grown incrementally by each ticket in this family.
  *
@@ -32,4 +41,7 @@ export * from './cst-utils.js';
 export * from './java-parser-adapter.js';
 export * from './java-structure.js';
 export * from './java-calls.js';
+export * from './java-http.js';
+export * from './bridge-shared.js';
+export * from './bridge-http.js';
 export * from './extract-java.js';

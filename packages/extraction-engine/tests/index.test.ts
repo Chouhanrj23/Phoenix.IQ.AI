@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   discoverJavaProject,
   extractJavaCallGraph,
+  extractJavaHttp,
   extractJavaProject,
   extractJavaStructure,
+  bridgeSpringController,
   parseJavaSource,
 } from '../src/index.js';
 
@@ -13,6 +15,8 @@ describe('extraction-engine barrel export', () => {
     expect(typeof parseJavaSource).toBe('function');
     expect(typeof extractJavaStructure).toBe('function');
     expect(typeof extractJavaCallGraph).toBe('function');
+    expect(typeof extractJavaHttp).toBe('function');
+    expect(typeof bridgeSpringController).toBe('function');
     expect(typeof extractJavaProject).toBe('function');
   });
 });
