@@ -259,6 +259,18 @@ persistence.ts`'s `bridgeJpaEntity` maps an entity directly to a real, validated
   (matching `packages/knowledge-graph`'s existing pin). Proven with 6 new tests (52 total across 11
   files), including the full end-to-end assembly into a validated `CanonicalKnowledgeBundle` and a
   byte-stability assertion (FR-DET-07) across two runs of identical input. See ADR 0020.
+- **Phase 3 — P3-09 (Java extraction OKF mapping):** `packages/extraction-engine/src/okf-mapping.ts`
+  — the final connective step for the Java extraction family. `buildJavaCanonicalBundle` wraps a
+  `JavaExtractionResult`'s already-bridged `objects`/`relationships` into a real
+  `CanonicalKnowledgeBundle` (accepting an optional `sources: Source[]` registry rather than
+  reconstructing one); `mapJavaExtractionToOkfDocument`/`serializeJavaExtractionToOkfYaml` reuse
+  P2-10's `toOkfDocument`/`serializeOkfYaml` (`@phoenix-ai/knowledge-graph`) completely unmodified —
+  no second YAML serializer or validator. No new canonical mapping is invented: the call graph,
+  type-dependency graph, repositories, and configuration facts stay outside any bundle this
+  produces, exactly as P3-05/P3-07/P3-08 already decided. No new dependencies. Proven with 4 new
+  tests against a real `extractJavaProject` run, including a full round-trip through the real
+  `parseAndValidateOkfYaml`. This completes the Java extraction family (P3-03 through P3-09). See
+  ADR 0021.
 
 ### Changed
 

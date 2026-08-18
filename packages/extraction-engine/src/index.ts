@@ -7,8 +7,14 @@
  * annotations), the call graph and type-dependency graph, Spring MVC
  * controllers/routes/API metadata, JPA entities and Spring Data
  * repositories, and application configuration/environment information.
+ *
+ * P3-09: maps a Java extraction's already-bridged objects into a real,
+ * complete `CanonicalKnowledgeBundle`/`OkfDocument`/OKF YAML string, reusing
+ * P2-10's schema/serialization exactly rather than inventing a second one.
+ * See `docs/architecture/adr/0021-java-okf-mapping.md`.
+ *
  * See `docs/phase-3/README.md` for the full status record and each
- * ticket's own ADR (`docs/architecture/adr/0015` through `0020`).
+ * ticket's own ADR (`docs/architecture/adr/0015` through `0021`).
  *
  *   - `java-project.ts` -- filesystem/build-file discovery (Maven/Gradle
  *     module boundaries, POM/Gradle coordinates, main/test source roots).
@@ -35,6 +41,9 @@
  *   - `bridge-http.ts` -- bridges a Spring controller into an `ApiObject`.
  *   - `bridge-persistence.ts` -- bridges a JPA entity into an `EntityObject`.
  *   - `extract-java.ts` -- `extractJavaProject`, the top-level orchestrator.
+ *   - `okf-mapping.ts` -- `buildJavaCanonicalBundle`/`mapJavaExtractionToOkfDocument`/
+ *     `serializeJavaExtractionToOkfYaml`, wrapping a Java extraction result
+ *     into a real OKF document/YAML text.
  *
  * Deliberately NOT implemented here: any language other than Java, JAX-RS,
  * MyBatis, raw SQL migrations (Flyway/Liquibase), full classpath/type
@@ -54,3 +63,4 @@ export * from './bridge-shared.js';
 export * from './bridge-http.js';
 export * from './bridge-persistence.js';
 export * from './extract-java.js';
+export * from './okf-mapping.js';

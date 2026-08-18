@@ -9,6 +9,9 @@ import {
   extractJavaStructure,
   bridgeJpaEntity,
   bridgeSpringController,
+  buildJavaCanonicalBundle,
+  mapJavaExtractionToOkfDocument,
+  serializeJavaExtractionToOkfYaml,
   parseJavaSource,
 } from '../src/index.js';
 
@@ -24,5 +27,8 @@ describe('extraction-engine barrel export', () => {
     expect(typeof bridgeJpaEntity).toBe('function');
     expect(typeof extractConfigReferences).toBe('function');
     expect(typeof extractJavaProject).toBe('function');
+    expect(typeof buildJavaCanonicalBundle).toBe('function');
+    expect(typeof mapJavaExtractionToOkfDocument).toBe('function');
+    expect(typeof serializeJavaExtractionToOkfYaml).toBe('function');
   });
 });

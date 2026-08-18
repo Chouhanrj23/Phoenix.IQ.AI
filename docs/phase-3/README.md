@@ -22,14 +22,16 @@ P3-06 in
 [`docs/architecture/adr/0018-java-rest-api-extraction.md`](../architecture/adr/0018-java-rest-api-extraction.md),
 P3-07 in
 [`docs/architecture/adr/0019-java-persistence-extraction.md`](../architecture/adr/0019-java-persistence-extraction.md),
-and P3-08 in
-[`docs/architecture/adr/0020-java-configuration-extraction.md`](../architecture/adr/0020-java-configuration-extraction.md);
+P3-08 in
+[`docs/architecture/adr/0020-java-configuration-extraction.md`](../architecture/adr/0020-java-configuration-extraction.md),
+and P3-09 in
+[`docs/architecture/adr/0021-java-okf-mapping.md`](../architecture/adr/0021-java-okf-mapping.md);
 this document is the narrative status record, not a duplicate of those ADRs.
 
 P3-03 onward is a family of tickets, all in `packages/extraction-engine`, each adding one piece of
 deterministic Java extraction on top of the last: P3-03 (source discovery) → P3-04 (structural facts)
-→ P3-05 (call/dependency graph) → P3-06 (REST/API) → P3-07 (persistence) → P3-08 (configuration).
-Each has its own ADR, its own commit, and its own section below.
+→ P3-05 (call/dependency graph) → P3-06 (REST/API) → P3-07 (persistence) → P3-08 (configuration) →
+P3-09 (OKF mapping). Each has its own ADR, its own commit, and its own section below.
 
 ## P3-01 — Common Connector Contract for Source Repositories
 
@@ -303,6 +305,29 @@ Proven end to end: `tests/extract-java.test.ts`'s final growth assembles the bri
 `packages/knowledge-graph`'s existing pin). 6 new tests (52 total in the package, across 11 files).
 See ADR 0020.
 
+## P3-09 — Java Extraction OKF Mapping
+
+**Status: Complete.**
+
+`packages/extraction-engine/src/okf-mapping.ts` — the final connective step: wraps a
+`JavaExtractionResult`'s already-bridged `objects`/`relationships` (from P3-06/P3-07's bridges) into
+a real, complete `CanonicalKnowledgeBundle`/`OkfDocument`/OKF YAML string, reusing P2-10's
+`toOkfDocument`/`serializeOkfYaml` (`@phoenix-ai/knowledge-graph`) completely unmodified — no second
+YAML serializer, no second validator. `buildJavaCanonicalBundle` assembles the bundle (accepting an
+optional `sources: Source[]` registry, typically the `Source` an `ingestion-connectors` connector
+session already produced, rather than reconstructing one); `mapJavaExtractionToOkfDocument` adds
+P2-10's `okfVersion` envelope; `serializeJavaExtractionToOkfYaml` renders the final YAML text.
+
+No new canonical mapping is invented here — deciding what bridges to a canonical object was already
+settled, deliberately, by each prior ticket's own bridge (or lack of one): the call graph,
+type-dependency graph, repositories, and configuration facts stay outside any bundle this produces,
+exactly as P3-05/P3-07/P3-08 already decided.
+
+Proven with 4 new tests, all against a real `extractJavaProject` run: the bundle validated with the
+real `validateCanonicalKnowledgeBundle`/`validateSourceReferences`, the OKF document validated with
+the real `validateOkfDocument`, and the serialized YAML round-tripped through the real
+`parseAndValidateOkfYaml`. No new dependencies. See ADR 0021.
+
 ## Remaining Phase 3 work
 
 Not started:
@@ -328,6 +353,6 @@ relationships` is always empty across the whole family; correctly constructing o
 
 Unaffected. Phase 1 (P1-01 through P1-12) is closed — see [`docs/phase-1/README.md`](../phase-1/README.md).
 Phase 2 (P2-01 through P2-12) is closed — see [`docs/phase-2/README.md`](../phase-2/README.md).
-P3-01 through P3-08 added new package content and documentation only; all 264
+P3-01 through P3-09 added new package content and documentation only; all 264
 `packages/knowledge-graph` tests pass unmodified, and `git status` confirms no changes to `apps/api`,
 `apps/web`, or `packages/shared`.
