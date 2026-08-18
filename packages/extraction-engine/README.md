@@ -58,6 +58,12 @@ position? }`, mirroring `ArtifactReadResult`'s convention from `ingestion-connec
   other pass has run. `BridgeOptions.sourceVersion?` also now flows into every bridged object's
   `Evidence.sourceVersion` — see ADR 0022.
 
+`samples/analyze-phoenix-repo.ts` (P3-11) — a dev/demo script, not part of this package's runtime
+API, that runs the real git connector (P3-02) and this whole family against Phoenix.ai-1's own real
+working tree and reports what it finds — run via
+`pnpm --filter @phoenix-ai/extraction-engine poc:analyze-phoenix`. See
+`docs/phase-3/README.md`'s P3-11 section for the real numbers and what they prove.
+
 **The load-bearing decision:** only JPA entities and Spring controllers bridge to canonical objects.
 Grouping classes into architectural Components or bounded contexts is semantic inference (the FRD's
 FR-SEM-01), not this package's job — everything else (the call graph, type-dependency graph,

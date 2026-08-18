@@ -286,6 +286,22 @@ fact-provenance.ts` — attaches `FactProvenance` (which source, which revision,
   Proven with 7 new tests for the generic stamper in isolation plus grown end-to-end coverage in
   `extract-java.test.ts`/`bridge-http.test.ts`/`bridge-persistence.test.ts` (69 tests total in the
   package). See ADR 0022.
+- **Phase 3 — P3-11 (POC: analyze the Phoenix repository):**
+  `packages/extraction-engine/samples/analyze-phoenix-repo.ts` — the first time the real git
+  connector (P3-02) and the whole Java extraction family (P3-03 through P3-10) run against a real,
+  un-curated repository neither wrote: Phoenix.ai-1's own working tree. Deliberately no ADR (no new
+  design decision; nothing in `src/` changes) and no permanent library API (matches
+  `packages/knowledge-graph/samples/generate-sample.ts`'s existing `samples/` convention). Real
+  result, run against this repository's own HEAD (342 tracked files after excluding build/dependency
+  noise): 0 `.java` files and therefore an empty extraction result across every category — the
+  correct finding for a TypeScript/Node monorepo with no Java source, proving the pipeline fabricates
+  no facts from content it was never designed to understand. What it DID prove positively: the git
+  connector lists a real 342-file repository correctly, the whole pipeline completes with zero
+  crashes and zero parse failures, and the resulting bundle/OKF YAML validate against the REAL
+  `validateCanonicalKnowledgeBundle`/`validateSourceReferences`/`parseAndValidateOkfYaml`. New
+  devDependency: `tsx`. Run via
+  `pnpm --filter @phoenix-ai/extraction-engine poc:analyze-phoenix`; full output in
+  `packages/extraction-engine/samples/phoenix-repo-analysis-report.md`.
 
 ### Changed
 

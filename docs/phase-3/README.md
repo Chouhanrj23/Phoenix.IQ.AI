@@ -33,8 +33,9 @@ this document is the narrative status record, not a duplicate of those ADRs.
 P3-03 onward is a family of tickets, all in `packages/extraction-engine`, each adding one piece of
 deterministic Java extraction on top of the last: P3-03 (source discovery) → P3-04 (structural facts)
 → P3-05 (call/dependency graph) → P3-06 (REST/API) → P3-07 (persistence) → P3-08 (configuration) →
-P3-09 (OKF mapping) → P3-10 (fact provenance). Each has its own ADR, its own commit, and its own
-section below.
+P3-09 (OKF mapping) → P3-10 (fact provenance) → P3-11 (a real-repository POC, deliberately without an
+ADR — see its own section for why). Each library ticket (P3-03 through P3-10) has its own ADR, its
+own commit, and its own section below.
 
 ## P3-01 — Common Connector Contract for Source Repositories
 
@@ -359,10 +360,44 @@ right place, nested facts stamped too, `Evidence.sourceVersion` set from `option
 and everything correctly omitted when the caller does not track a revision) plus one test each in
 `bridge-http.test.ts`/`bridge-persistence.test.ts`. No new dependencies. See ADR 0022.
 
+## P3-11 — POC: Analyze the Phoenix Repository
+
+**Status: Complete.**
+
+Every test up to this point ran the pipeline against a small, hand-built fixture — purpose-shaped to
+exercise one behavior at a time. P3-11 is the first time the real git connector (P3-02) and the whole
+Java extraction family (P3-03 through P3-10) run against a real, un-curated repository neither wrote:
+`packages/extraction-engine/samples/analyze-phoenix-repo.ts` points them at Phoenix.ai-1 itself — this
+project's own working tree — and reports what it finds. Not a formal ADR (no new design decision is
+made here; nothing in `src/` changes), but a genuinely executed POC with real output, matching the
+`samples/` convention `packages/knowledge-graph/samples/generate-sample.ts` already established.
+
+**What it actually found**, running against this repository's own real HEAD
+(`f57198d6d21f5903d5110f4f55c77bdb04eea683`, 342 tracked files after excluding `node_modules`/`.git`/
+build output): 0 `.java` files, 0 Maven/Gradle build files, and therefore an empty extraction result
+across every category (structural facts, call graph, controllers, entities, config). This is the
+CORRECT and expected finding, not a failure — Phoenix.ai-1 is a TypeScript/Node monorepo with no Java
+source, and an empty result is exactly what proves the pipeline does not fabricate facts out of
+content it was never designed to understand. What the run DID prove, positively: the git connector
+opens and lists a real 342-file repository correctly (the file-extension breakdown matches this
+project's real composition — 192 `.ts`, 58 `.md`, 36 `.json`, 29 `.tsx`, ...); the whole pipeline runs
+to completion with zero crashes and zero parse failures; and the resulting (empty-but-real) bundle
+validates against the REAL `validateCanonicalKnowledgeBundle`/`validateSourceReferences`, and the REAL
+generated OKF YAML round-trips through the REAL `parseAndValidateOkfYaml` — every validation in the
+script's final report ran against actual code, not a fixture standing in for it.
+
+Run it yourself: `pnpm --filter @phoenix-ai/extraction-engine poc:analyze-phoenix`. Full output:
+`packages/extraction-engine/samples/phoenix-repo-analysis-report.md`. New devDependency: `tsx`
+(matching `packages/knowledge-graph`'s own `samples/` script runner). A genuine positive-path proof —
+Java controllers/entities/routes actually being extracted from a real service — needs a different
+target repository that actually contains Spring/JPA code; that is future work, not this ticket's job.
+
 ## Remaining Phase 3 work
 
 Not started:
 
+- A genuine positive-path POC against a real repository that actually contains Spring/JPA Java code
+  (P3-11 only proved the pipeline's negative/null path against a real, non-Java repository).
 - Connectors for the other source kinds in this package's remit (documentation, project/issue
   systems, log stores, gateways) — each adds its own descriptor narrowing; the `SourceConnector`
   interface does not change.
@@ -384,6 +419,6 @@ relationships` is always empty across the whole family; correctly constructing o
 
 Unaffected. Phase 1 (P1-01 through P1-12) is closed — see [`docs/phase-1/README.md`](../phase-1/README.md).
 Phase 2 (P2-01 through P2-12) is closed — see [`docs/phase-2/README.md`](../phase-2/README.md).
-P3-01 through P3-10 added new package content and documentation only; all 264
+P3-01 through P3-11 added new package content and documentation only; all 264
 `packages/knowledge-graph` tests pass unmodified, and `git status` confirms no changes to `apps/api`,
 `apps/web`, or `packages/shared`.
