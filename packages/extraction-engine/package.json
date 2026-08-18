@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "@phoenix-ai/shared": "workspace:*",
-    "@phoenix-ai/ingestion-connectors": "workspace:*"
+    "@phoenix-ai/ingestion-connectors": "workspace:*",
+    "java-parser": "3.0.1"
   },
   "devDependencies": {
     "vitest": "^2.1.4"

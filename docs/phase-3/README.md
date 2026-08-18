@@ -12,8 +12,10 @@ Design rationale is recorded separately per ticket — P3-01 in
 [`docs/architecture/adr/0013-source-connector-contract.md`](../architecture/adr/0013-source-connector-contract.md),
 P3-02 in
 [`docs/architecture/adr/0014-git-repository-connector.md`](../architecture/adr/0014-git-repository-connector.md),
-and P3-03 in
-[`docs/architecture/adr/0015-java-source-discovery.md`](../architecture/adr/0015-java-source-discovery.md);
+P3-03 in
+[`docs/architecture/adr/0015-java-source-discovery.md`](../architecture/adr/0015-java-source-discovery.md),
+and P3-04 in
+[`docs/architecture/adr/0016-java-structural-facts.md`](../architecture/adr/0016-java-structural-facts.md);
 this document is the narrative status record, not a duplicate of those ADRs.
 
 P3-03 onward is a family of tickets, all in `packages/extraction-engine`, each adding one piece of
@@ -180,13 +182,35 @@ Proven with 7 tests: nearest-ancestor module resolution for a nested multi-modul
 `<parent>` POM fixture proving inheritance is not wrongly picked up, Gradle Groovy/Kotlin-DSL
 coordinate shorthand, and an unassigned `.java` file surfaced rather than dropped. See ADR 0015.
 
+## P3-04 — Java Structural Facts (Packages, Classes, Interfaces)
+
+**Status: Complete.**
+
+The first ticket in the family that actually parses Java. Three new files in
+`packages/extraction-engine/src/`:
+
+- `java-parser-adapter.ts` — the one call site wrapping `java-parser`'s throw-only `parse()` into a
+  non-throwing result (`{ ok: true, cst } | { ok: false, reason, detail, position? }`), mirroring
+  `ArtifactReadResult`'s convention from `ingestion-connectors`.
+- `cst-utils.ts` — rule-agnostic CST helpers (`sourceTextOf`, `resolveLiteral`, ...) every other
+  CST-touching module in this family shares.
+- `java-structure.ts` — `extractJavaStructure`: package, imports, and every type declaration
+  (class/interface/enum/record/annotation-type) with its modifiers, annotations, extends/implements,
+  fields, methods, and nested types, each carrying file+line evidence (FR-DET-01, FR-DET-08). Plain
+  recursive-descent over the declaration grammar, not a CST visitor — see ADR 0016 decision 3.
+
+`extract-java.ts`'s `extractJavaProject` now wires discovery through parsing through structural
+facts. New dependency: `java-parser` (pinned `3.0.1`) — the AST/CST library the rest of this family
+rests on. Proven with 16 new tests (23 total in the package), including a dedicated nested-class
+recursion guard and a parse failure proven not to abort the run. See ADR 0016.
+
 ## Remaining Phase 3 work
 
 Not started:
 
-- P3-04 (structural facts: packages/classes/interfaces), P3-05 (method/call/dependency extraction),
-  P3-06 (REST/API extraction), P3-07 (database interaction extraction), and P3-08 (configuration
-  extraction) — the rest of the Java extraction family, each building on P3-03's discovery output.
+- P3-05 (method/call/dependency extraction), P3-06 (REST/API extraction), P3-07 (database interaction
+  extraction), and P3-08 (configuration extraction) — the rest of the Java extraction family, each
+  building on P3-04's structural facts.
 - Connectors for the other source kinds in this package's remit (documentation, project/issue
   systems, log stores, gateways) — each adds its own descriptor narrowing; the `SourceConnector`
   interface does not change.
@@ -200,6 +224,6 @@ Not started:
 
 Unaffected. Phase 1 (P1-01 through P1-12) is closed — see [`docs/phase-1/README.md`](../phase-1/README.md).
 Phase 2 (P2-01 through P2-12) is closed — see [`docs/phase-2/README.md`](../phase-2/README.md).
-P3-01 through P3-03 added new package content and documentation only; all 264
+P3-01 through P3-04 added new package content and documentation only; all 264
 `packages/knowledge-graph` tests pass unmodified, and `git status` confirms no changes to `apps/api`,
 `apps/web`, or `packages/shared`.

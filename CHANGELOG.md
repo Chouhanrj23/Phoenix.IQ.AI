@@ -203,6 +203,17 @@ All notable changes to this project will be documented in this file. Format foll
   type this ticket classifies). Proven with 7 tests, including a `<parent>` POM fixture proving
   inheritance is not wrongly picked up and a nested multi-module layout resolving to its nearest
   ancestor build file. See ADR 0015.
+- **Phase 3 — P3-04 (Java structural facts):** `packages/extraction-engine/src/` — the first ticket
+  in the Java extraction family that actually parses Java, on a real AST parser (`java-parser`,
+  pinned `3.0.1`) rather than a hand-rolled scanner. `java-parser-adapter.ts` wraps `java-parser`'s
+  throw-only `parse()` into a non-throwing result; `cst-utils.ts` provides rule-agnostic CST helpers
+  shared by every later CST-touching module; `extractJavaStructure` (`java-structure.ts`) captures
+  package/imports and every type declaration (fields, methods, annotations, extends/implements,
+  nested types) with file+line evidence, via plain recursive-descent over the declaration grammar
+  rather than a CST visitor (avoiding Chevrotain's default-auto-recursion foot-gun). `extractJavaProject`
+  (`extract-java.ts`) now wires discovery through parsing through structural facts. New dependency:
+  `java-parser`. Proven with 16 new tests (23 total), including a dedicated nested-class recursion
+  guard. See ADR 0016.
 
 ### Changed
 
