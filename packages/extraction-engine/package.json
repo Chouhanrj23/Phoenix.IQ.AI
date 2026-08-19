@@ -13,6 +13,7 @@
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "poc:analyze-phoenix": "tsx samples/analyze-phoenix-repo.ts",
+    "poc:analyze-spring-petclinic": "tsx samples/analyze-spring-petclinic.ts",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {

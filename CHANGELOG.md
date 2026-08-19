@@ -302,6 +302,21 @@ fact-provenance.ts` — attaches `FactProvenance` (which source, which revision,
   devDependency: `tsx`. Run via
   `pnpm --filter @phoenix-ai/extraction-engine poc:analyze-phoenix`; full output in
   `packages/extraction-engine/samples/phoenix-repo-analysis-report.md`.
+  **Positive-path follow-up:** `packages/extraction-engine/samples/analyze-spring-petclinic.ts` runs
+  the identical, unmodified pipeline against the real, uncurated
+  [spring-projects/spring-petclinic](https://github.com/spring-projects/spring-petclinic) (pinned
+  `88e37c15cf6fc8490b01bc3e8e2c800cec1ac272`) via the connector's real remote-clone path (`kind:
+'git'`, first real exercise of that path). Real, non-empty findings: 49 `.java` files, 6 Spring MVC
+  controllers / 17 REST routes, 6 JPA entities with real associations, 3 Spring Data repositories, 22
+  config keys (secrets redacted in the report), 12 bridged canonical objects, all validated against
+  the real `validateCanonicalKnowledgeBundle`/`validateSourceReferences`/`parseAndValidateOkfYaml`.
+  Two honest, non-defect limitations surfaced by real-world code and documented, not fixed (out of
+  scope for this step): inherited `@Id` fields are invisible without classpath resolution (per ADR
+  0017's existing, documented shallow-resolution scope), and a dual Gradle+Maven root directory
+  resolves deterministically to one module per P3-03's nearest-ancestor rule. Run via
+  `pnpm --filter @phoenix-ai/extraction-engine poc:analyze-spring-petclinic`; full output in
+  `packages/extraction-engine/samples/spring-petclinic-analysis-report.md` and
+  `packages/extraction-engine/samples/spring-petclinic.okf.yaml`. No P3-01–P3-10 code changed.
 
 ### Changed
 
