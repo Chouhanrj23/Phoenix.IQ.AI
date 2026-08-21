@@ -1,0 +1,31 @@
+{
+  "name": "@phoenix-ai/graph-persistence",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Neo4j connection boundary and OKF-to-graph mapping for Phase 4. Owns the Neo4j client/config (prerequisite fix) and the OKF->graph node/relationship mapping (P4-01) -- ingestion, querying, and consistency validation are separate, not-yet-implemented tickets (P4-02 through P4-09).",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b --watch",
+    "lint": "eslint src",
+    "typecheck": "tsc -b --noEmit",
+    "test": "vitest run",
+    "poc:demo-spring-petclinic-graph": "tsx samples/demo-spring-petclinic-graph.ts",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@phoenix-ai/shared": "workspace:*",
+    "@phoenix-ai/knowledge-graph": "workspace:*",
+    "neo4j-driver": "^6.2.0"
+  },
+  "devDependencies": {
+    "@phoenix-ai/ingestion-connectors": "workspace:*",
+    "@phoenix-ai/extraction-engine": "workspace:*",
+    "@testcontainers/neo4j": "^12.1.0",
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "vitest": "^2.1.4"
+  }
+}

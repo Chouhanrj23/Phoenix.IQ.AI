@@ -317,6 +317,60 @@ fact-provenance.ts` — attaches `FactProvenance` (which source, which revision,
   `pnpm --filter @phoenix-ai/extraction-engine poc:analyze-spring-petclinic`; full output in
   `packages/extraction-engine/samples/spring-petclinic-analysis-report.md` and
   `packages/extraction-engine/samples/spring-petclinic.okf.yaml`. No P3-01–P3-10 code changed.
+- **Phase 4 prerequisites (audit-driven, before P4-02/03/04):**
+  `packages/extraction-engine/src/bridge-relationships.ts` — fixes a mapping gap (not an extraction
+  gap) found by the Phase 4 readiness audit: `extractJavaProject` had always hardcoded
+  `relationships: []`, even though the call/type-dependency graph (P3-05) and JPA associations
+  (P3-07) were already fully extracted and resolved. Two new, narrow bridges — resolved
+  `paramType`/`returnType`/`extends`/`implements`/`throws` dependencies (`kind: 'dependsOn'`) and
+  JPA `@OneToMany`/`@ManyToOne`/`@OneToOne`/`@ManyToMany` associations (`kind: 'hasAssociation'`) —
+  produce real `CanonicalKnowledgeRelationship`s only between two already-bridged canonical objects,
+  never inventing or guessing a target. Verified against real spring-petclinic source: 29
+  relationships (24 `dependsOn`, 4 `hasAssociation`) now produced from what was previously always
+  zero; report/OKF regenerated. 7 new tests (`bridge-relationships.test.ts`) plus extended
+  `pipeline-e2e.test.ts` assertions (77/77 package tests pass). The call graph itself remains
+  unbridged (documented deferral, not a silent gap). New package `@phoenix-ai/graph-persistence`
+  (`config.ts`/`neo4j-client.ts` only — no mapping/ingestion/query logic yet) with a real,
+  Testcontainers-verified Neo4j connection and typed failure behavior (`Neo4jUnavailableError`);
+  root `docker-compose.yml`/`.env.example` for local dev. No `apps/api`/`apps/web` changes; no
+  P4-01/02/03/04/07/08/09/10 implementation. See ADR 0023.
+- **Phase 4 — P4-01 (Finalize graph mapping):** `packages/graph-persistence/src/graph-mapping.ts` —
+  the authoritative OKF → Neo4j node/relationship mapping. Maps all 15 real Phase 2 object kinds
+  (corrected from an earlier miscounted "12" — see ADR 0024) to Neo4j labels, and all 19 relationship
+  kinds (17 schema-supported + the 2 `dependsOn`/`hasAssociation` kinds Phase 3 currently produces) to
+  relationship types. Stable ids are reused verbatim from the OKF's own already-deterministic
+  `identity.id`/relationship `id` — never re-derived. `attributes` flattens generically (Neo4j-safe
+  scalars/arrays as-is, anything else JSON-stringified) rather than hand-mapped per kind, to avoid
+  building a second domain model. `provenance`/`evidence` are preserved as their own structured,
+  unflattened arrays (never truncated to one entry); `confidence`/`confidenceDetail` flatten onto
+  scalar properties, calculating nothing new. Pure and synchronous — no `neo4j-driver` import, no
+  Cypher, no API route, no UI change. 28 new tests (`graph-mapping.test.ts`), built against real,
+  validated, typed instances of every Phase 2 object kind (each checked with
+  `validateCanonicalKnowledgeObject` before any mapping assertion runs). See ADR 0024.
+- **Phase 4 — P4-02 through P4-10 (Neo4j transformation, persistence, query, UI integration,
+  consistency, real repository demo):** `packages/graph-persistence/src/{transform,ingest,query,
+consistency}.ts` — P4-02's pure, parameterized `MERGE` write-operation builder; P4-03/P4-04's real,
+  transactional, idempotent Neo4j node/relationship ingestion (`GraphIngestionError` on malformed data
+  or a missing relationship endpoint, `Neo4jUnavailableError` reused for connectivity/auth failures);
+  P4-07's UI-agnostic query layer (`getFullGraph`/`getNodeById`/`getRelationshipsForNode`); P4-09's
+  `checkGraphConsistency` (OKF vs. real queried graph — missing/extra nodes/relationships, endpoint/
+  provenance/confidence mismatches, never auto-repaired). Provenance/evidence persist as lossless
+  `provenanceJson`/`evidenceJson` string properties (P4-05); confidence/confidenceDetail flatten onto
+  scalar properties (P4-06) — no new score calculated anywhere. New `apps/api` route `GET /api/full-graph`
+  (`routes/graph.ts` + `services/graph.service.ts`), translating `Neo4jUnavailableError` into a clean
+  `503`. `apps/web`'s `apiProvider.getFullGraph` now calls this real route instead of falling back to
+  mock data (P4-08) — a real bug was found and fixed in the same pass: `GraphExplorerPage.tsx`'s
+  hardcoded `KIND_ORDER` list didn't include `Api`/`Entity`, the only two labels real Phase 3 data
+  produces, which would have silently filtered every real node out of the rendered graph despite a
+  successful API response; fixed by extending `KIND_ORDER` additively. 26 new real-Neo4j integration
+  tests (Testcontainers, `ingest.test.ts`/`query.test.ts`/`provenance-confidence.test.ts`) plus 10
+  pure unit tests (`transform.test.ts`) and 13 pure unit tests (`consistency.test.ts`); 3 new `apps/api`
+  route tests; 2 new `apps/web` `apiProvider` tests. P4-10: a real, uninterrupted run of the whole chain
+  against `spring-projects/spring-petclinic` (pinned `88e37c15cf6fc8490b01bc3e8e2c800cec1ac272`) — 12
+  bridged objects, 29 bridged relationships, 0 unmappable, ingested twice into a real Neo4j to prove
+  idempotency (12/29 both times), queried back exactly, and confirmed consistent (`consistent: true`,
+  0 differences) via `checkGraphConsistency`; a second, persistent (`docker-compose`) run confirmed the
+  real `/api/full-graph` HTTP contract end to end. See ADR 0024 and `docs/phase-4/README.md`.
 
 ### Changed
 

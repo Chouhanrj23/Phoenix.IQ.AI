@@ -284,6 +284,23 @@ describe('full pipeline — real git ingestion through OKF validation', () => {
     expect(entityObject?.evidence[0]?.sourceVersion).toBe(revision);
     expect(entityObject?.confidenceDetail).toEqual({ basis: 'observed' });
 
+    // Relationship bridging (Phase 4 prerequisite fix, `bridge-relationships.ts`): both
+    // `getBySku` and its private helper `lookup` really do return `Product` -- two
+    // distinct, separately-evidenced return-type dependencies from the bridged Api to
+    // the bridged Entity, not fabricated, not the call graph (which stays unbridged),
+    // and not the repository (which has no OKF kind and so is correctly excluded
+    // rather than guessed at).
+    expect(result.relationships).toHaveLength(2);
+    for (const dependsOn of result.relationships) {
+      expect(dependsOn.sourceObjectId).toBe(apiObject?.identity.id);
+      expect(dependsOn.targetObjectId).toBe(entityObject?.identity.id);
+      expect(dependsOn.kind).toBe('dependsOn');
+      expect(dependsOn.category).toBe('association');
+      expect(dependsOn.attributes).toEqual({ relation: 'returnType' });
+      expect(dependsOn.confidenceDetail).toEqual({ basis: 'observed' });
+    }
+    expect(new Set(result.relationships.map((r) => r.id)).size).toBe(2); // distinct evidence, distinct ids
+
     // --- Stage 5: OKF mapping, serialization, and schema validation (P3-09, P2-10) ---
     const mappingOptions = { systemId: 'catalog-service', generatedAt, sources: [source] };
     const bundle = buildJavaCanonicalBundle(result, mappingOptions);
@@ -294,6 +311,7 @@ describe('full pipeline — real git ingestion through OKF validation', () => {
     const yamlText = serializeOkfYaml(document);
     expect(yamlText).toContain('kind: integration.api');
     expect(yamlText).toContain('kind: domain.entity');
+    expect(yamlText).toContain('kind: dependsOn');
 
     const roundTrip = parseAndValidateOkfYaml(yamlText);
     expect(roundTrip).toEqual({ valid: true, errors: [] });

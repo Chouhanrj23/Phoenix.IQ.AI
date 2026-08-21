@@ -85,7 +85,11 @@ for one.
   (they have no canonical shape, per decision 1); a caller that needs them still reads them off
   `JavaExtractionResult` directly.
 - **`relationships` is always empty** in any bundle this produces, inherited from every prior ticket
-  in this family.
+  in this family. **Update (Phase 4 prerequisite, ADR 0023):** no longer strictly true —
+  `bridge-relationships.ts` now populates `relationships` for resolved type-dependencies/JPA
+  associations between two already-bridged objects; this ticket's own wrapping logic (`objects`,
+  `relationships`, `sources` → `CanonicalKnowledgeBundle`) required no change to pick that up, since
+  it already passed `result.relationships` through unmodified.
 - **No multi-source/multi-module bundle merging.** One `JavaExtractionResult` (one call to
   `extractJavaProject`) maps to one bundle; combining several extraction runs (e.g. several
   repositories) into a single multi-source bundle is a caller concern, not built here.

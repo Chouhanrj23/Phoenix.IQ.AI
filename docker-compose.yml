@@ -1,0 +1,43 @@
+# Local development Neo4j instance -- Phase 4 prerequisite (Blocker 1).
+#
+# Not used by automated tests: `packages/graph-persistence/tests/neo4j-client.test.ts`
+# spins up its own real, ephemeral Neo4j instance via Testcontainers, per
+# `docs/architecture/adr/0023-phase-4-prerequisites.md` decision 1. This
+# compose file is for a developer running Phoenix locally against a
+# persistent graph instance across sessions.
+#
+# Startup:
+#   1. cp .env.example .env
+#   2. edit .env and set NEO4J_PASSWORD (no default is provided -- see
+#      .env.example for why)
+#   3. docker compose up -d
+#   4. Neo4j Browser: http://localhost:7474  (bolt: bolt://localhost:7687)
+#
+# Failure behavior: if this container is not running (or NEO4J_URI in a
+# consuming app's environment points somewhere unreachable),
+# `@phoenix-ai/graph-persistence`'s `verifyNeo4jConnectivity` throws a
+# `Neo4jUnavailableError` rather than hanging or silently no-op-ing -- see
+# `packages/graph-persistence/src/neo4j-client.ts`.
+
+services:
+  neo4j:
+    image: neo4j:5-community
+    ports:
+      - '7474:7474' # Neo4j Browser (HTTP)
+      - '7687:7687' # Bolt (driver connections)
+    environment:
+      # ${VAR:?message} makes compose refuse to start rather than silently
+      # falling back to a hardcoded/guessable credential -- NEO4J_PASSWORD
+      # has no default anywhere in this repository, by design.
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:?Set NEO4J_PASSWORD in .env -- see .env.example. No default is provided for a credential.}
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -O /dev/null -q http://localhost:7474 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  neo4j_data:

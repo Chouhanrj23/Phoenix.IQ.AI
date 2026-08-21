@@ -32,6 +32,7 @@ describe('apiProvider — real backend calls (P1-09)', () => {
     await apiProvider.getGapItems();
     await apiProvider.getDriftAlerts();
     await apiProvider.getDriftHistory();
+    await apiProvider.getFullGraph();
 
     const calledUrls = fetchMock.mock.calls.map((call) => call[0]);
     expect(calledUrls).toEqual([
@@ -45,6 +46,7 @@ describe('apiProvider — real backend calls (P1-09)', () => {
       expect.stringContaining('/api/gap-items'),
       expect.stringContaining('/api/drift-alerts'),
       expect.stringContaining('/api/drift-history'),
+      expect.stringContaining('/api/full-graph'),
     ]);
   });
 
@@ -59,27 +61,42 @@ describe('apiProvider — real backend calls (P1-09)', () => {
     mockFetchOnce([]);
     await expect(apiProvider.getDomains()).resolves.toEqual([]);
   });
+
+  // P4-08: getFullGraph must behave exactly like every other real route above
+  // — a backend/Neo4j failure is a real rejection (surfaced as
+  // GraphExplorerPage's ErrorState), never silently swapped for mock fixture
+  // data. A fallback here would hide a real outage behind what looks like a
+  // normal, populated graph.
+  it('propagates a real backend failure for getFullGraph instead of falling back to fixture data', async () => {
+    mockFetchOnce(null, false, 503, 'Service Unavailable');
+    await expect(apiProvider.getFullGraph()).rejects.toThrow(
+      'Request to /api/full-graph failed: 503 Service Unavailable',
+    );
+  });
+
+  it('resolves an empty graph, not an error and not fixture data, when the backend graph is empty', async () => {
+    mockFetchOnce({ nodes: [], edges: [] });
+    await expect(apiProvider.getFullGraph()).resolves.toEqual({ nodes: [], edges: [] });
+  });
 });
 
 // P1-10: methods with no backend route yet must not crash — they fall back
 // to mock fixture data instead. DEMO/FALLBACK DATA, not a real backend call.
 describe('apiProvider — fallback to mock fixture data for not-yet-implemented areas (P1-10)', () => {
-  it('returns fixture data without calling fetch for execution flows, personas, journeys, epics, and the full graph', async () => {
+  it('returns fixture data without calling fetch for execution flows, personas, journeys, and epics', async () => {
     const fetchMock = mockFetchOnce({});
 
-    const [flows, personas, journeys, epics, graph] = await Promise.all([
+    const [flows, personas, journeys, epics] = await Promise.all([
       apiProvider.getExecutionFlows(),
       apiProvider.getPersonas(),
       apiProvider.getJourneys(),
       apiProvider.getEpics(),
-      apiProvider.getFullGraph(),
     ]);
 
     expect(flows.length).toBeGreaterThan(0);
     expect(personas.length).toBeGreaterThan(0);
     expect(journeys.length).toBeGreaterThan(0);
     expect(epics.length).toBeGreaterThan(0);
-    expect(graph.nodes.length).toBeGreaterThan(0);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

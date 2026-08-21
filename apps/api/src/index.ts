@@ -12,6 +12,7 @@ import { registerNfrRoutes } from './routes/nfrs.js';
 import { registerReviewRoutes } from './routes/review-items.js';
 import { registerGapRoutes } from './routes/gap-items.js';
 import { registerDriftRoutes } from './routes/drift.js';
+import { registerGraphRoutes } from './routes/graph.js';
 
 const config = loadConfig();
 const app = Fastify({ logger: false });
@@ -43,6 +44,7 @@ registerNfrRoutes(app);
 registerReviewRoutes(app);
 registerGapRoutes(app);
 registerDriftRoutes(app);
+registerGraphRoutes(app);
 
 app
   .listen({ port: config.port, host: config.host })

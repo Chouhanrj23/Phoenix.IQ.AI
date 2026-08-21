@@ -12,7 +12,10 @@
  * Spring Data repositories -> application config
  * (`application*.properties`/`.yml` artifacts) plus config
  * cross-references -> bridge each controller and entity into a real
- * canonical object -> stamp `FactProvenance` onto every fact (P3-10,
+ * canonical object -> bridge resolved type-dependency/JPA-association facts
+ * into relationships between two already-bridged objects
+ * (`bridge-relationships.ts`, a Phase 4 prerequisite fix -- see its file
+ * header) -> stamp `FactProvenance` onto every fact (P3-10,
  * `fact-provenance.ts`).
  *
  * `options` (systemId/sourceId/generatedAt, introduced in P3-06; now also
@@ -55,6 +58,7 @@ import {
 } from './java-config.js';
 import { bridgeSpringController } from './bridge-http.js';
 import { bridgeJpaEntity } from './bridge-persistence.js';
+import { bridgeJpaAssociations, bridgeTypeDependencies } from './bridge-relationships.js';
 import type { BridgeOptions } from './bridge-shared.js';
 import { stampFactProvenance, type FactProvenance } from './fact-provenance.js';
 import type { CstNode } from 'java-parser';
@@ -81,7 +85,18 @@ export interface JavaExtractionResult {
   configReferences: JavaConfigReferenceFact[];
   /** Bridged `ApiObject`s/`EntityObject`s -- see `bridge-http.ts`/`bridge-persistence.ts` for what does and does not bridge. */
   objects: CanonicalKnowledgeObject[];
-  /** Always empty in this family -- no cross-object relationship bridging is performed yet (a documented gap). */
+  /**
+   * Relationships between two already-bridged canonical objects, evidenced
+   * by resolved type-dependency facts (`paramType`/`returnType`/`extends`/
+   * `implements`/`throws`) and JPA associations (`@OneToMany`/`@ManyToOne`/
+   * `@OneToOne`/`@ManyToMany`) -- see `bridge-relationships.ts`. Still
+   * intentionally incomplete, not intentionally empty: a dependency whose
+   * target has no canonical object yet (e.g. a Repository, a plain service
+   * class -- neither has an OKF kind) produces no relationship here, and
+   * the call graph (`calls`) is not bridged at all yet (its target
+   * resolution is shallower/noisier than the type-dependency graph's --
+   * see the file header on why this was deferred, not silently dropped).
+   */
   relationships: CanonicalKnowledgeRelationship[];
 }
 
@@ -149,9 +164,35 @@ export function extractJavaProject(
     );
   const configReferences = extractConfigReferences(files, calls);
 
-  const objects: CanonicalKnowledgeObject[] = [
-    ...controllers.map((controller) => bridgeSpringController(controller, bridgeOptions)),
-    ...entities.map((entity) => bridgeJpaEntity(entity, bridgeOptions)),
+  const controllerObjects = controllers.map((controller) =>
+    bridgeSpringController(controller, bridgeOptions),
+  );
+  const entityObjects = entities.map((entity) => bridgeJpaEntity(entity, bridgeOptions));
+  const objects: CanonicalKnowledgeObject[] = [...controllerObjects, ...entityObjects];
+
+  const bridgedObjectIdsByQualifiedName = new Map<string, string>();
+  controllers.forEach((controller, index) => {
+    const object = controllerObjects[index];
+    if (object !== undefined) {
+      bridgedObjectIdsByQualifiedName.set(controller.qualifiedName, object.identity.id);
+    }
+  });
+  entities.forEach((entity, index) => {
+    const object = entityObjects[index];
+    if (object !== undefined) {
+      bridgedObjectIdsByQualifiedName.set(entity.qualifiedName, object.identity.id);
+    }
+  });
+  const entityQualifiedNames = new Set(entities.map((entity) => entity.qualifiedName));
+
+  const relationships: CanonicalKnowledgeRelationship[] = [
+    ...bridgeTypeDependencies(
+      typeDependencies,
+      bridgedObjectIdsByQualifiedName,
+      entityQualifiedNames,
+      bridgeOptions,
+    ),
+    ...bridgeJpaAssociations(entities, bridgedObjectIdsByQualifiedName, bridgeOptions),
   ];
 
   return {
@@ -166,6 +207,6 @@ export function extractJavaProject(
     config: stampFactProvenance(config, factProvenance),
     configReferences: stampFactProvenance(configReferences, factProvenance),
     objects,
-    relationships: [],
+    relationships,
   };
 }

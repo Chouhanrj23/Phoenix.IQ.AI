@@ -95,6 +95,13 @@ scanner. `@phoenix-ai/knowledge-graph` (canonical objects/validators). `yaml` (m
 
 Not yet implemented: any language other than Java; JAX-RS, MyBatis, and raw SQL migration (Flyway/
 Liquibase) support; full classpath/type resolution (call-graph and type-dependency resolution stays
-shallow by design); `<parent>` POM inheritance; a custom Gradle `sourceSets` layout; and any
-cross-object relationship bridging (`JavaExtractionResult.relationships` is always empty). See each
+shallow by design); `<parent>` POM inheritance; a custom Gradle `sourceSets` layout. See each
 ticket's ADR "Limitations" section for the full list and why each is deferred.
+
+**Relationship bridging** (`bridge-relationships.ts`, a Phase 4 prerequisite fix, ADR 0023):
+`JavaExtractionResult.relationships` is no longer always empty. Resolved type-dependency facts
+(`paramType`/`returnType`/`extends`/`implements`/`throws`) and JPA associations (`@OneToMany`/
+`@ManyToOne`/`@OneToOne`/`@ManyToMany`) are bridged into real `CanonicalKnowledgeRelationship`s
+whenever BOTH ends are already-bridged canonical objects (an `ApiObject`/`EntityObject`). Still
+intentionally incomplete: a dependency whose target has no canonical object yet (e.g. a Repository)
+produces no relationship, and the call graph (`calls`) is not bridged at all yet. See ADR 0023.

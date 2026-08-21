@@ -204,6 +204,9 @@ async function main(): Promise<void> {
     `Config cross-references (@Value/@ConfigurationProperties/System.getenv sites): ${result.configReferences.length}`,
   );
   log(`Bridged canonical objects: ${result.objects.length}`);
+  log(
+    `Bridged canonical relationships (Phase 4 prerequisite fix, dependsOn/hasAssociation): ${result.relationships.length}`,
+  );
 
   // --- Representative findings: real, specific examples, not just counts ---
   log('\n## Representative extracted facts\n');
@@ -233,6 +236,24 @@ async function main(): Promise<void> {
     for (const association of entity.associations) {
       log(`    ${association.kind} ${association.fieldName}: ${association.targetJavaType}`);
     }
+  }
+
+  log(
+    '\n### Bridged relationships (all) -- real, directly-evidenced edges between bridged objects',
+  );
+  if (result.relationships.length === 0) {
+    log('  (none -- no resolved type-dependency or JPA association connects two bridged objects)');
+  }
+  for (const relationship of result.relationships) {
+    const sourceLabel = result.objects.find(
+      (o) => o.identity.id === relationship.sourceObjectId,
+    )?.label;
+    const targetLabel = result.objects.find(
+      (o) => o.identity.id === relationship.targetObjectId,
+    )?.label;
+    log(
+      `- ${sourceLabel ?? relationship.sourceObjectId} --${relationship.kind}(${JSON.stringify(relationship.attributes)})--> ${targetLabel ?? relationship.targetObjectId}`,
+    );
   }
 
   log('\n### Spring Data repositories (all)');

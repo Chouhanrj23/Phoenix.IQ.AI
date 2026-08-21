@@ -1,6 +1,6 @@
 okfVersion: 2026-08-p2-02
 systemId: spring-petclinic
-generatedAt: 2026-08-19T18:40:03.434Z
+generatedAt: 2026-08-19T19:54:32.764Z
 sources:
   - id: repo://spring-petclinic
     label: spring-petclinic (spring-projects/spring-petclinic, real upstream repository)
@@ -11,8 +11,8 @@ objects:
   - identity:
       id: api-2ca89ca285a8f472
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: integration.api
@@ -38,22 +38,22 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-0e0381fdb6e01a75
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java#L48-L179
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
   - identity:
       id: api-f7040584d84949f8
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: integration.api
@@ -73,22 +73,22 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-c60dafbc0320e0b4
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/owner/PetController.java#L47-L207
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
   - identity:
       id: api-8808040d90fd5194
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: integration.api
@@ -104,22 +104,22 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-137fc48b53a83c6b
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/owner/VisitController.java#L42-L114
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
   - identity:
       id: api-d05ec2c74095c218
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: integration.api
@@ -133,22 +133,22 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-de60c873036f7dc4
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/system/CrashController.java#L28-L37
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
   - identity:
       id: api-1ba5dbbb916a3f8c
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: integration.api
@@ -162,22 +162,22 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-019376c3eea6ed1c
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/system/WelcomeController.java#L22-L30
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
   - identity:
       id: api-e65ae4aa94d82d5d
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: integration.api
@@ -193,22 +193,22 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-540537864396431a
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/vet/VetController.java#L35-L74
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
   - identity:
       id: entity-2531e5ce7b896ae3
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: domain.entity
@@ -233,22 +233,22 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-35bfc1d7d3db6cdd
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/owner/Owner.java#L47-L176
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
   - identity:
       id: entity-8722ba9a358041ab
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: domain.entity
@@ -270,22 +270,22 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-8ac66d1d4e23c9b1
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/owner/Pet.java#L44-L85
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
   - identity:
       id: entity-7362ae070b5727c1
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: domain.entity
@@ -298,22 +298,22 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-586f9018a8a7eedc
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/owner/PetType.java#L26-L30
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
   - identity:
       id: entity-5b214fa8440d9db9
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: domain.entity
@@ -332,22 +332,22 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-7f68b7ee95cac68c
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/owner/Visit.java#L34-L68
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
   - identity:
       id: entity-86c4baaa9e0c2da1
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: domain.entity
@@ -360,22 +360,22 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-31c16bd149f671e5
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/vet/Specialty.java#L28-L32
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
   - identity:
       id: entity-b0529006a7c909b2
       systemId: spring-petclinic
-      createdAt: 2026-08-19T18:40:03.434Z
-      updatedAt: 2026-08-19T18:40:03.434Z
+      createdAt: 2026-08-19T19:54:32.764Z
+      updatedAt: 2026-08-19T19:54:32.764Z
       schemaVersion: 2026-08-p2-02
     category: entity
     kind: domain.entity
@@ -391,15 +391,686 @@ objects:
         - sourceId: repo://spring-petclinic
           sourceType: source-code
           derivedBy: extraction-engine
-          derivedAt: 2026-08-19T18:40:03.434Z
+          derivedAt: 2026-08-19T19:54:32.764Z
       confidence:
         level: high
     evidence:
       - id: evidence-db09a345a13a5dae
         sourceId: repo://spring-petclinic
         locator: src/main/java/org/springframework/samples/petclinic/vet/Vet.java#L43-L74
-        capturedAt: 2026-08-19T18:40:03.434Z
+        capturedAt: 2026-08-19T19:54:32.764Z
         sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
     confidenceDetail:
       basis: observed
-relationships: []
+relationships:
+  - id: relationship-19b80160c3390f9d
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-f7040584d84949f8
+    targetObjectId: entity-2531e5ce7b896ae3
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-0b240381ec66bc75
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/PetController.java#L100-L105
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-1d40cb21837373a6
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-f7040584d84949f8
+    targetObjectId: entity-2531e5ce7b896ae3
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-0b240381ec66bc75
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/PetController.java#L144-L179
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-27ba7c2c88ade4d4
+    category: association
+    kind: dependsOn
+    sourceObjectId: entity-b0529006a7c909b2
+    targetObjectId: entity-86c4baaa9e0c2da1
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-620a15f163ee65e0
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/vet/Vet.java#L70-L72
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-315c42cc1ffbcf68
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-2ca89ca285a8f472
+    targetObjectId: entity-2531e5ce7b896ae3
+    attributes:
+      relation: returnType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-3fd4ada4e39c7476
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java#L64-L70
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-6a6cd37c78156c3f
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-2ca89ca285a8f472
+    targetObjectId: entity-2531e5ce7b896ae3
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-3fd4ada4e39c7476
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java#L144-L162
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-6ea50dd73a82ee8e
+    category: association
+    kind: dependsOn
+    sourceObjectId: entity-2531e5ce7b896ae3
+    targetObjectId: entity-8722ba9a358041ab
+    attributes:
+      relation: returnType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-b1dde1add668729d
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/Owner.java#L108-L110
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-6edae6468d93566e
+    category: association
+    kind: dependsOn
+    sourceObjectId: entity-8722ba9a358041ab
+    targetObjectId: entity-5b214fa8440d9db9
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-b3c7c925ad148454
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/Pet.java#L81-L83
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-6fb7c29506ba1eac
+    category: association
+    kind: dependsOn
+    sourceObjectId: entity-2531e5ce7b896ae3
+    targetObjectId: entity-8722ba9a358041ab
+    attributes:
+      relation: returnType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-b1dde1add668729d
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/Owner.java#L117-L127
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-7d137ef3b63b80f1
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-f7040584d84949f8
+    targetObjectId: entity-2531e5ce7b896ae3
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-0b240381ec66bc75
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/PetController.java#L186-L200
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-8340e6bb76eb4dc5
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-2ca89ca285a8f472
+    targetObjectId: entity-2531e5ce7b896ae3
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-3fd4ada4e39c7476
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java#L77-L87
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-8e9924c3445c0b3f
+    category: association
+    kind: dependsOn
+    sourceObjectId: entity-2531e5ce7b896ae3
+    targetObjectId: entity-8722ba9a358041ab
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-b1dde1add668729d
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/Owner.java#L97-L101
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-945dd80574fb925d
+    category: association
+    kind: dependsOn
+    sourceObjectId: entity-2531e5ce7b896ae3
+    targetObjectId: entity-5b214fa8440d9db9
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-b1dde1add668729d
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/Owner.java#L164-L174
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-9fc4614ffd8b7805
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-f7040584d84949f8
+    targetObjectId: entity-2531e5ce7b896ae3
+    attributes:
+      relation: returnType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-0b240381ec66bc75
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/PetController.java#L67-L73
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-a2f131fa8f398695
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-8808040d90fd5194
+    targetObjectId: entity-5b214fa8440d9db9
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-c2d06fceb82e20bc
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/VisitController.java#L97-L112
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-bce8156f9966732c
+    category: association
+    kind: dependsOn
+    sourceObjectId: entity-2531e5ce7b896ae3
+    targetObjectId: entity-8722ba9a358041ab
+    attributes:
+      relation: returnType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-b1dde1add668729d
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/Owner.java#L135-L145
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-c81ff7dbd42eaffb
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-f7040584d84949f8
+    targetObjectId: entity-8722ba9a358041ab
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-0b240381ec66bc75
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/PetController.java#L186-L200
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-c83431af6ec43734
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-8808040d90fd5194
+    targetObjectId: entity-5b214fa8440d9db9
+    attributes:
+      relation: returnType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-c2d06fceb82e20bc
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/VisitController.java#L63-L81
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-c834a700e4e13096
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-f7040584d84949f8
+    targetObjectId: entity-8722ba9a358041ab
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-0b240381ec66bc75
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/PetController.java#L144-L179
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-cb658535e42c6345
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-f7040584d84949f8
+    targetObjectId: entity-2531e5ce7b896ae3
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-0b240381ec66bc75
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/PetController.java#L107-L137
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-cd46b022c92bf817
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-8808040d90fd5194
+    targetObjectId: entity-2531e5ce7b896ae3
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-c2d06fceb82e20bc
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/VisitController.java#L97-L112
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-e016a59a1b585986
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-f7040584d84949f8
+    targetObjectId: entity-8722ba9a358041ab
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-0b240381ec66bc75
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/PetController.java#L107-L137
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-e1dd54659abd4650
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-2ca89ca285a8f472
+    targetObjectId: entity-2531e5ce7b896ae3
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-3fd4ada4e39c7476
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java#L94-L122
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-ebf726dd13b780b2
+    category: association
+    kind: dependsOn
+    sourceObjectId: entity-8722ba9a358041ab
+    targetObjectId: entity-7362ae070b5727c1
+    attributes:
+      relation: paramType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-b3c7c925ad148454
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/Pet.java#L73-L75
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-ecfb7bc72f7a2fc2
+    category: association
+    kind: dependsOn
+    sourceObjectId: api-f7040584d84949f8
+    targetObjectId: entity-8722ba9a358041ab
+    attributes:
+      relation: returnType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-0b240381ec66bc75
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/PetController.java#L75-L87
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-ff12a89d06039fc4
+    category: association
+    kind: dependsOn
+    sourceObjectId: entity-8722ba9a358041ab
+    targetObjectId: entity-7362ae070b5727c1
+    attributes:
+      relation: returnType
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-b3c7c925ad148454
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/Pet.java#L69-L71
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-6e477dbf43083776
+    category: association
+    kind: hasAssociation
+    sourceObjectId: entity-b0529006a7c909b2
+    targetObjectId: entity-86c4baaa9e0c2da1
+    attributes:
+      associationKind: ManyToMany
+      fieldName: specialties
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-e520d42fecc4c718
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/vet/Vet.java#L43-L74
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-6f38cbf6607cf742
+    category: association
+    kind: hasAssociation
+    sourceObjectId: entity-2531e5ce7b896ae3
+    targetObjectId: entity-8722ba9a358041ab
+    attributes:
+      associationKind: OneToMany
+      fieldName: pets
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-8d20bc1627702a04
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/Owner.java#L47-L176
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-8b3e70bb56876569
+    category: association
+    kind: hasAssociation
+    sourceObjectId: entity-8722ba9a358041ab
+    targetObjectId: entity-5b214fa8440d9db9
+    attributes:
+      associationKind: OneToMany
+      fieldName: visits
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-a460d1e418d350e8
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/Pet.java#L44-L85
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed
+  - id: relationship-8f99019db5724166
+    category: association
+    kind: hasAssociation
+    sourceObjectId: entity-8722ba9a358041ab
+    targetObjectId: entity-7362ae070b5727c1
+    attributes:
+      associationKind: ManyToOne
+      fieldName: type
+    metadata:
+      provenance:
+        - sourceId: repo://spring-petclinic
+          sourceType: source-code
+          derivedBy: extraction-engine
+          derivedAt: 2026-08-19T19:54:32.764Z
+      confidence:
+        level: high
+    evidence:
+      - id: evidence-0b283dce90f5d922
+        sourceId: repo://spring-petclinic
+        locator: src/main/java/org/springframework/samples/petclinic/owner/Pet.java#L44-L85
+        capturedAt: 2026-08-19T19:54:32.764Z
+        sourceVersion: 88e37c15cf6fc8490b01bc3e8e2c800cec1ac272
+    confidenceDetail:
+      basis: observed

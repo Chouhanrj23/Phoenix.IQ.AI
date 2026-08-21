@@ -12,14 +12,33 @@ import { Badge } from '../components/ui/badge.js';
 import { NodeDetailPanel } from '../components/node-detail-panel.js';
 import { cn } from '../lib/utils.js';
 
+// The mock provider only ever produces the first ten kinds below. The
+// remaining ones (P4-08) are the real Neo4j node labels
+// `@phoenix-ai/graph-persistence`'s graph mapping (P4-01,
+// `OBJECT_KIND_TO_LABEL`) already translates the OKF's dotted `kind`
+// vocabulary into -- `Api`/`Entity` in particular are the only two labels
+// real Phase 3 extraction currently produces (see
+// `docs/phase-4/README.md`). Without them here, `allKinds` (below) would
+// never include them, `activeKinds` would end up empty for a real-repository
+// graph, and every node would be silently filtered out of `flowNodes` even
+// though the API call succeeded -- a real graph rendered as a blank canvas.
+// Purely additive: existing mock-mode kinds/order are unchanged.
 const KIND_ORDER = [
   'System',
   'Container',
+  'Component',
   'Domain',
+  'Entity',
   'Aggregate',
+  'EntityState',
   'Persona',
   'Journey',
   'Flow',
+  'Action',
+  'Api',
+  'Interface',
+  'Integration',
+  'DataFlow',
   'Epic',
   'Feature',
   'Story',
@@ -140,7 +159,9 @@ export function GraphExplorerPage(): JSX.Element {
 
       <FullscreenDiagram>
         {(isFullscreen) => (
-          <div className={cn('grid grid-cols-1 gap-4 pt-12 lg:grid-cols-3', isFullscreen && 'h-full')}>
+          <div
+            className={cn('grid grid-cols-1 gap-4 pt-12 lg:grid-cols-3', isFullscreen && 'h-full')}
+          >
             <div
               className={cn(
                 'overflow-hidden rounded-lg border border-border lg:col-span-2',

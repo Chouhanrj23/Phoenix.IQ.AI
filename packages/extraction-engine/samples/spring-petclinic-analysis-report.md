@@ -45,6 +45,7 @@ Spring Data repositories: 3
 Application config keys: 22
 Config cross-references (@Value/@ConfigurationProperties/System.getenv sites): 0
 Bridged canonical objects: 12
+Bridged canonical relationships (Phase 4 prerequisite fix, dependsOn/hasAssociation): 29
 
 ## Representative extracted facts
 
@@ -88,6 +89,38 @@ Bridged canonical objects: 12
 - `org.springframework.samples.petclinic.vet.Vet` -> table "vets", id fields [], 1 columns, 1 associations (src/main/java/org/springframework/samples/petclinic/vet/Vet.java:43)
   ManyToMany specialties: Specialty
 
+### Bridged relationships (all) -- real, directly-evidenced edges between bridged objects
+
+- PetController --dependsOn({"relation":"paramType"})--> Owner
+- PetController --dependsOn({"relation":"paramType"})--> Owner
+- Vet --dependsOn({"relation":"paramType"})--> Specialty
+- OwnerController --dependsOn({"relation":"returnType"})--> Owner
+- OwnerController --dependsOn({"relation":"paramType"})--> Owner
+- Owner --dependsOn({"relation":"returnType"})--> Pet
+- Pet --dependsOn({"relation":"paramType"})--> Visit
+- Owner --dependsOn({"relation":"returnType"})--> Pet
+- PetController --dependsOn({"relation":"paramType"})--> Owner
+- OwnerController --dependsOn({"relation":"paramType"})--> Owner
+- Owner --dependsOn({"relation":"paramType"})--> Pet
+- Owner --dependsOn({"relation":"paramType"})--> Visit
+- PetController --dependsOn({"relation":"returnType"})--> Owner
+- VisitController --dependsOn({"relation":"paramType"})--> Visit
+- Owner --dependsOn({"relation":"returnType"})--> Pet
+- PetController --dependsOn({"relation":"paramType"})--> Pet
+- VisitController --dependsOn({"relation":"returnType"})--> Visit
+- PetController --dependsOn({"relation":"paramType"})--> Pet
+- PetController --dependsOn({"relation":"paramType"})--> Owner
+- VisitController --dependsOn({"relation":"paramType"})--> Owner
+- PetController --dependsOn({"relation":"paramType"})--> Pet
+- OwnerController --dependsOn({"relation":"paramType"})--> Owner
+- Pet --dependsOn({"relation":"paramType"})--> PetType
+- PetController --dependsOn({"relation":"returnType"})--> Pet
+- Pet --dependsOn({"relation":"returnType"})--> PetType
+- Vet --hasAssociation({"associationKind":"ManyToMany","fieldName":"specialties"})--> Specialty
+- Owner --hasAssociation({"associationKind":"OneToMany","fieldName":"pets"})--> Pet
+- Pet --hasAssociation({"associationKind":"OneToMany","fieldName":"visits"})--> Visit
+- Pet --hasAssociation({"associationKind":"ManyToOne","fieldName":"type"})--> PetType
+
 ### Spring Data repositories (all)
 
 - `org.springframework.samples.petclinic.owner.OwnerRepository` extends JpaRepository<Owner, Integer>, 2 declared query methods (src/main/java/org/springframework/samples/petclinic/owner/OwnerRepository.java:36)
@@ -121,17 +154,17 @@ Bridged canonical objects: 12
 
 ### Provenance -- one representative fact of each kind, showing what was actually stamped
 
-- Entity `org.springframework.samples.petclinic.owner.Owner`.provenance = {"sourceId":"repo://spring-petclinic","sourceVersion":"88e37c15cf6fc8490b01bc3e8e2c800cec1ac272","derivedBy":"extraction-engine","derivedAt":"2026-08-19T18:40:03.434Z"}
-- Controller `org.springframework.samples.petclinic.owner.OwnerController`.provenance = {"sourceId":"repo://spring-petclinic","sourceVersion":"88e37c15cf6fc8490b01bc3e8e2c800cec1ac272","derivedBy":"extraction-engine","derivedAt":"2026-08-19T18:40:03.434Z"}
-- Bridged canonical object `api-2ca89ca285a8f472` (integration.api).metadata.provenance = [{"sourceId":"repo://spring-petclinic","sourceType":"source-code","derivedBy":"extraction-engine","derivedAt":"2026-08-19T18:40:03.434Z"}]
-  .evidence = [{"id":"evidence-0e0381fdb6e01a75","sourceId":"repo://spring-petclinic","locator":"src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java#L48-L179","capturedAt":"2026-08-19T18:40:03.434Z","sourceVersion":"88e37c15cf6fc8490b01bc3e8e2c800cec1ac272"}]
+- Entity `org.springframework.samples.petclinic.owner.Owner`.provenance = {"sourceId":"repo://spring-petclinic","sourceVersion":"88e37c15cf6fc8490b01bc3e8e2c800cec1ac272","derivedBy":"extraction-engine","derivedAt":"2026-08-19T19:54:32.764Z"}
+- Controller `org.springframework.samples.petclinic.owner.OwnerController`.provenance = {"sourceId":"repo://spring-petclinic","sourceVersion":"88e37c15cf6fc8490b01bc3e8e2c800cec1ac272","derivedBy":"extraction-engine","derivedAt":"2026-08-19T19:54:32.764Z"}
+- Bridged canonical object `api-2ca89ca285a8f472` (integration.api).metadata.provenance = [{"sourceId":"repo://spring-petclinic","sourceType":"source-code","derivedBy":"extraction-engine","derivedAt":"2026-08-19T19:54:32.764Z"}]
+  .evidence = [{"id":"evidence-0e0381fdb6e01a75","sourceId":"repo://spring-petclinic","locator":"src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java#L48-L179","capturedAt":"2026-08-19T19:54:32.764Z","sourceVersion":"88e37c15cf6fc8490b01bc3e8e2c800cec1ac272"}]
   .confidenceDetail = {"basis":"observed"}
 
 ## OKF mapping and validation
 
 Bundle validates against the real validateCanonicalKnowledgeBundle: true
 Every provenance/evidence sourceId resolves against the sources registry: true
-OKF YAML document generated: 406 lines
+OKF YAML document generated: 1077 lines
 OKF YAML round-trips through the real parseAndValidateOkfYaml: true
 
 Full generated OKF document written to C:\Users\OPEN_OS\Desktop\Phoenix.IQ.AI\Phoenix.ai\packages\extraction-engine\samples\spring-petclinic.okf.yaml

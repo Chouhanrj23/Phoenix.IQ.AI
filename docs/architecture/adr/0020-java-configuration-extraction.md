@@ -82,6 +82,10 @@ interpret.
 - **No relationship bridging anywhere in this family** — `JavaExtractionResult.relationships` is
   always empty. Constructing one (e.g. Controller "handles" Entity) would require resolving exactly
   the call/type graph P3-05 (ADR 0017) already documents as deliberately shallow.
+  **Update (Phase 4 prerequisite, ADR 0023):** the type-dependency graph's _resolved_ facts turned
+  out to be sufficient for a narrow, non-inventive bridge between two already-bridged objects — see
+  ADR 0023 for what changed and why this limitation was a mapping gap, not an extraction gap. The
+  call graph itself remains unbridged.
 - **A Spring profile-specific file (`application-{profile}.yml`) is read the same as the base
   `application.yml`** — no profile-activation logic is modeled; every such file's keys are extracted
   unconditionally, without knowing which profile (if any) is actually active at runtime.

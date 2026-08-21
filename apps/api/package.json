@@ -17,9 +17,11 @@
   "dependencies": {
     "@phoenix-ai/shared": "workspace:*",
     "@phoenix-ai/knowledge-graph": "workspace:*",
+    "@phoenix-ai/graph-persistence": "workspace:*",
     "@phoenix-ai/okf-renderers": "workspace:*",
     "@phoenix-ai/review-loop": "workspace:*",
-    "fastify": "^5.1.0"
+    "fastify": "^5.1.0",
+    "neo4j-driver": "^6.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

@@ -16,14 +16,21 @@ async function getJson<T>(path: string): Promise<T> {
  * DEMO/FALLBACK DATA — not real backend data.
  *
  * @phoenix-ai/api has no route yet for execution flows, personas, journeys,
- * epics, or the full graph (later-phase work over @phoenix-ai/knowledge-graph /
+ * or epics (later-phase work over @phoenix-ai/knowledge-graph /
  * @phoenix-ai/okf-renderers / @phoenix-ai/review-loop / a real drift engine —
  * see docs/phase-1/README.md). Rather than letting the pages that need them
- * 404 in `api` mode, those five methods fall back to the mock provider's
+ * 404 in `api` mode, those four methods fall back to the mock provider's
  * fixture data below. apiProvider has no concept of company selection (the
  * backend only ever serves the Aurora dataset), so the fallback is pinned to
  * DEFAULT_COMPANY rather than whatever company is selected in the UI, to
  * avoid mixing live Aurora API data with a different company's fixtures.
+ *
+ * `getFullGraph` is NOT in this list (as of P4-08) — it now hits the real
+ * `/api/full-graph` route (`@phoenix-ai/graph-persistence` behind it). A
+ * failure there must surface as a real error (`useAsync`'s error state,
+ * `GraphExplorerPage`'s `ErrorState`), never silently fall back to fixture
+ * data — a fallback would hide a real backend/Neo4j outage behind what
+ * looks like a normal, populated graph.
  */
 const fallback = mockProviderFor(DEFAULT_COMPANY);
 
@@ -52,5 +59,5 @@ export const apiProvider: OkfDataProvider = {
   getIntegrations: () => getJson('/api/integrations'),
   getGapItems: () => getJson('/api/gap-items'),
   getDriftHistory: () => getJson('/api/drift-history'),
-  getFullGraph: () => fallback.getFullGraph(),
+  getFullGraph: () => getJson('/api/full-graph'),
 };

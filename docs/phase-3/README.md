@@ -443,9 +443,13 @@ Not started:
 - Extraction for any language other than Java.
 - JAX-RS, MyBatis, and raw SQL migration (Flyway/Liquibase) support within the Java extraction
   engine.
-- Cross-object relationship bridging (e.g. Controller "handles" Entity) — `JavaExtractionResult.
-relationships` is always empty across the whole family; correctly constructing one requires
-  resolving exactly the call/type graph P3-05 documents as deliberately shallow.
+- Cross-object relationship bridging beyond resolved type-dependencies and JPA associations — as of
+  the Phase 4 prerequisite fix (ADR 0023, `bridge-relationships.ts`), `JavaExtractionResult.
+relationships` is populated whenever a resolved `paramType`/`returnType`/`extends`/`implements`/
+  `throws` dependency or a JPA association connects two already-bridged canonical objects, but the
+  call graph (`calls`) is still not bridged at all (its target resolution is shallower/noisier than
+  the type-dependency graph's — P3-05/ADR 0017), and a dependency whose target has no canonical
+  object yet (e.g. a Repository, a plain service class) still produces no relationship.
 - `packages/inference-engine` turning this family's raw facts (call graph, type-dependency graph,
   repositories, configuration) into semantic interpretation (bounded contexts, Component boundaries)
   — explicitly out of scope for deterministic extraction (FR-SEM-01).

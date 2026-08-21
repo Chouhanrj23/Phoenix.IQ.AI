@@ -3,19 +3,22 @@
  * building on P2-10's schema).
  *
  * `extractJavaProject` (P3-08, `extract-java.ts`) already produces real
- * `CanonicalKnowledgeObject`s (`objects`, via P3-06/P3-07's bridges) and an
- * (always empty, per ADR 0018-0020) `relationships` array -- this ticket
- * does NOT invent any new mapping from raw facts to canonical shape, since
- * that boundary was already drawn deliberately at each bridge (ADR 0018
- * decision 4, ADR 0019 decision 4, ADR 0020 decision 5: only what is
- * directly annotation-decidable bridges; the call graph, type-dependency
- * graph, repositories, and config facts have no canonical shape and stay
- * facts for `inference-engine`). What THIS ticket adds is the missing last
- * step: wrapping those already-canonical objects into a real, complete
- * `CanonicalKnowledgeBundle` -- with a `sources` registry so
- * `validateSourceReferences` can resolve every `provenance`/`evidence`
- * `sourceId` -- and rendering it through P2-10's existing, unmodified
- * `toOkfDocument`/`serializeOkfYaml` (`@phoenix-ai/knowledge-graph`).
+ * `CanonicalKnowledgeObject`s (`objects`, via P3-06/P3-07's bridges) and a
+ * `relationships` array (`bridge-relationships.ts`, a Phase 4 prerequisite
+ * fix, ADR 0023 -- not always empty as originally shipped; see that ADR for
+ * why the original "always empty" scope boundary was a mapping gap, not an
+ * extraction gap) -- this ticket does NOT invent any new mapping from raw
+ * facts to canonical shape, since that boundary was already drawn
+ * deliberately at each bridge (ADR 0018 decision 4, ADR 0019 decision 4,
+ * ADR 0020 decision 5, ADR 0023: only what is directly, deterministically
+ * evidenced bridges; the call graph and raw config facts have no canonical
+ * shape yet and stay facts for `inference-engine`). What THIS ticket adds is
+ * the missing last step: wrapping those already-canonical objects and
+ * relationships into a real, complete `CanonicalKnowledgeBundle` -- with a
+ * `sources` registry so `validateSourceReferences` can resolve every
+ * `provenance`/`evidence` `sourceId` -- and rendering it through P2-10's
+ * existing, unmodified `toOkfDocument`/`serializeOkfYaml`
+ * (`@phoenix-ai/knowledge-graph`).
  *
  * No new canonical model, no new validation logic, and no new YAML
  * serialization is written here -- reusing P2-10's machinery exactly is the
