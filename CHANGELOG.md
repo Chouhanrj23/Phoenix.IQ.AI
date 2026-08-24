@@ -371,6 +371,56 @@ consistency}.ts` — P4-02's pure, parameterized `MERGE` write-operation builder
   idempotency (12/29 both times), queried back exactly, and confirmed consistent (`consistent: true`,
   0 differences) via `checkGraphConsistency`; a second, persistent (`docker-compose`) run confirmed the
   real `/api/full-graph` HTTP contract end to end. See ADR 0024 and `docs/phase-4/README.md`.
+- **Phase 5 — P5-01 through P5-10 (Business understanding):** `packages/inference-engine/src/` —
+  domain-agnostic inference of business vocabulary, concepts, capabilities, journeys, entity states,
+  and business↔technical traceability from Phase 2/3/4's already-verified OKF facts, never from raw
+  source. Reuses 11 existing-but-previously-unpopulated Phase 2 kinds/relationship-kinds
+  (`domain.entity`/`domain.entity-state`, `journey.journey`/`.flow`/`.action`, `hasState`/
+  `transitionsTo`/`readsEntity`/`writesEntity`/`triggersTransition`/`contains`/`supports`) and adds
+  exactly one new, additive kind (`business.capability`, plus `comprises`/`realizedBy` and the
+  cross-cutting `groundedIn` relationship kinds) via Phase 2's already-open `kind: string` vocabulary —
+  zero changes to `packages/knowledge-graph` itself. `inference-contract.ts` (P5-01) defines the one
+  `InferenceProvider<TInput, TOutput>` contract and the single documented, deterministic confidence
+  formula every stage uses; no LLM is connected (none exists anywhere in this repo), by explicit design.
+  `vocabulary.ts` (P5-02), `concept-inference.ts` (P5-03), `capability-inference.ts` (P5-04),
+  `journey-inference.ts` (P5-05), `state-inference.ts` (P5-06), `journey-mapping.ts` (P5-07), and
+  `traceability.ts` (P5-08) implement the remaining pipeline stages, each driven by structural,
+  domain-neutral rules (naming conventions, CRUD-verb ordering, module co-location) rather than any
+  business-noun lookup table. P5-09: domain-neutrality verified mechanically — a scanner
+  (`tests/domain-agnostic.test.ts`) reads every actual `src/*.ts` file's text for forbidden business
+  nouns and runs the full pipeline over two lexically unrelated placeholder vocabularies, catching and
+  fixing two genuine issues in the implementation itself (an illustrative "Order" in two doc-comments;
+  an inconsistent verb table between `vocabulary.ts` and `state-inference.ts`). P5-10: the same
+  pipeline run over two genuinely different, honestly-disclosed representative fixtures grounded in
+  this repo's own existing demo data — Aurora e-commerce (`packages/knowledge-graph/samples/
+aurora-commerce.sample.okf.yaml`) and a fintech digital-banking system (`apps/web/src/data/mock/
+fintech/fixtures.ts`, "nimbus-financial") — producing structurally analogous, non-overlapping
+  business output for both (`tests/aurora-fintech-validation.test.ts`), with neither claimed as a real
+  external repository extraction. 90 new tests across 11 test files, all passing. See ADR 0025 and
+  `docs/phase-5/README.md`.
+- **Phase 5 — corrective fixes (post-acceptance validation audit):** a strict audit found the Phase 5
+  pipeline, though green against its own curated fixtures, had never been proven against Phase 3's real
+  producer output shape and had two genuine gaps. Five fixes, `packages/inference-engine/src/`:
+  (1) `vocabulary.ts`'s `normalizeIdentifierText` now derives a generic `normalizedAction`
+  (`create`/`read`/`update`/`terminate`) from the HTTP method alone for real REST operation names
+  (`"GET /owners/{id}"`, Phase 3's actual shape) that have no bare leading verb — consumed by
+  `journey-inference.ts`/`state-inference.ts`/`journey-mapping.ts`; (2) `capability-inference.ts` gained
+  a documented SECONDARY module-key fallback deriving a real Java-package-directory signal from
+  `Evidence.locator` file paths for flat/monolith repositories whose `repo://x` provenance carries no
+  service-boundary path; (3) `state-inference.ts` now derives real provenance/evidence per inferred
+  `domain.entity-state` from its actual status-verb operation evidence (`deriveProvenanceFrom`/
+  `deriveEvidenceFrom`, the same mechanism `concept-inference.ts` already used) and returns
+  `stateGroundingLinks` that `traceability.ts`'s new `buildStateGroundingRelationships` turns into real
+  `groundedIn` edges, closing a traceability hole `explainTraceability` previously could not resolve for
+  any state object; (4) `domain-agnostic.test.ts`/`aurora-fintech-validation.test.ts` gained REST-style
+  evidence fixtures ADDED ALONGSIDE the existing curated ones; (5) `concept-inference.ts`'s new
+  `existingEntityResolutionProvider` wires P5-01's previously-unused `InferenceProvider`/
+  `AmbiguousInferenceResult` contract through the one genuine ambiguity point in the pipeline. Validated
+  directly against the real `packages/extraction-engine/samples/spring-petclinic.okf.yaml` extraction:
+  capabilities went from 0 → 3 real clusters, journeys 0 → 5, entity states 0 → 5, and
+  `explainTraceability` now resolves a real state object back to a real source location
+  (`OwnerController.java#L48-L179`). 33 new/updated tests (123 total in the package, up from 90). See
+  ADR 0025 addendum and `docs/phase-5/README.md` "Corrective fixes."
 
 ### Changed
 

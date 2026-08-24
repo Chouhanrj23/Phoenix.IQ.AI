@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { MODULE_NAME, placeholder } from '../src/index.js';
+import * as inferenceEngine from '../src/index.js';
 
-describe('inference-engine scaffold', () => {
-  it('exposes its module name', () => {
-    expect(MODULE_NAME).toBe('inference-engine');
-  });
-
-  it('placeholder returns a string', () => {
-    expect(typeof placeholder()).toBe('string');
+describe('inference-engine public API', () => {
+  it('exposes every Phase 5 stage function', () => {
+    expect(typeof inferenceEngine.extractTechnicalEvidence).toBe('function');
+    expect(typeof inferenceEngine.extractVocabulary).toBe('function');
+    expect(typeof inferenceEngine.inferBusinessConcepts).toBe('function');
+    expect(typeof inferenceEngine.materializeBusinessConcepts).toBe('function');
+    expect(typeof inferenceEngine.inferBusinessCapabilities).toBe('function');
+    expect(typeof inferenceEngine.materializeBusinessCapabilities).toBe('function');
+    expect(typeof inferenceEngine.inferJourneys).toBe('function');
+    expect(typeof inferenceEngine.inferEntityStates).toBe('function');
+    expect(typeof inferenceEngine.mapJourneysToEntitiesAndStates).toBe('function');
+    expect(typeof inferenceEngine.explainTraceability).toBe('function');
   });
 });
