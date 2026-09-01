@@ -106,7 +106,8 @@ function crossRefsFor(bundle: GraphBundle, label: string, nodeId: string): Graph
   }
 
   for (const nfr of bundle.nonFunctionalRequirements) {
-    if (!nfr.appliesTo.some((target) => mentions(target, label) || mentions(label, target))) continue;
+    if (!nfr.appliesTo.some((target) => mentions(target, label) || mentions(label, target)))
+      continue;
     refs.push({
       id: nfr.id,
       kind: 'nfr',
@@ -212,10 +213,16 @@ export function buildFullGraph(bundle: GraphBundle): { nodes: GraphNode[]; edges
   for (const c of bundle.containerNodes) {
     const talksTo = bundle.containerEdges
       .filter((e) => e.source === c.id)
-      .map((e) => `${e.label} → ${bundle.containerNodes.find((n) => n.id === e.target)?.name ?? e.target}`);
+      .map(
+        (e) =>
+          `${e.label} → ${bundle.containerNodes.find((n) => n.id === e.target)?.name ?? e.target}`,
+      );
     const calledBy = bundle.containerEdges
       .filter((e) => e.target === c.id)
-      .map((e) => `${bundle.containerNodes.find((n) => n.id === e.source)?.name ?? e.source} — ${e.label}`);
+      .map(
+        (e) =>
+          `${bundle.containerNodes.find((n) => n.id === e.source)?.name ?? e.source} — ${e.label}`,
+      );
 
     nodes.push({
       id: c.id,
@@ -240,7 +247,12 @@ export function buildFullGraph(bundle: GraphBundle): { nodes: GraphNode[]; edges
         routeLabel: 'Architecture (C4)',
       }),
     });
-    edges.push({ id: `sys-${c.id}`, source: bundle.systemSummary.id, target: c.id, label: 'contains' });
+    edges.push({
+      id: `sys-${c.id}`,
+      source: bundle.systemSummary.id,
+      target: c.id,
+      label: 'contains',
+    });
   }
   for (const e of bundle.containerEdges) {
     edges.push({ id: e.id, source: e.source, target: e.target, label: e.label });
@@ -336,7 +348,7 @@ export function buildFullGraph(bundle: GraphBundle): { nodes: GraphNode[]; edges
           { label: 'Journeys', items: theirJourneys.map((j) => j.name) },
         ],
         metadata: p.metadata,
-        route: '/personas',
+        route: `/personas?persona=${p.id}`,
         routeLabel: 'Personas & journeys',
       }),
     });
@@ -371,14 +383,22 @@ export function buildFullGraph(bundle: GraphBundle): { nodes: GraphNode[]; edges
             label: 'Execution flows',
             items: realisedBy.map((f) => `${f.name} — ${f.steps.length} steps`),
           },
-          { label: 'Persona pain points carried into this journey', items: persona?.painPoints ?? [] },
+          {
+            label: 'Persona pain points carried into this journey',
+            items: persona?.painPoints ?? [],
+          },
         ],
         metadata: j.metadata,
-        route: '/personas',
+        route: `/personas?persona=${j.personaId}&journey=${j.id}`,
         routeLabel: 'Personas & journeys',
       }),
     });
-    edges.push({ id: `${j.personaId}-${j.id}`, source: j.personaId, target: j.id, label: 'experiences' });
+    edges.push({
+      id: `${j.personaId}-${j.id}`,
+      source: j.personaId,
+      target: j.id,
+      label: 'experiences',
+    });
     for (const flowId of j.flowIds) {
       const flow = bundle.executionFlows.find((f) => f.id === flowId);
       if (flow) {
@@ -419,7 +439,8 @@ export function buildFullGraph(bundle: GraphBundle): { nodes: GraphNode[]; edges
           {
             label: 'Weakest links',
             items: weakSteps.map(
-              (s) => `${s.name}: ${s.metadata.confidence.rationale ?? `${s.metadata.confidence.level} confidence`}`,
+              (s) =>
+                `${s.name}: ${s.metadata.confidence.rationale ?? `${s.metadata.confidence.level} confidence`}`,
             ),
           },
         ],
@@ -484,7 +505,12 @@ export function buildFullGraph(bundle: GraphBundle): { nodes: GraphNode[]; edges
           routeLabel: 'Product backlog',
         }),
       });
-      edges.push({ id: `${e.id}-${feature.id}`, source: e.id, target: feature.id, label: 'contains' });
+      edges.push({
+        id: `${e.id}-${feature.id}`,
+        source: e.id,
+        target: feature.id,
+        label: 'contains',
+      });
 
       for (const story of feature.stories) {
         nodes.push({

@@ -80,4 +80,35 @@ describe('graph node dossiers', () => {
       expect(ids.has(edge.target), `${edge.id} target`).toBe(true);
     }
   });
+
+  // PC-02: Persona/Journey node "Projected onto" links must deep-link to the
+  // specific item (via ?persona=/?journey=), not just the generic page —
+  // otherwise "View in Personas & journeys" from the graph explorer would
+  // land on an unselected page for every persona/journey node.
+  it('deep-links Persona and Journey node routes to the specific item, not just the generic page', async () => {
+    const { nodes } = await mockProvider.getFullGraph();
+    const personaNodes = nodes.filter((n) => n.kind === 'Persona');
+    const journeyNodes = nodes.filter((n) => n.kind === 'Journey');
+    expect(personaNodes.length).toBeGreaterThan(0);
+    expect(journeyNodes.length).toBeGreaterThan(0);
+    for (const node of personaNodes) {
+      expect(node.detail?.route).toBe(`/personas?persona=${node.id}`);
+    }
+    for (const node of journeyNodes) {
+      expect(node.detail?.route).toMatch(/^\/personas\?persona=.+&journey=.+$/);
+      expect(node.detail?.route).toContain(`journey=${node.id}`);
+    }
+  });
+
+  it('every Persona -> Journey edge connects a real persona to a real journey it experiences', async () => {
+    const { nodes, edges } = await mockProvider.getFullGraph();
+    const personaIds = new Set(nodes.filter((n) => n.kind === 'Persona').map((n) => n.id));
+    const journeyIds = new Set(nodes.filter((n) => n.kind === 'Journey').map((n) => n.id));
+    const experiencesEdges = edges.filter((e) => e.label === 'experiences');
+    expect(experiencesEdges.length).toBeGreaterThan(0);
+    for (const edge of experiencesEdges) {
+      expect(personaIds.has(edge.source)).toBe(true);
+      expect(journeyIds.has(edge.target)).toBe(true);
+    }
+  });
 });

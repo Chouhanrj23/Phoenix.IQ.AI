@@ -99,4 +99,14 @@ describe('apiProvider — fallback to mock fixture data for not-yet-implemented 
     expect(epics.length).toBeGreaterThan(0);
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  // PC-01: business capabilities have no @phoenix-ai/api route either (Phase 5
+  // output was never wired through @phoenix-ai/graph-persistence/apps/api) —
+  // same fallback discipline as the four methods above, not a new pattern.
+  it('returns fixture data without calling fetch for business capabilities', async () => {
+    const fetchMock = mockFetchOnce({});
+    const capabilities = await apiProvider.getBusinessCapabilities();
+    expect(capabilities.length).toBeGreaterThan(0);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

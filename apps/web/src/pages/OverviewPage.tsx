@@ -31,6 +31,9 @@ import { Badge } from '../components/ui/badge.js';
 import { PageHeader } from '../components/page-header.js';
 import { LoadingState, ErrorState } from '../components/loading-state.js';
 import { CONFIDENCE_COLORS } from '../components/confidence-badge.js';
+import { BusinessOverviewSection } from '../components/business-overview.js';
+import { ConnectedSourcesSummary } from '../components/connected-sources.js';
+import { computeConnectedSources } from '../lib/connected-sources.js';
 
 const GAP_SEVERITY_COLORS: Record<GapSeverity, string> = {
   blocking: '#e11d48',
@@ -56,6 +59,13 @@ export function OverviewPage(): JSX.Element {
   const gapItems = useAsync(() => dataProvider.getGapItems(), []);
   const driftHistory = useAsync(() => dataProvider.getDriftHistory(), []);
   const fullGraph = useAsync(() => dataProvider.getFullGraph(), []);
+  const personas = useAsync(() => dataProvider.getPersonas(), []);
+  const journeys = useAsync(() => dataProvider.getJourneys(), []);
+  const capabilities = useAsync(() => dataProvider.getBusinessCapabilities(), []);
+  const flows = useAsync(() => dataProvider.getExecutionFlows(), []);
+  const deployment = useAsync(() => dataProvider.getDeploymentTopology(), []);
+  const integrations = useAsync(() => dataProvider.getIntegrations(), []);
+  const nfrs = useAsync(() => dataProvider.getNonFunctionalRequirements(), []);
 
   const loading =
     summary.loading ||
@@ -65,7 +75,14 @@ export function OverviewPage(): JSX.Element {
     driftAlerts.loading ||
     gapItems.loading ||
     driftHistory.loading ||
-    fullGraph.loading;
+    fullGraph.loading ||
+    personas.loading ||
+    journeys.loading ||
+    capabilities.loading ||
+    flows.loading ||
+    deployment.loading ||
+    integrations.loading ||
+    nfrs.loading;
   const error =
     summary.error ??
     architecture.error ??
@@ -74,7 +91,52 @@ export function OverviewPage(): JSX.Element {
     driftAlerts.error ??
     gapItems.error ??
     driftHistory.error ??
-    fullGraph.error;
+    fullGraph.error ??
+    personas.error ??
+    journeys.error ??
+    capabilities.error ??
+    flows.error ??
+    deployment.error ??
+    integrations.error ??
+    nfrs.error;
+
+  const domainEntityNames = useMemo(() => {
+    if (!domains.data) return [];
+    const names = new Set<string>();
+    for (const domain of domains.data) {
+      for (const aggregate of domain.aggregates) {
+        for (const entity of aggregate.entities) names.add(entity);
+      }
+    }
+    return [...names].sort();
+  }, [domains.data]);
+
+  const connectedSources = useMemo(() => {
+    if (loading || error) return [];
+    return computeConnectedSources({
+      personas: personas.data ?? [],
+      journeys: journeys.data ?? [],
+      flows: flows.data ?? [],
+      domains: domains.data ?? [],
+      capabilities: capabilities.data ?? [],
+      containers: architecture.data?.nodes ?? [],
+      deploymentNodes: deployment.data ?? [],
+      integrations: integrations.data ?? [],
+      nonFunctionalRequirements: nfrs.data ?? [],
+    });
+  }, [
+    loading,
+    error,
+    personas.data,
+    journeys.data,
+    flows.data,
+    domains.data,
+    capabilities.data,
+    architecture.data,
+    deployment.data,
+    integrations.data,
+    nfrs.data,
+  ]);
 
   const confidenceStats = useMemo(() => {
     if (!architecture.data || !domains.data || !reviewItems.data) return [];
@@ -152,6 +214,19 @@ export function OverviewPage(): JSX.Element {
     <div>
       <PageHeader title={s.name} description={s.description} />
 
+      <BusinessOverviewSection
+        personas={personas.data ?? []}
+        journeys={journeys.data ?? []}
+        capabilities={capabilities.data ?? []}
+        entityNames={domainEntityNames}
+        services={architecture.data?.nodes ?? []}
+      />
+
+      <div className="mb-6">
+        <ConnectedSourcesSummary groups={connectedSources} />
+      </div>
+
+      <h2 className="mb-3 text-sm font-semibold text-muted-foreground">System Health</h2>
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">

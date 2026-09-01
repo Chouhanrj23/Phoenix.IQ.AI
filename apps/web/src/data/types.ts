@@ -90,6 +90,22 @@ export interface Journey {
 }
 
 // ---------------------------------------------------------------------------
+// Business capabilities (Phase 5 output: `business.capability` OKF objects —
+// see packages/inference-engine/src/capability-inference.ts). `domainId`
+// links back to the Domain this capability was clustered from, so a future
+// drill-down (PC-02/PC-03) can navigate capability -> domain -> entities
+// without a second, parallel identity scheme.
+// ---------------------------------------------------------------------------
+
+export interface BusinessCapability {
+  id: string;
+  name: string;
+  description: string;
+  domainId: string;
+  metadata: GraphElementMetadata;
+}
+
+// ---------------------------------------------------------------------------
 // Epics / Features / Stories (OKF output: epics/features/stories)
 // ---------------------------------------------------------------------------
 
@@ -199,6 +215,7 @@ export interface OkfDataProvider {
   getDriftAlerts(): Promise<DriftAlert[]>;
   getPersonas(): Promise<Persona[]>;
   getJourneys(): Promise<Journey[]>;
+  getBusinessCapabilities(): Promise<BusinessCapability[]>;
   getEpics(): Promise<Epic[]>;
   getDeploymentTopology(): Promise<DeploymentNode[]>;
   getNonFunctionalRequirements(): Promise<NonFunctionalRequirement[]>;

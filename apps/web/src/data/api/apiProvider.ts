@@ -16,11 +16,15 @@ async function getJson<T>(path: string): Promise<T> {
  * DEMO/FALLBACK DATA — not real backend data.
  *
  * @phoenix-ai/api has no route yet for execution flows, personas, journeys,
- * or epics (later-phase work over @phoenix-ai/knowledge-graph /
- * @phoenix-ai/okf-renderers / @phoenix-ai/review-loop / a real drift engine —
- * see docs/phase-1/README.md). Rather than letting the pages that need them
- * 404 in `api` mode, those four methods fall back to the mock provider's
- * fixture data below. apiProvider has no concept of company selection (the
+ * business capabilities, or epics (later-phase work over
+ * @phoenix-ai/knowledge-graph / @phoenix-ai/okf-renderers /
+ * @phoenix-ai/review-loop / a real drift engine — see docs/phase-1/README.md).
+ * Business capabilities specifically are Phase 5 output
+ * (@phoenix-ai/inference-engine's `business.capability` objects) that has
+ * never been wired through @phoenix-ai/graph-persistence/@phoenix-ai/api —
+ * see docs/phase-5/README.md "Known limitations". Rather than letting the
+ * pages that need them 404 in `api` mode, those five methods fall back to
+ * the mock provider's fixture data below. apiProvider has no concept of company selection (the
  * backend only ever serves the Aurora dataset), so the fallback is pinned to
  * DEFAULT_COMPANY rather than whatever company is selected in the UI, to
  * avoid mixing live Aurora API data with a different company's fixtures.
@@ -53,6 +57,7 @@ export const apiProvider: OkfDataProvider = {
   getDriftAlerts: () => getJson('/api/drift-alerts'),
   getPersonas: () => fallback.getPersonas(),
   getJourneys: () => fallback.getJourneys(),
+  getBusinessCapabilities: () => fallback.getBusinessCapabilities(),
   getEpics: () => fallback.getEpics(),
   getDeploymentTopology: () => getJson('/api/deployment-topology'),
   getNonFunctionalRequirements: () => getJson('/api/nfrs'),

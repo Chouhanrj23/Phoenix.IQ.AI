@@ -35,13 +35,20 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { PageHeader } from '../components/page-header.js';
 import { FullscreenDiagram } from '../components/fullscreen-diagram.js';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card.js';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '../components/ui/card.js';
 import { Badge } from '../components/ui/badge.js';
 import { Button } from '../components/ui/button.js';
 import { cn } from '../lib/utils.js';
 import { pairwise } from '../lib/pairwise.js';
 
-type StageColor = 'slate' | 'violet' | 'amber' | 'teal' | 'rose' | 'blue' | 'orange' | 'cyan' | 'emerald';
+type StageColor =
+  'slate' | 'violet' | 'amber' | 'teal' | 'rose' | 'blue' | 'orange' | 'cyan' | 'emerald';
 type StageStatus = 'pending' | 'active' | 'awaiting_review' | 'done';
 
 interface Stage {
@@ -55,7 +62,10 @@ interface Stage {
   log: string[];
 }
 
-const COLOR_CLASSES: Record<StageColor, { icon: string; badge: string; dot: string; stroke: string }> = {
+const COLOR_CLASSES: Record<
+  StageColor,
+  { icon: string; badge: string; dot: string; stroke: string }
+> = {
   slate: {
     icon: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
     badge: 'border-transparent bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
@@ -64,13 +74,15 @@ const COLOR_CLASSES: Record<StageColor, { icon: string; badge: string; dot: stri
   },
   violet: {
     icon: 'bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300',
-    badge: 'border-transparent bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+    badge:
+      'border-transparent bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
     dot: 'bg-violet-500',
     stroke: '#8b5cf6',
   },
   amber: {
     icon: 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300',
-    badge: 'border-transparent bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+    badge:
+      'border-transparent bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
     dot: 'bg-amber-500',
     stroke: '#d97706',
   },
@@ -94,7 +106,8 @@ const COLOR_CLASSES: Record<StageColor, { icon: string; badge: string; dot: stri
   },
   orange: {
     icon: 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300',
-    badge: 'border-transparent bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+    badge:
+      'border-transparent bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
     dot: 'bg-orange-500',
     stroke: '#f97316',
   },
@@ -106,7 +119,8 @@ const COLOR_CLASSES: Record<StageColor, { icon: string; badge: string; dot: stri
   },
   emerald: {
     icon: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300',
-    badge: 'border-transparent bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    badge:
+      'border-transparent bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
     dot: 'bg-emerald-500',
     stroke: '#10b981',
   },
@@ -123,7 +137,7 @@ const STAGES: Stage[] = [
     detail:
       'Connects to source code, docs, tickets, logs, gateways, data models and recordings. Each artifact is stamped with source type, version/commit and checksum. Supports incremental fetch on re-runs.',
     log: [
-      'Connected 6 sources: Git (ClaimsCore, 340k LOC), Confluence (212 pages), Jira (1,847 tickets)',
+      "Connected source-code, ticket, and documentation repositories for this walkthrough — see the Overview page for this system's real connected-source counts",
       'Splunk logs (30-day window), Oracle DB schema, Kong API gateway specs',
       'Normalized to common intermediate representation — 1 source (SharePoint SOPs) access pending, recorded as gap',
     ],
@@ -341,7 +355,15 @@ function sleep(ms: number): Promise<void> {
 const HANDLE_DOT = '!h-2 !w-2 !border-none !bg-border';
 
 function AgentNode({ data }: NodeProps<AgentNodeData>): JSX.Element {
-  const { stage, status, isSelected, needsTargetTop, needsTargetLeft, needsSourceRight, needsSourceBottom } = data;
+  const {
+    stage,
+    status,
+    isSelected,
+    needsTargetTop,
+    needsTargetLeft,
+    needsSourceRight,
+    needsSourceBottom,
+  } = data;
   const Icon = stage.icon;
   const colors = COLOR_CLASSES[stage.color];
 
@@ -351,19 +373,34 @@ function AgentNode({ data }: NodeProps<AgentNodeData>): JSX.Element {
         'flex h-[76px] w-[184px] flex-col justify-between rounded-lg border bg-card px-3 py-2.5 shadow-sm transition-all',
         status === 'active' && 'border-primary ring-2 ring-primary',
         status === 'awaiting_review' && 'border-emerald-400 ring-2 ring-emerald-300 animate-pulse',
-        status !== 'active' && status !== 'awaiting_review' && isSelected && 'border-violet-400 ring-2 ring-violet-300',
+        status !== 'active' &&
+          status !== 'awaiting_review' &&
+          isSelected &&
+          'border-violet-400 ring-2 ring-violet-300',
         status !== 'active' && status !== 'awaiting_review' && !isSelected && 'border-border',
         status === 'done' && 'opacity-60',
       )}
     >
       {needsTargetTop ? (
-        <Handle type="target" position={Position.Top} id="target-top" className={cn('!left-1/2', HANDLE_DOT)} />
+        <Handle
+          type="target"
+          position={Position.Top}
+          id="target-top"
+          className={cn('!left-1/2', HANDLE_DOT)}
+        />
       ) : null}
       {needsTargetLeft ? (
-        <Handle type="target" position={Position.Left} id="target-left" className={cn('!top-1/2', HANDLE_DOT)} />
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="target-left"
+          className={cn('!top-1/2', HANDLE_DOT)}
+        />
       ) : null}
       <div className="flex items-center justify-between gap-2">
-        <div className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded', colors.icon)}>
+        <div
+          className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded', colors.icon)}
+        >
           <Icon className="h-3.5 w-3.5" />
         </div>
         {status === 'done' ? (
@@ -380,10 +417,20 @@ function AgentNode({ data }: NodeProps<AgentNodeData>): JSX.Element {
       </div>
       <div className="line-clamp-2 text-[11.5px] font-semibold leading-tight">{stage.name}</div>
       {needsSourceRight ? (
-        <Handle type="source" position={Position.Right} id="source-right" className={cn('!top-1/2', HANDLE_DOT)} />
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="source-right"
+          className={cn('!top-1/2', HANDLE_DOT)}
+        />
       ) : null}
       {needsSourceBottom ? (
-        <Handle type="source" position={Position.Bottom} id="source-bottom" className={cn('!left-1/2', HANDLE_DOT)} />
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="source-bottom"
+          className={cn('!left-1/2', HANDLE_DOT)}
+        />
       ) : null}
     </div>
   );
@@ -515,7 +562,11 @@ function DecisionBadge({ action }: { action: ReviewAction }): JSX.Element {
   }
   return (
     <Badge variant="danger" className="gap-1">
-      {action === 'reject_rollback' ? <Undo2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+      {action === 'reject_rollback' ? (
+        <Undo2 className="h-3 w-3" />
+      ) : (
+        <XCircle className="h-3 w-3" />
+      )}
       {ACTION_LABEL[action]}
     </Badge>
   );
@@ -562,10 +613,15 @@ function ReviewGatePanel({
       </CardHeader>
       <CardContent className="space-y-3">
         <div>
-          <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Stage output to review</div>
+          <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
+            Stage output to review
+          </div>
           <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
             {stage.log.map((line) => (
-              <li key={line} className="rounded bg-background/70 px-2 py-1 font-mono text-[11px] leading-snug text-muted-foreground">
+              <li
+                key={line}
+                className="rounded bg-background/70 px-2 py-1 font-mono text-[11px] leading-snug text-muted-foreground"
+              >
                 {line}
               </li>
             ))}
@@ -581,7 +637,10 @@ function ReviewGatePanel({
         />
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" onClick={() => onDecision({ action: 'approve', comment: comment.trim() || undefined })}>
+          <Button
+            size="sm"
+            onClick={() => onDecision({ action: 'approve', comment: comment.trim() || undefined })}
+          >
             <Check className="h-3.5 w-3.5" /> Approve & continue
           </Button>
 
@@ -613,7 +672,9 @@ function ReviewGatePanel({
                 variant="outline"
                 className="border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-400"
                 disabled={needsComment}
-                onClick={() => onDecision({ action: 'reject_rollback', comment: comment.trim(), rollbackTo })}
+                onClick={() =>
+                  onDecision({ action: 'reject_rollback', comment: comment.trim(), rollbackTo })
+                }
               >
                 <Undo2 className="h-3.5 w-3.5" /> Reject & roll back
               </Button>
@@ -643,7 +704,9 @@ function DecisionHistory({ decisions }: { decisions: Decision[] }): JSX.Element 
     <Card className="mb-4">
       <CardHeader>
         <CardTitle className="text-sm">Review decisions</CardTitle>
-        <CardDescription>Audit trail for this run — every gate, decision, and reason.</CardDescription>
+        <CardDescription>
+          Audit trail for this run — every gate, decision, and reason.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         {reversed.map((d, idx) => {
@@ -660,7 +723,9 @@ function DecisionHistory({ decisions }: { decisions: Decision[] }): JSX.Element 
                   <span className="text-[11px] text-muted-foreground">attempt {d.attempt}</span>
                   <DecisionBadge action={d.action} />
                 </div>
-                {d.comment ? <p className="text-xs text-muted-foreground">&ldquo;{d.comment}&rdquo;</p> : null}
+                {d.comment ? (
+                  <p className="text-xs text-muted-foreground">&ldquo;{d.comment}&rdquo;</p>
+                ) : null}
                 {d.action === 'reject_rollback' && d.rollbackTo !== undefined ? (
                   <p className="text-xs text-muted-foreground">
                     rolled back to {STAGES[d.rollbackTo]?.code} · {STAGES[d.rollbackTo]?.name}
@@ -771,7 +836,10 @@ export function AgentPipelinePage(): JSX.Element {
     setSelectedIndex(i);
     setLogs((prev) => [
       ...prev,
-      { stageIndex: i, text: `${stage.name} — starting${attempt > 1 ? ` (attempt ${attempt}, revising per feedback)` : ''}` },
+      {
+        stageIndex: i,
+        text: `${stage.name} — starting${attempt > 1 ? ` (attempt ${attempt}, revising per feedback)` : ''}`,
+      },
     ]);
     for (const line of stage.log) {
       await sleep(delay);
@@ -834,7 +902,10 @@ export function AgentPipelinePage(): JSX.Element {
       if (decision.action === 'approve') {
         setLogs((prev) => [
           ...prev,
-          { stageIndex: i, text: `✅ reviewer approved${decision.comment ? ` — "${decision.comment}"` : ''}` },
+          {
+            stageIndex: i,
+            text: `✅ reviewer approved${decision.comment ? ` — "${decision.comment}"` : ''}`,
+          },
         ]);
         setCompleted((prev) => new Set(prev).add(i));
         i++;
@@ -882,7 +953,10 @@ export function AgentPipelinePage(): JSX.Element {
     setActiveIndex(-1);
     setLogs((prev) => [
       ...prev,
-      { stageIndex: -1, text: 'Orchestrator — run complete, graph v14 published, reproducible for identical inputs' },
+      {
+        stageIndex: -1,
+        text: 'Orchestrator — run complete, graph v14 published, reproducible for identical inputs',
+      },
     ]);
     setRunning(false);
   }
@@ -1030,21 +1104,37 @@ export function AgentPipelinePage(): JSX.Element {
               )}
             >
               <div className="flex shrink-0 items-center justify-between border-b border-slate-800 px-4 py-2 text-xs text-slate-400">
-                <span>run log · sample system: Evernorth ClaimsCore (legacy claims processing platform)</span>
-                <span>{running ? (reviewGate ? 'awaiting review…' : 'running…') : logs.length > 0 ? 'complete' : 'idle'}</span>
+                <span>
+                  run log · sample system: Evernorth ClaimsCore (legacy claims processing platform)
+                </span>
+                <span>
+                  {running
+                    ? reviewGate
+                      ? 'awaiting review…'
+                      : 'running…'
+                    : logs.length > 0
+                      ? 'complete'
+                      : 'idle'}
+                </span>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 font-mono text-[12px] leading-7 text-slate-300">
                 {logs.length === 0 ? (
                   <div className="text-slate-500">
-                    — click &quot;Run demo&quot; to process a sample system through every agent stage —
+                    — click &quot;Run demo&quot; to process a sample system through every agent
+                    stage —
                   </div>
                 ) : (
                   logs.map((entry, idx) => {
-                    const sourceStage = entry.stageIndex >= 0 ? STAGES[entry.stageIndex] : undefined;
-                    const stageColor = sourceStage ? COLOR_CLASSES[sourceStage.color].dot : 'bg-violet-400';
+                    const sourceStage =
+                      entry.stageIndex >= 0 ? STAGES[entry.stageIndex] : undefined;
+                    const stageColor = sourceStage
+                      ? COLOR_CLASSES[sourceStage.color].dot
+                      : 'bg-violet-400';
                     return (
                       <div key={idx} className="flex items-start gap-2">
-                        <span className={cn('mt-2 h-1.5 w-1.5 shrink-0 rounded-full', stageColor)} />
+                        <span
+                          className={cn('mt-2 h-1.5 w-1.5 shrink-0 rounded-full', stageColor)}
+                        />
                         <span className="whitespace-pre-wrap">{entry.text}</span>
                       </div>
                     );
@@ -1079,7 +1169,10 @@ export function AgentPipelinePage(): JSX.Element {
                   </Badge>
                 ))}
                 {isGated(selectedIndex) ? (
-                  <Badge variant="outline" className="gap-1 text-[10px] text-emerald-700 dark:text-emerald-400">
+                  <Badge
+                    variant="outline"
+                    className="gap-1 text-[10px] text-emerald-700 dark:text-emerald-400"
+                  >
                     <ClipboardCheck className="h-2.5 w-2.5" /> review gate
                   </Badge>
                 ) : null}
@@ -1091,7 +1184,10 @@ export function AgentPipelinePage(): JSX.Element {
                 </div>
                 <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
                   {selectedStage.log.map((line) => (
-                    <li key={line} className="font-mono text-[11px] leading-snug text-muted-foreground">
+                    <li
+                      key={line}
+                      className="font-mono text-[11px] leading-snug text-muted-foreground"
+                    >
                       {line}
                     </li>
                   ))}

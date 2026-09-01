@@ -1,7 +1,30 @@
 import { describe, expect, it } from 'vitest';
-import { mockProvider } from '../src/data/mock/mockProvider.js';
+import { mockProvider, mockProviderFor } from '../src/data/mock/mockProvider.js';
 
 describe('mockProvider — extended demo data', () => {
+  // PC-01: Business Overview cards read real counts from getBusinessCapabilities().
+  it('returns business capabilities that each reference a real domain', async () => {
+    const capabilities = await mockProvider.getBusinessCapabilities();
+    const domains = await mockProvider.getDomains();
+    expect(capabilities.length).toBeGreaterThan(0);
+    const domainIds = new Set(domains.map((d) => d.id));
+    for (const capability of capabilities) {
+      expect(domainIds.has(capability.domainId)).toBe(true);
+      expect(capability.name.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('returns genuinely different business capabilities for each company (never a single hard-coded set)', async () => {
+    const aurora = await mockProviderFor('aurora').getBusinessCapabilities();
+    const fintech = await mockProviderFor('fintech').getBusinessCapabilities();
+    expect(aurora.length).toBeGreaterThan(0);
+    expect(fintech.length).toBeGreaterThan(0);
+    const auroraNames = new Set(aurora.map((c) => c.name));
+    const fintechNames = new Set(fintech.map((c) => c.name));
+    const overlap = [...auroraNames].filter((name) => fintechNames.has(name));
+    expect(overlap.length).toBe(0);
+  });
+
   it('returns personas and journeys that reference valid personas', async () => {
     const personas = await mockProvider.getPersonas();
     const journeys = await mockProvider.getJourneys();

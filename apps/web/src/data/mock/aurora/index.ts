@@ -11,6 +11,7 @@ import {
   systemSummary,
 } from './fixtures.js';
 import { personas, journeys } from './personas.js';
+import { capabilities } from './capabilities.js';
 import { epics } from './epics.js';
 import { deploymentNodes } from './deployment.js';
 import { nonFunctionalRequirements } from './nfrs.js';
@@ -49,6 +50,7 @@ export const auroraBundle = {
   driftAlerts,
   personas,
   journeys,
+  capabilities,
   epics,
   deploymentNodes,
   nonFunctionalRequirements,

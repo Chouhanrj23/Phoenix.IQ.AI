@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import ReactFlow, { Background, Controls, MiniMap, type Edge, type Node } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { Maximize2 } from 'lucide-react';
 import { dataProvider, type GraphNode } from '../data/index.js';
 import { useAsync } from '../lib/useAsync.js';
 import { PageHeader } from '../components/page-header.js';
@@ -9,7 +10,9 @@ import { CONFIDENCE_COLORS } from '../components/confidence-badge.js';
 import { FullscreenDiagram } from '../components/fullscreen-diagram.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card.js';
 import { Badge } from '../components/ui/badge.js';
+import { Button } from '../components/ui/button.js';
 import { NodeDetailPanel } from '../components/node-detail-panel.js';
+import { selectRepresentativeNodes } from '../lib/representative-view.js';
 import { cn } from '../lib/utils.js';
 
 // The mock provider only ever produces the first ten kinds below. The
@@ -46,11 +49,22 @@ const KIND_ORDER = [
 const COLUMN_WIDTH = 210;
 const ROW_HEIGHT = 56;
 
+/**
+ * PC-07 — representative view. The full graph is always fetched (nothing is
+ * deleted or excluded from the API response); this only caps how many
+ * nodes PER KIND are actually RENDERED by default, so a large real
+ * repository analysis doesn't dump hundreds of nodes onto the canvas the
+ * instant a client opens this page. "Show all nodes" (below) reveals
+ * everything with one click — the data was there the whole time.
+ */
+const REPRESENTATIVE_LIMIT_PER_KIND = 6;
+
 export function GraphExplorerPage(): JSX.Element {
   const { data, loading, error } = useAsync(() => dataProvider.getFullGraph(), []);
   const [visibleKinds, setVisibleKinds] = useState<Set<string> | null>(null);
   const [filterText, setFilterText] = useState('');
   const [selected, setSelected] = useState<GraphNode | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const allKinds = useMemo(() => {
     if (!data) return [];
@@ -60,48 +74,57 @@ export function GraphExplorerPage(): JSX.Element {
 
   const activeKinds = useMemo(() => visibleKinds ?? new Set(allKinds), [visibleKinds, allKinds]);
 
+  const selection = useMemo(() => {
+    if (!data) return null;
+    return selectRepresentativeNodes(
+      data.nodes,
+      data.edges,
+      activeKinds,
+      REPRESENTATIVE_LIMIT_PER_KIND,
+      showAll,
+    );
+  }, [data, activeKinds, showAll]);
+
   const { flowNodes, flowEdges } = useMemo(() => {
-    if (!data) return { flowNodes: [], flowEdges: [] };
+    if (!data || !selection) return { flowNodes: [] as Node[], flowEdges: [] as Edge[] };
     const columnIndex = new Map<string, number>();
     allKinds.forEach((k, i) => columnIndex.set(k, i));
-    const rowCounters = new Map<string, number>();
 
     const filterQuery = filterText.trim().toLowerCase();
     const visibleNodeIds = new Set<string>();
 
     const flowNodes: Node[] = [];
-    for (const n of data.nodes) {
-      if (!activeKinds.has(n.kind)) continue;
-      const col = columnIndex.get(n.kind) ?? 0;
-      const row = rowCounters.get(n.kind) ?? 0;
-      rowCounters.set(n.kind, row + 1);
-      const matches = !filterQuery || n.label.toLowerCase().includes(filterQuery);
-      const isSelected = n.id === selected?.id;
-      visibleNodeIds.add(n.id);
-      flowNodes.push({
-        id: n.id,
-        position: { x: col * COLUMN_WIDTH, y: row * ROW_HEIGHT },
-        data: {
-          label: (
-            <div className="text-left" style={{ opacity: matches ? 1 : 0.25 }}>
-              <div className="flex items-center gap-1.5 text-[11px] font-medium leading-tight">
-                <span
-                  className="h-1.5 w-1.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: CONFIDENCE_COLORS[n.confidenceLevel] }}
-                />
-                {n.label}
+    for (const [kind, capped] of selection.visibleNodesByKind) {
+      const col = columnIndex.get(kind) ?? 0;
+      capped.forEach((n, row) => {
+        const matches = !filterQuery || n.label.toLowerCase().includes(filterQuery);
+        const isSelected = n.id === selected?.id;
+        visibleNodeIds.add(n.id);
+        flowNodes.push({
+          id: n.id,
+          position: { x: col * COLUMN_WIDTH, y: row * ROW_HEIGHT },
+          data: {
+            label: (
+              <div className="text-left" style={{ opacity: matches ? 1 : 0.25 }}>
+                <div className="flex items-center gap-1.5 text-[11px] font-medium leading-tight">
+                  <span
+                    className="h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: CONFIDENCE_COLORS[n.confidenceLevel] }}
+                  />
+                  {n.label}
+                </div>
+                <div className="text-[9px] text-muted-foreground">{n.kind}</div>
               </div>
-              <div className="text-[9px] text-muted-foreground">{n.kind}</div>
-            </div>
-          ),
-        },
-        style: {
-          width: 190,
-          borderRadius: 6,
-          border: isSelected ? '2px solid hsl(221 83% 53%)' : '1px solid hsl(214 32% 91%)',
-          background: 'white',
-          padding: 6,
-        },
+            ),
+          },
+          style: {
+            width: 190,
+            borderRadius: 6,
+            border: isSelected ? '2px solid hsl(221 83% 53%)' : '1px solid hsl(214 32% 91%)',
+            background: 'white',
+            padding: 6,
+          },
+        });
       });
     }
 
@@ -117,7 +140,10 @@ export function GraphExplorerPage(): JSX.Element {
       }));
 
     return { flowNodes, flowEdges };
-  }, [data, activeKinds, allKinds, filterText, selected]);
+  }, [data, selection, allKinds, filterText, selected]);
+
+  const shownCount = selection?.shownCount ?? 0;
+  const totalCount = selection?.totalCount ?? 0;
 
   if (loading) return <LoadingState label="Loading knowledge graph…" />;
   if (error) return <ErrorState message={error.message} />;
@@ -156,6 +182,24 @@ export function GraphExplorerPage(): JSX.Element {
           </button>
         ))}
       </div>
+
+      {!showAll && shownCount < totalCount ? (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+          <Maximize2 className="h-3.5 w-3.5 shrink-0" />
+          Showing a representative {shownCount} of {totalCount} elements (up to{' '}
+          {REPRESENTATIVE_LIMIT_PER_KIND} per type, prioritising elements with real relationships).
+          <Button variant="outline" size="sm" onClick={() => setShowAll(true)} className="ml-auto">
+            Show all {totalCount}
+          </Button>
+        </div>
+      ) : showAll && totalCount > REPRESENTATIVE_LIMIT_PER_KIND ? (
+        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+          Showing all {totalCount} elements.
+          <Button variant="outline" size="sm" onClick={() => setShowAll(false)}>
+            Show representative view
+          </Button>
+        </div>
+      ) : null}
 
       <FullscreenDiagram>
         {(isFullscreen) => (

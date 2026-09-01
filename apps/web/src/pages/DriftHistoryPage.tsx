@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronRight, Plus, Minus, Pencil } from 'lucide-react';
 import type { DriftAlert } from '../data/index.js';
 import { dataProvider } from '../data/index.js';
@@ -16,7 +16,23 @@ const ICON_BY_CHANGE: Record<DriftAlert['changeType'], typeof Plus> = {
 
 export function DriftHistoryPage(): JSX.Element {
   const { data, loading, error } = useAsync(() => dataProvider.getDriftHistory(), []);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set(data?.[0] ? [data[0].id] : []));
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [seededDefault, setSeededDefault] = useState(false);
+
+  // PC-08 fix: the most recent run should start open, but `data` only
+  // arrives asynchronously (after this component's first render), so
+  // seeding `expanded` directly in `useState` above always produced an
+  // empty set in practice — the row only *looked* open because of a
+  // `|| i === 0` fallback in the render below, which also made that row
+  // impossible to ever collapse. Seeding once here (only the first time
+  // data arrives) preserves the "most recent run open by default" intent
+  // while leaving every row, including the first, genuinely toggleable.
+  useEffect(() => {
+    if (!seededDefault && data && data[0]) {
+      setExpanded(new Set([data[0].id]));
+      setSeededDefault(true);
+    }
+  }, [data, seededDefault]);
 
   function toggle(id: string): void {
     setExpanded((prev) => {
@@ -37,8 +53,8 @@ export function DriftHistoryPage(): JSX.Element {
         description="What changed between each differential run — the platform's continuous-currency guarantee made concrete, not just a point-in-time snapshot."
       />
       <div className="space-y-3">
-        {(data ?? []).map((run, i) => {
-          const isOpen = expanded.has(run.id) || i === 0;
+        {(data ?? []).map((run) => {
+          const isOpen = expanded.has(run.id);
           return (
             <Card key={run.id}>
               <button

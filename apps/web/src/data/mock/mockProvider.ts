@@ -37,6 +37,8 @@ function providerFor(bundle: CompanyBundle): OkfDataProvider {
 
     getJourneys: () => delay(bundle.journeys),
 
+    getBusinessCapabilities: () => delay(bundle.capabilities),
+
     getEpics: () => delay(bundle.epics),
 
     getDeploymentTopology: () => delay(bundle.deploymentNodes),

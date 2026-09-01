@@ -15,6 +15,8 @@ import { IntegrationsPage } from './pages/IntegrationsPage.js';
 import { GapAnalysisPage } from './pages/GapAnalysisPage.js';
 import { DriftHistoryPage } from './pages/DriftHistoryPage.js';
 import { GraphExplorerPage } from './pages/GraphExplorerPage.js';
+import { CorrelationExplorerPage } from './pages/CorrelationExplorerPage.js';
+import { SystemMapPage } from './pages/SystemMapPage.js';
 import { AgentPipelinePage } from './pages/AgentPipelinePage.js';
 import {
   getActiveCompany,
@@ -57,6 +59,8 @@ export function App(): JSX.Element {
                 <Routes>
                   <Route path="/" element={<OverviewPage />} />
                   <Route path="/graph" element={<GraphExplorerPage />} />
+                  <Route path="/correlation" element={<CorrelationExplorerPage />} />
+                  <Route path="/system-map" element={<SystemMapPage />} />
                   <Route path="/agents" element={<AgentPipelinePage />} />
                   <Route path="/architecture" element={<ArchitecturePage />} />
                   <Route path="/domains" element={<DomainModelPage />} />

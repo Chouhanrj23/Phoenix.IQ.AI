@@ -6,6 +6,8 @@ import { getCompany, type CompanyId } from '../data/index.js';
 import {
   LayoutDashboard,
   Share2,
+  Waypoints,
+  Map,
   Network,
   Boxes,
   Server,
@@ -34,6 +36,8 @@ const NAV_SECTIONS: Array<{ title: string | null; items: NavItem[] }> = [
     items: [
       { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
       { to: '/graph', label: 'Knowledge Graph', icon: Share2 },
+      { to: '/system-map', label: 'System Map', icon: Map },
+      { to: '/correlation', label: 'Cross-Correlation', icon: Waypoints },
       { to: '/agents', label: 'Agent Pipeline', icon: Bot },
     ],
   },
