@@ -4,10 +4,13 @@ import type {
   DeploymentNode,
   Domain,
   ExecutionFlow,
+  GraphElementMetadata,
   Integration,
   Journey,
   Persona,
+  ReviewItem,
 } from '../data/index.js';
+import { mentions } from './mentions.js';
 
 /**
  * PC-04 — cross-correlation engine. One graph, built once from the SAME
@@ -49,6 +52,21 @@ export interface CorrelationNode {
   readonly id: string;
   readonly label: string;
   readonly secondary?: string;
+  /**
+   * PC-09 — the object's own real `description` field, only when the
+   * underlying type actually has one (Journey, BusinessCapability, C4Node).
+   * Never composed or invented for kinds without one (Persona, Concept,
+   * Entity, Technology, Deployment, Integration) — see `describe()` below.
+   */
+  readonly description?: string;
+  /**
+   * PC-09 — the real provenance + confidence carried by the underlying
+   * object, when it is a full tracked object. Entity and Technology are
+   * derived label strings (not their own tracked objects anywhere in
+   * Phase 1-5), so they carry no metadata of their own — left undefined
+   * rather than borrowed from a neighboring object.
+   */
+  readonly metadata?: GraphElementMetadata;
 }
 
 export interface CorrelationEdge {
@@ -72,6 +90,13 @@ export interface CorrelationBundle {
   readonly containers: readonly C4Node[];
   readonly deploymentNodes: readonly DeploymentNode[];
   readonly integrations: readonly Integration[];
+  /**
+   * PC-09 — optional: only needed by callers that surface Review Status
+   * (currently the Cross-Correlation detail panel). Optional so every
+   * existing caller that doesn't fetch review items (System Map, Connected
+   * Sources, the correlation tests) keeps working unchanged.
+   */
+  readonly reviewItems?: readonly ReviewItem[];
 }
 
 export function nodeKey(kind: CorrelationKind, id: string): string {
@@ -98,6 +123,9 @@ export function buildCorrelationGraph(bundle: CorrelationBundle): CorrelationGra
       id: persona.id,
       label: persona.name,
       secondary: persona.role,
+      // Persona has no `description` field in the data model (only
+      // `role`/`goals`/`painPoints`) -- left undefined rather than composed.
+      metadata: persona.metadata,
     });
   }
   for (const journey of bundle.journeys) {
@@ -106,6 +134,8 @@ export function buildCorrelationGraph(bundle: CorrelationBundle): CorrelationGra
       kind: 'journey',
       id: journey.id,
       label: journey.name,
+      description: journey.description,
+      metadata: journey.metadata,
     });
   }
   for (const capability of bundle.capabilities) {
@@ -114,6 +144,8 @@ export function buildCorrelationGraph(bundle: CorrelationBundle): CorrelationGra
       kind: 'capability',
       id: capability.id,
       label: capability.name,
+      description: capability.description,
+      metadata: capability.metadata,
     });
   }
 
@@ -127,6 +159,10 @@ export function buildCorrelationGraph(bundle: CorrelationBundle): CorrelationGra
         id: aggregate.id,
         label: aggregate.name,
         secondary: domain.name,
+        // Aggregate has no `description` field (only `name`/`entities`) --
+        // its parent Domain has one, but that describes the domain, not
+        // this concept, so it is intentionally not borrowed here.
+        metadata: aggregate.metadata,
       });
       aggregateDomainId.set(aggregate.id, domain.id);
       for (const entityName of aggregate.entities) {
@@ -135,6 +171,9 @@ export function buildCorrelationGraph(bundle: CorrelationBundle): CorrelationGra
           kind: 'entity',
           id: entityName,
           label: entityName,
+          // A Domain Entity is a bare name string inside `Aggregate.entities`
+          // -- it is never its own tracked object anywhere in Phase 1-5, so
+          // it has no description and no independent metadata of its own.
         });
         const set = entityToAggregateIds.get(entityName) ?? new Set<string>();
         set.add(aggregate.id);
@@ -150,6 +189,8 @@ export function buildCorrelationGraph(bundle: CorrelationBundle): CorrelationGra
       id: container.id,
       label: container.name,
       ...(container.technology === undefined ? {} : { secondary: container.technology }),
+      description: container.description,
+      metadata: container.metadata,
     });
   }
 
@@ -157,6 +198,8 @@ export function buildCorrelationGraph(bundle: CorrelationBundle): CorrelationGra
     bundle.containers.map((c) => c.technology).filter((t): t is string => Boolean(t)),
   );
   for (const tech of technologies) {
+    // Technology is a bare string read off `C4Node.technology` -- never its
+    // own tracked object, so no description/metadata of its own exists.
     addNode({ key: nodeKey('technology', tech), kind: 'technology', id: tech, label: tech });
   }
 
@@ -171,6 +214,9 @@ export function buildCorrelationGraph(bundle: CorrelationBundle): CorrelationGra
       id: node.id,
       label: node.name,
       ...(env?.name === undefined ? {} : { secondary: env.name }),
+      // DeploymentNode has no `description` field (only runtime/scale, shown
+      // as attributes elsewhere) -- left undefined rather than composed.
+      metadata: node.metadata,
     });
   }
 
@@ -180,6 +226,9 @@ export function buildCorrelationGraph(bundle: CorrelationBundle): CorrelationGra
       kind: 'integration',
       id: integration.id,
       label: integration.name,
+      // Integration has no `description` field (protocol/counterpart/
+      // dataExchanged are shown as attributes elsewhere, not a description).
+      metadata: integration.metadata,
     });
   }
 
@@ -384,6 +433,49 @@ export const CORRELATION_KIND_LABEL: Readonly<Record<CorrelationKind, string>> =
   deployment: 'Deployment',
   integration: 'Integration',
 };
+
+/**
+ * PC-HR-03 — mirrors `ReviewItem.status` exactly (`'pending' | 'confirmed' |
+ * 'corrected'`), plus `'none'` for "no review item currently references
+ * this object" -- never collapsed into a single "reviewed" bucket, so the
+ * detail panel can honestly distinguish "Human Reviewed / Validated" from
+ * "Human Corrected" rather than reporting both as one undifferentiated
+ * status.
+ */
+export type ReviewStatus = 'pending' | 'confirmed' | 'corrected' | 'none';
+
+/**
+ * PC-09/PC-HR-03 — every real review item that currently references this
+ * object, reusing the exact same whole-word name-matching join
+ * `build-graph.ts`'s cross-refs already use to connect a review item to the
+ * element it's about (never a second, parallel review-linking scheme).
+ */
+export function reviewMatchesFor(
+  reviewItems: readonly ReviewItem[] | undefined,
+  label: string,
+): readonly ReviewItem[] {
+  if (!reviewItems || reviewItems.length === 0) return [];
+  return reviewItems.filter((item) => mentions(item.elementName, label));
+}
+
+/**
+ * PC-09/PC-HR-03 — the object's real review status, derived from its
+ * matching review item(s)' real `status` field. `'none'` means no open or
+ * resolved review item currently references this object -- not
+ * "validated", which would claim more than the data actually shows. When
+ * multiple matches disagree, `pending` wins (still needs attention), then
+ * `corrected` (a real change was made), then `confirmed`.
+ */
+export function reviewStatusFor(
+  reviewItems: readonly ReviewItem[] | undefined,
+  label: string,
+): ReviewStatus {
+  const matches = reviewMatchesFor(reviewItems, label);
+  if (matches.length === 0) return 'none';
+  if (matches.some((item) => item.status === 'pending')) return 'pending';
+  if (matches.some((item) => item.status === 'corrected')) return 'corrected';
+  return 'confirmed';
+}
 
 export const CORRELATION_KIND_LABEL_PLURAL: Readonly<Record<CorrelationKind, string>> = {
   persona: 'Personas',

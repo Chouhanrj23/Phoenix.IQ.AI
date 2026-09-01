@@ -4,22 +4,34 @@ import {
   buildCorrelationGraph,
   getRelated,
   nodeKey,
+  reviewMatchesFor,
+  reviewStatusFor,
   type CorrelationBundle,
 } from '../src/lib/correlation.js';
 
-async function loadAuroraGraph() {
-  const [personas, journeys, flows, domains, capabilities, architecture, deployment, integrations] =
-    await Promise.all([
-      mockProvider.getPersonas(),
-      mockProvider.getJourneys(),
-      mockProvider.getExecutionFlows(),
-      mockProvider.getDomains(),
-      mockProvider.getBusinessCapabilities(),
-      mockProvider.getArchitecture('container'),
-      mockProvider.getDeploymentTopology(),
-      mockProvider.getIntegrations(),
-    ]);
-  const bundle: CorrelationBundle = {
+async function loadAuroraBundle(): Promise<CorrelationBundle> {
+  const [
+    personas,
+    journeys,
+    flows,
+    domains,
+    capabilities,
+    architecture,
+    deployment,
+    integrations,
+    reviewItems,
+  ] = await Promise.all([
+    mockProvider.getPersonas(),
+    mockProvider.getJourneys(),
+    mockProvider.getExecutionFlows(),
+    mockProvider.getDomains(),
+    mockProvider.getBusinessCapabilities(),
+    mockProvider.getArchitecture('container'),
+    mockProvider.getDeploymentTopology(),
+    mockProvider.getIntegrations(),
+    mockProvider.getReviewItems(),
+  ]);
+  return {
     personas,
     journeys,
     flows,
@@ -28,8 +40,12 @@ async function loadAuroraGraph() {
     containers: architecture.nodes,
     deploymentNodes: deployment,
     integrations,
+    reviewItems,
   };
-  return buildCorrelationGraph(bundle);
+}
+
+async function loadAuroraGraph() {
+  return buildCorrelationGraph(await loadAuroraBundle());
 }
 
 function namesOf(
@@ -174,5 +190,123 @@ describe('buildCorrelationGraph / getRelated (PC-04) — real Aurora fixture dat
     expect(related).toBeDefined();
     expect(related!.groups).toEqual([]);
     expect(related!.immediateNeighborKeys.size).toBe(0);
+  });
+
+  // PC-09: every object's business detail (description, confidence,
+  // review status) must come from its own real field -- never invented,
+  // never borrowed from an unrelated object.
+  describe('description/metadata (PC-09) — reused directly from real Phase 1-5 fields, never composed', () => {
+    it('uses the real Journey.description verbatim, and carries its real confidence/provenance', async () => {
+      const bundle = await loadAuroraBundle();
+      const graph = buildCorrelationGraph(bundle);
+      const node = graph.nodesByKey.get(nodeKey('journey', 'journey-browse-to-purchase'))!;
+      const journey = bundle.journeys.find((j) => j.id === 'journey-browse-to-purchase')!;
+      expect(node.description).toBe(journey.description);
+      expect(node.metadata).toBe(journey.metadata);
+    });
+
+    it('uses the real C4Node.description verbatim for a Service', async () => {
+      const bundle = await loadAuroraBundle();
+      const graph = buildCorrelationGraph(bundle);
+      const node = graph.nodesByKey.get(nodeKey('service', 'ctr-fraud'))!;
+      expect(node.description).toBe('Aggregates signals and calls RiskShield ML for a risk score.');
+    });
+
+    it('never invents a description for Persona or Concept -- neither type has a real description field', async () => {
+      const bundle = await loadAuroraBundle();
+      const graph = buildCorrelationGraph(bundle);
+      const persona = graph.nodesByKey.get(nodeKey('persona', 'persona-returning-shopper'));
+      const concept = graph.nodesByKey.get(nodeKey('concept', 'agg-loyalty'));
+      expect(persona?.description).toBeUndefined();
+      expect(concept?.description).toBeUndefined();
+      // Both still carry their own real confidence/provenance.
+      expect(persona?.metadata).toBeDefined();
+      expect(concept?.metadata).toBeDefined();
+    });
+
+    it('never fabricates metadata for Entity or Technology -- neither is its own tracked object anywhere in Phase 1-5', async () => {
+      const bundle = await loadAuroraBundle();
+      const graph = buildCorrelationGraph(bundle);
+      const entity = graph.nodesByKey.get(nodeKey('entity', 'Order'));
+      const technology = graph.nodesByKey.get(nodeKey('technology', 'Python'));
+      expect(entity?.metadata).toBeUndefined();
+      expect(entity?.description).toBeUndefined();
+      expect(technology?.metadata).toBeUndefined();
+    });
+  });
+
+  describe('reviewStatusFor (PC-09) — real review-queue status by name, reusing the same whole-word join build-graph.ts uses', () => {
+    it('reports "pending" for an object with a real open review item referencing it', async () => {
+      const bundle = await loadAuroraBundle();
+      // rev-1: "Payments Gateway Adapter — technology", status: pending.
+      expect(reviewStatusFor(bundle.reviewItems, 'Payments Gateway Adapter')).toBe('pending');
+      // rev-3: "LoyaltyAccount — domain ownership", status: pending.
+      expect(reviewStatusFor(bundle.reviewItems, 'LoyaltyAccount')).toBe('pending');
+    });
+
+    it('reports "confirmed" — distinct from "corrected" — when the matching review item was accepted as-is', async () => {
+      const bundle = await loadAuroraBundle();
+      // rev-6: "Order — schema", status: confirmed.
+      expect(reviewStatusFor(bundle.reviewItems, 'Order')).toBe('confirmed');
+    });
+
+    it('reports "corrected" — distinct from "confirmed" — when a matching review item was corrected, never collapsed into one undifferentiated "reviewed" bucket', () => {
+      const items = [
+        {
+          id: 'rev-x',
+          elementType: 'Container',
+          elementName: 'Widget Service',
+          currentValue: 'Corrected value',
+          metadata: { provenance: [], confidence: { level: 'high' as const } },
+          status: 'corrected' as const,
+        },
+      ];
+      expect(reviewStatusFor(items, 'Widget Service')).toBe('corrected');
+    });
+
+    it('prioritises "pending" over "corrected"/"confirmed" when multiple review items disagree on the same object', () => {
+      const items = [
+        {
+          id: 'rev-a',
+          elementType: 'Container',
+          elementName: 'Widget Service — technology',
+          currentValue: 'a',
+          metadata: { provenance: [], confidence: { level: 'high' as const } },
+          status: 'confirmed' as const,
+        },
+        {
+          id: 'rev-b',
+          elementType: 'Container',
+          elementName: 'Widget Service — status',
+          currentValue: 'b',
+          metadata: { provenance: [], confidence: { level: 'high' as const } },
+          status: 'pending' as const,
+        },
+      ];
+      expect(reviewStatusFor(items, 'Widget Service')).toBe('pending');
+    });
+
+    it('reports "none" — never a false "validated" claim — when no review item references the object', async () => {
+      const bundle = await loadAuroraBundle();
+      expect(reviewStatusFor(bundle.reviewItems, 'Notification Service')).toBe('none');
+      expect(reviewStatusFor([], 'Order')).toBe('none');
+      expect(reviewStatusFor(undefined, 'Order')).toBe('none');
+    });
+  });
+
+  describe('reviewMatchesFor (PC-HR-03) — the real ReviewItem(s) behind a status, for deep-linking to the Review queue', () => {
+    it('returns the real matching review item(s) for an object, never an invented one', async () => {
+      const bundle = await loadAuroraBundle();
+      const matches = reviewMatchesFor(bundle.reviewItems, 'LoyaltyAccount');
+      expect(matches).toHaveLength(1);
+      expect(matches[0]!.id).toBe('rev-3');
+      expect(matches[0]!.status).toBe('pending');
+    });
+
+    it('returns an empty list — never throwing — for an object with no review item, or when reviewItems is undefined', async () => {
+      const bundle = await loadAuroraBundle();
+      expect(reviewMatchesFor(bundle.reviewItems, 'Notification Service')).toEqual([]);
+      expect(reviewMatchesFor(undefined, 'Order')).toEqual([]);
+    });
   });
 });

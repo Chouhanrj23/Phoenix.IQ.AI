@@ -21,6 +21,7 @@ import type {
   SystemSummary,
 } from '../types.js';
 import { conf, meta, prov } from './helpers.js';
+import { mentions } from '../../lib/mentions.js';
 
 /**
  * Everything buildFullGraph() needs, sourced from one company's fixtures.
@@ -54,17 +55,6 @@ export interface GraphBundle {
 // hand-maintaining a second link table, we resolve those references here so a
 // node's dossier always reflects what those pages currently say.
 // ---------------------------------------------------------------------------
-
-/**
- * Whole-word containment. Naive substring matching produced false positives
- * ("Product" matching "production", the Payment aggregate matching a review
- * item about the "Payments Gateway Adapter"), so references only resolve on
- * word boundaries.
- */
-function mentions(haystack: string, needle: string): boolean {
-  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`\\b${escaped}\\b`, 'i').test(haystack);
-}
 
 function crossRefsFor(bundle: GraphBundle, label: string, nodeId: string): GraphCrossRef[] {
   const refs: GraphCrossRef[] = [];

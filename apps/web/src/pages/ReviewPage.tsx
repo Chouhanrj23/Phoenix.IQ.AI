@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, PencilLine, ShieldAlert } from 'lucide-react';
 import type { ConfidenceLevel } from '@phoenix-ai/shared';
+import { useSearchParams } from 'react-router-dom';
 import { dataProvider, type ReviewItem } from '../data/index.js';
 import { useAsync } from '../lib/useAsync.js';
 import { PageHeader } from '../components/page-header.js';
@@ -10,23 +11,34 @@ import { ProvenanceList } from '../components/provenance-list.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card.js';
 import { Badge } from '../components/ui/badge.js';
 import { Button } from '../components/ui/button.js';
+import { cn } from '../lib/utils.js';
 
 const SEVERITY_ORDER: Record<ConfidenceLevel, number> = { inferred: 0, low: 1, medium: 2, high: 3 };
 
 function ReviewRow({
   item,
+  highlighted,
+  sessionModified,
   onConfirm,
   onCorrect,
 }: {
   item: ReviewItem;
+  highlighted: boolean;
+  /** True only when THIS decision was made in the current session (via Confirm/Correct below) — not when the item simply started out confirmed/corrected in the underlying data. */
+  sessionModified: boolean;
   onConfirm: (id: string) => void;
   onCorrect: (id: string, value: string) => void;
 }): JSX.Element {
   const [correcting, setCorrecting] = useState(false);
   const [draft, setDraft] = useState(item.currentValue);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (highlighted) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlighted]);
 
   return (
-    <Card>
+    <Card ref={ref} className={cn(highlighted && 'ring-2 ring-primary')}>
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
@@ -120,6 +132,12 @@ function ReviewRow({
             )}
           </div>
         )}
+        {sessionModified && (
+          <p className="text-[11px] text-muted-foreground">
+            This decision is recorded for your current browser session only — it is not yet written
+            back to the underlying knowledge graph.
+          </p>
+        )}
       </CardContent>
     </Card>
   );
@@ -128,6 +146,10 @@ function ReviewRow({
 export function ReviewPage(): JSX.Element {
   const { data, loading, error } = useAsync(() => dataProvider.getReviewItems(), []);
   const [items, setItems] = useState<ReviewItem[]>([]);
+  /** Ids the CURRENT user actually acted on this session — distinct from items that simply started out confirmed/corrected in the underlying data. */
+  const [sessionModifiedIds, setSessionModifiedIds] = useState<ReadonlySet<string>>(new Set());
+  const [searchParams] = useSearchParams();
+  const highlightedId = searchParams.get('item');
 
   useEffect(() => {
     if (data) setItems(data);
@@ -144,12 +166,14 @@ export function ReviewPage(): JSX.Element {
 
   function handleConfirm(id: string): void {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status: 'confirmed' } : i)));
+    setSessionModifiedIds((prev) => new Set(prev).add(id));
   }
 
   function handleCorrect(id: string, value: string): void {
     setItems((prev) =>
       prev.map((i) => (i.id === id ? { ...i, status: 'corrected', currentValue: value } : i)),
     );
+    setSessionModifiedIds((prev) => new Set(prev).add(id));
   }
 
   if (loading) return <LoadingState label="Loading review queue…" />;
@@ -168,6 +192,8 @@ export function ReviewPage(): JSX.Element {
           <ReviewRow
             key={item.id}
             item={item}
+            highlighted={item.id === highlightedId}
+            sessionModified={sessionModifiedIds.has(item.id)}
             onConfirm={handleConfirm}
             onCorrect={handleCorrect}
           />

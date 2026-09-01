@@ -3,15 +3,16 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import ReactFlow, { Background, Controls, type Edge, type Node } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { ArrowLeft, Search, Waypoints } from 'lucide-react';
-import { dataProvider } from '../data/index.js';
+import { dataProvider, type ReviewItem } from '../data/index.js';
 import { useAsync } from '../lib/useAsync.js';
 import { radialLayout } from '../lib/radial-layout.js';
 import {
   buildCorrelationGraph,
   getRelated,
   nodeKey,
+  reviewMatchesFor,
+  reviewStatusFor,
   CORRELATION_KIND_LABEL,
-  CORRELATION_KIND_LABEL_PLURAL,
   type CorrelationGraph,
   type CorrelationKind,
   type CorrelationNode,
@@ -19,6 +20,7 @@ import {
 import { PageHeader } from '../components/page-header.js';
 import { LoadingState, ErrorState } from '../components/loading-state.js';
 import { FullscreenDiagram } from '../components/fullscreen-diagram.js';
+import { ObjectDetailPanel } from '../components/object-detail-panel.js';
 import {
   Card,
   CardContent,
@@ -81,11 +83,20 @@ export function CorrelationExplorerPage(): JSX.Element {
   const architecture = useAsync(() => dataProvider.getArchitecture('container'), []);
   const deployment = useAsync(() => dataProvider.getDeploymentTopology(), []);
   const integrations = useAsync(() => dataProvider.getIntegrations(), []);
+  const reviewItems = useAsync(() => dataProvider.getReviewItems(), []);
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  /**
+   * PC-HR-05 — real, working Confirm/Correct actions in the detail panel,
+   * mirroring `ReviewPage.tsx`'s own local-state pattern exactly. There is
+   * no write method anywhere on `OkfDataProvider`, so this is genuinely
+   * local to this page's session — never persisted, and never pretended to
+   * be (see the panel's own disclaimer text).
+   */
+  const [reviewOverrides, setReviewOverrides] = useState<Record<string, ReviewItem>>({});
 
   const loading =
     personas.loading ||
@@ -95,7 +106,8 @@ export function CorrelationExplorerPage(): JSX.Element {
     capabilities.loading ||
     architecture.loading ||
     deployment.loading ||
-    integrations.loading;
+    integrations.loading ||
+    reviewItems.loading;
   const error =
     personas.error ??
     journeys.error ??
@@ -104,7 +116,14 @@ export function CorrelationExplorerPage(): JSX.Element {
     capabilities.error ??
     architecture.error ??
     deployment.error ??
-    integrations.error;
+    integrations.error ??
+    reviewItems.error;
+
+  /** Real review items, with any in-session Confirm/Correct decisions applied on top — never a second data source, just the same list with local overrides layered in. */
+  const effectiveReviewItems = useMemo(
+    () => (reviewItems.data ?? []).map((item) => reviewOverrides[item.id] ?? item),
+    [reviewItems.data, reviewOverrides],
+  );
 
   const graph: CorrelationGraph | null = useMemo(() => {
     if (loading || error) return null;
@@ -117,6 +136,7 @@ export function CorrelationExplorerPage(): JSX.Element {
       containers: architecture.data?.nodes ?? [],
       deploymentNodes: deployment.data ?? [],
       integrations: integrations.data ?? [],
+      reviewItems: effectiveReviewItems,
     });
   }, [
     loading,
@@ -129,6 +149,7 @@ export function CorrelationExplorerPage(): JSX.Element {
     architecture.data,
     deployment.data,
     integrations.data,
+    effectiveReviewItems,
   ]);
 
   const centerKey = useMemo(() => {
@@ -141,6 +162,37 @@ export function CorrelationExplorerPage(): JSX.Element {
     if (!graph || !centerKey) return undefined;
     return getRelated(graph, centerKey);
   }, [graph, centerKey]);
+
+  const centerReviewStatus = useMemo(() => {
+    if (!related) return 'none' as const;
+    return reviewStatusFor(effectiveReviewItems, related.center.label);
+  }, [related, effectiveReviewItems]);
+
+  const centerPendingReviewItem = useMemo(() => {
+    if (!related || centerReviewStatus !== 'pending') return undefined;
+    return reviewMatchesFor(effectiveReviewItems, related.center.label).find(
+      (item) => item.status === 'pending',
+    );
+  }, [related, centerReviewStatus, effectiveReviewItems]);
+
+  /** True only when the CURRENT user actually confirmed/corrected this object in this session — distinct from an object that simply started out confirmed/corrected in the underlying data. */
+  const centerReviewIsSessionOverride = useMemo(() => {
+    if (!related) return false;
+    return reviewMatchesFor(effectiveReviewItems, related.center.label).some(
+      (item) => item.id in reviewOverrides,
+    );
+  }, [related, effectiveReviewItems, reviewOverrides]);
+
+  function handleConfirmReview(item: ReviewItem): void {
+    setReviewOverrides((prev) => ({ ...prev, [item.id]: { ...item, status: 'confirmed' } }));
+  }
+
+  function handleCorrectReview(item: ReviewItem, value: string): void {
+    setReviewOverrides((prev) => ({
+      ...prev,
+      [item.id]: { ...item, status: 'corrected', currentValue: value },
+    }));
+  }
 
   const searchResults = useMemo(() => {
     if (!graph) return [];
@@ -294,18 +346,12 @@ export function CorrelationExplorerPage(): JSX.Element {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <CardTitle>{related.center.label}</CardTitle>
-                    <CardDescription>
-                      {CORRELATION_KIND_LABEL[related.center.kind]}
-                      {related.center.secondary ? ` · ${related.center.secondary}` : ''}
-                    </CardDescription>
-                  </div>
-                  <Badge variant="outline">
-                    {related.immediateNeighborKeys.size} direct connection(s)
-                  </Badge>
-                </div>
+                <CardTitle>{related.center.label}</CardTitle>
+                <CardDescription>
+                  {CORRELATION_KIND_LABEL[related.center.kind]}
+                  {related.center.secondary ? ` · ${related.center.secondary}` : ''} — selected
+                  object highlighted below, its immediate connections around it.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <FullscreenDiagram className="h-[420px] rounded-lg border border-border">
@@ -332,35 +378,18 @@ export function CorrelationExplorerPage(): JSX.Element {
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Related</CardTitle>
-              <CardDescription>
-                Everything reachable from {related.center.label} in the knowledge graph.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="max-h-[480px] space-y-4 overflow-y-auto">
-              {related.groups.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No related items found in the current knowledge graph.
-                </p>
-              ) : (
-                related.groups.map((group) => (
-                  <div key={group.kind}>
-                    <div className="mb-1.5 text-xs font-semibold uppercase text-muted-foreground">
-                      {CORRELATION_KIND_LABEL_PLURAL[group.kind]}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {group.nodes.map((node) => (
-                        <button key={node.key} type="button" onClick={() => selectNode(node)}>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-muted">
-                            {node.label}
-                          </Badge>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
+            <CardContent className="max-h-[600px] overflow-y-auto pt-4">
+              <ObjectDetailPanel
+                node={related.center}
+                reviewStatus={centerReviewStatus}
+                reviewIsSessionOverride={centerReviewIsSessionOverride}
+                {...(centerPendingReviewItem ? { pendingReviewItem: centerPendingReviewItem } : {})}
+                onConfirmReview={handleConfirmReview}
+                onCorrectReview={handleCorrectReview}
+                groups={related.groups}
+                immediateCount={related.immediateNeighborKeys.size}
+                onSelect={selectNode}
+              />
             </CardContent>
           </Card>
         </div>
