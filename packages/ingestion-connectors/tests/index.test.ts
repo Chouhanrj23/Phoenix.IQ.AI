@@ -4,14 +4,18 @@ import {
   CREDENTIAL_SCHEMES,
   SOURCE_DOCUMENT_SPACE_KINDS,
   SOURCE_REPOSITORY_KINDS,
+  SOURCE_TICKET_TRACKER_KINDS,
   createConnectorRegistry,
   createInMemoryDocumentSpaceConnector,
   createInMemoryRepositoryConnector,
+  createJiraConnector,
   descriptorToSource,
   matchesArtifactFilter,
+  renderAdfToText,
   validateSourceConnector,
   validateSourceDocumentSpaceDescriptor,
   validateSourceRepositoryDescriptor,
+  validateSourceTicketTrackerDescriptor,
 } from '../src/index.js';
 
 // P3-01 replaced the scaffold's MODULE_NAME/placeholder() with the real
@@ -61,5 +65,14 @@ describe('@phoenix-ai/ingestion-connectors entry point', () => {
       createInMemoryRepositoryConnector({ artifacts: [], id: 'repo-connector' }),
     ]);
     expect(registry.get('repo-connector')).toBeDefined();
+  });
+
+  it('exports the ticket-tracker narrowing and Jira connector added in P6-02', () => {
+    expect(typeof validateSourceTicketTrackerDescriptor).toBe('function');
+    expect(SOURCE_TICKET_TRACKER_KINDS).toEqual(['jira']);
+    expect(typeof renderAdfToText).toBe('function');
+    expect(
+      validateSourceConnector(createJiraConnector({ fetchImpl: async () => new Response('{}') })),
+    ).toEqual({ valid: true, errors: [] });
   });
 });

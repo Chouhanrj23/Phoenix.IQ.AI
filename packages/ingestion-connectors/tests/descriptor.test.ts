@@ -7,8 +7,10 @@ import {
   validateSourceDescriptor,
   validateSourceDocumentSpaceDescriptor,
   validateSourceRepositoryDescriptor,
+  validateSourceTicketTrackerDescriptor,
   type SourceDocumentSpaceDescriptor,
   type SourceRepositoryDescriptor,
+  type SourceTicketTrackerDescriptor,
 } from '../src/descriptor.js';
 
 // Grounded in the real source registry of
@@ -41,6 +43,21 @@ function paymentsWikiDescriptor(
     label: 'Confluence: Payments Architecture',
     locator: 'docs://confluence/payments-architecture',
     documentSpace: { kind: 'wiki', spaceId: 'PAY' },
+    ...overrides,
+  };
+}
+
+// A Jira-shaped descriptor, illustrative rather than drawn from a real Jira
+// tenant — the same status the wiki fixture above already has.
+function refundsJiraDescriptor(
+  overrides: Partial<SourceTicketTrackerDescriptor> = {},
+): SourceTicketTrackerDescriptor {
+  return {
+    id: 'ticket://acme-jira/AUR',
+    sourceType: 'ticket',
+    label: 'Jira: Aurora Commerce (AUR)',
+    locator: 'ticket://acme-jira/AUR',
+    ticketTracker: { kind: 'jira', baseUrl: 'https://acme.atlassian.net', projectKeys: ['AUR'] },
     ...overrides,
   };
 }
@@ -312,6 +329,139 @@ describe('validateSourceDocumentSpaceDescriptor', () => {
   });
 });
 
+describe('validateSourceTicketTrackerDescriptor', () => {
+  it('accepts a minimal ticket-tracker descriptor', () => {
+    expect(validateSourceTicketTrackerDescriptor(refundsJiraDescriptor())).toEqual({
+      valid: true,
+      errors: [],
+    });
+  });
+
+  it('accepts a fully-populated ticket-tracker descriptor', () => {
+    const result = validateSourceTicketTrackerDescriptor(
+      refundsJiraDescriptor({
+        ticketTracker: {
+          kind: 'jira',
+          baseUrl: 'https://acme.atlassian.net',
+          projectKeys: ['AUR', 'PAY'],
+          issueTypes: ['Story', 'Bug'],
+          jql: 'status != Done',
+          accountEmail: 'bot@acme.example',
+        },
+        credential: { scheme: 'environment', ref: 'JIRA_API_TOKEN' },
+      }),
+    );
+    expect(result).toEqual({ valid: true, errors: [] });
+  });
+
+  it('requires ticketTracker coordinates', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to omit it
+    const { ticketTracker: _ticketTracker, ...withoutTicketTracker } = refundsJiraDescriptor();
+    expect(validateSourceTicketTrackerDescriptor(withoutTicketTracker).errors).toContain(
+      'ticketTracker is required',
+    );
+  });
+
+  it('rejects an unknown ticketTracker kind', () => {
+    expect(
+      validateSourceTicketTrackerDescriptor({
+        ...refundsJiraDescriptor(),
+        ticketTracker: {
+          kind: 'linear',
+          baseUrl: 'https://acme.atlassian.net',
+          projectKeys: ['AUR'],
+        },
+      }).errors,
+    ).toContain('ticketTracker.kind must be one of: jira');
+  });
+
+  it('rejects a baseUrl with no scheme', () => {
+    expect(
+      validateSourceTicketTrackerDescriptor(
+        refundsJiraDescriptor({
+          ticketTracker: { kind: 'jira', baseUrl: 'acme.atlassian.net', projectKeys: ['AUR'] },
+        }),
+      ).errors,
+    ).toContain(
+      'ticketTracker.baseUrl must be an http(s) URL with no trailing slash, e.g. "https://acme.atlassian.net"',
+    );
+  });
+
+  it('rejects a baseUrl with a trailing slash', () => {
+    expect(
+      validateSourceTicketTrackerDescriptor(
+        refundsJiraDescriptor({
+          ticketTracker: {
+            kind: 'jira',
+            baseUrl: 'https://acme.atlassian.net/',
+            projectKeys: ['AUR'],
+          },
+        }),
+      ).errors,
+    ).toContain(
+      'ticketTracker.baseUrl must be an http(s) URL with no trailing slash, e.g. "https://acme.atlassian.net"',
+    );
+  });
+
+  it('requires at least one projectKey', () => {
+    expect(
+      validateSourceTicketTrackerDescriptor(
+        refundsJiraDescriptor({
+          ticketTracker: { kind: 'jira', baseUrl: 'https://acme.atlassian.net', projectKeys: [] },
+        }),
+      ).errors,
+    ).toContain('ticketTracker.projectKeys must be a non-empty array');
+  });
+
+  it('rejects an empty projectKeys entry', () => {
+    expect(
+      validateSourceTicketTrackerDescriptor(
+        refundsJiraDescriptor({
+          ticketTracker: { kind: 'jira', baseUrl: 'https://acme.atlassian.net', projectKeys: [''] },
+        }),
+      ).errors,
+    ).toContain('ticketTracker.projectKeys[0] must be a non-empty string');
+  });
+
+  it('rejects a non-array issueTypes', () => {
+    expect(
+      validateSourceTicketTrackerDescriptor({
+        ...refundsJiraDescriptor(),
+        ticketTracker: {
+          kind: 'jira',
+          baseUrl: 'https://acme.atlassian.net',
+          projectKeys: ['AUR'],
+          issueTypes: 'Story',
+        },
+      }).errors,
+    ).toContain('ticketTracker.issueTypes, if present, must be an array');
+  });
+
+  it('rejects an empty jql or accountEmail', () => {
+    const errors = validateSourceTicketTrackerDescriptor({
+      ...refundsJiraDescriptor(),
+      ticketTracker: {
+        kind: 'jira',
+        baseUrl: 'https://acme.atlassian.net',
+        projectKeys: ['AUR'],
+        jql: '',
+        accountEmail: '',
+      },
+    }).errors;
+    expect(errors).toContain('ticketTracker.jql, if present, must be a non-empty string');
+    expect(errors).toContain('ticketTracker.accountEmail, if present, must be a non-empty string');
+  });
+
+  it('still reports generic descriptor errors alongside ticket-tracker ones', () => {
+    const result = validateSourceTicketTrackerDescriptor({
+      ticketTracker: { kind: 'jira', baseUrl: 'https://acme.atlassian.net', projectKeys: ['AUR'] },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('id is required');
+    expect(result.errors).toContain('label is required');
+  });
+});
+
 describe('descriptorToSource — the P2-07 bridge', () => {
   it('produces a Source that passes the real validateSource', () => {
     const source = descriptorToSource(checkoutDescriptor());
@@ -364,6 +514,13 @@ describe('descriptorToSource — the P2-07 bridge', () => {
       documentSpace: { kind: 'static-site', spaceId: 'PAY', revision: 'build-42' },
     });
     expect(descriptorToSource(descriptor).version).toBe('build-42');
+  });
+
+  it('omits version for a ticket-tracker descriptor — TicketTrackerCoordinates has no revision field', () => {
+    // P6-02: unlike repository.revision/documentSpace.revision, there is
+    // nothing for declaredRevisionOf to find here, by design (ADR 0027).
+    const source = descriptorToSource(refundsJiraDescriptor());
+    expect(source).not.toHaveProperty('version');
   });
 
   it('produces a registry that validates as a whole', () => {

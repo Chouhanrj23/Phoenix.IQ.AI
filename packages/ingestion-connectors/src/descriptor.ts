@@ -190,6 +190,52 @@ export interface SourceDocumentSpaceDescriptor extends SourceDescriptor {
   documentSpace: DocumentSpaceCoordinates;
 }
 
+export const SOURCE_TICKET_TRACKER_KINDS = ['jira'] as const;
+export type SourceTicketTrackerKind = (typeof SOURCE_TICKET_TRACKER_KINDS)[number];
+
+/**
+ * P6-02 -- the third source-specific narrowing, for a ticket/issue tracker.
+ * Deliberately has NO `revision` field, unlike `RepositoryCoordinates` and
+ * `DocumentSpaceCoordinates`: an issue tracker has no snapshot concept at
+ * all reachable through its search API (an issue's changelog could
+ * theoretically be replayed to an earlier state, but that is out of scope
+ * here -- see `docs/architecture/adr/0027-p6-02-jira-connector.md`
+ * "Limitations"). Making the field simply not exist means a caller cannot
+ * even construct a descriptor that asks for a pinned revision, which is a
+ * stronger guarantee than `document-space-connector.ts`'s runtime rejection
+ * of the same request (P6-01) -- the violation ADR 0013 decision 6 cares
+ * about is unrepresentable here, not merely refused.
+ */
+export interface TicketTrackerCoordinates {
+  kind: SourceTicketTrackerKind;
+  /** Base URL of the tracker instance, e.g. `https://acme.atlassian.net`. No trailing slash. */
+  baseUrl: string;
+  /** Project keys to read, e.g. `['AUR']`. At least one required. */
+  projectKeys: string[];
+  /** Restrict to these issue types, e.g. `['Story', 'Bug']`. Omitted selects every issue type. */
+  issueTypes?: string[];
+  /**
+   * Extra JQL, ANDed with the `projectKeys`/`issueTypes` filter the connector
+   * already builds -- a caller-supplied query fragment (e.g.
+   * `"status != Done"`), not a value substituted into one, so it is never
+   * escaped the way `projectKeys`/`issueTypes` are. Trusted the same way
+   * `repository.branch` is: a descriptor is operator-authored configuration,
+   * not untrusted end-user input.
+   */
+  jql?: string;
+  /**
+   * The account email paired with an API-token credential for Basic auth
+   * (Jira Cloud). NOT a secret -- omit it to authenticate with a bearer
+   * personal access token instead (Jira Server/Data Center), which needs no
+   * paired identity. See `jira-client.ts`.
+   */
+  accountEmail?: string;
+}
+
+export interface SourceTicketTrackerDescriptor extends SourceDescriptor {
+  ticketTracker: TicketTrackerCoordinates;
+}
+
 function collectForbiddenSecretKeyErrors(
   candidate: Record<string, unknown>,
   path: string,
@@ -318,6 +364,69 @@ export function validateSourceDocumentSpaceDescriptor(candidate: unknown): Valid
     const value = documentSpace[field];
     if (value !== undefined && !isNonEmptyString(value)) {
       errors.push(`documentSpace.${field}, if present, must be a non-empty string`);
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+const BASE_URL_PATTERN = /^https?:\/\/\S+[^/]$/;
+
+/** Validates a `SourceTicketTrackerDescriptor` -- the generic fields plus `ticketTracker`. */
+export function validateSourceTicketTrackerDescriptor(candidate: unknown): ValidationResult {
+  const base = validateSourceDescriptor(candidate);
+  if (!isPlainObject(candidate)) return base;
+
+  const errors = [...base.errors];
+  const ticketTracker = candidate.ticketTracker;
+  if (!isPlainObject(ticketTracker)) {
+    errors.push('ticketTracker is required');
+    return { valid: false, errors };
+  }
+
+  const kind = ticketTracker.kind;
+  if (
+    !isNonEmptyString(kind) ||
+    !(SOURCE_TICKET_TRACKER_KINDS as readonly string[]).includes(kind)
+  ) {
+    errors.push(`ticketTracker.kind must be one of: ${SOURCE_TICKET_TRACKER_KINDS.join(', ')}`);
+  }
+
+  const baseUrl = ticketTracker.baseUrl;
+  if (!isNonEmptyString(baseUrl) || !BASE_URL_PATTERN.test(baseUrl)) {
+    errors.push(
+      'ticketTracker.baseUrl must be an http(s) URL with no trailing slash, e.g. "https://acme.atlassian.net"',
+    );
+  }
+
+  const projectKeys = ticketTracker.projectKeys;
+  if (!Array.isArray(projectKeys) || projectKeys.length === 0) {
+    errors.push('ticketTracker.projectKeys must be a non-empty array');
+  } else {
+    projectKeys.forEach((key, index) => {
+      if (typeof key !== 'string' || key.length === 0) {
+        errors.push(`ticketTracker.projectKeys[${index}] must be a non-empty string`);
+      }
+    });
+  }
+
+  const issueTypes = ticketTracker.issueTypes;
+  if (issueTypes !== undefined) {
+    if (!Array.isArray(issueTypes)) {
+      errors.push('ticketTracker.issueTypes, if present, must be an array');
+    } else {
+      issueTypes.forEach((type, index) => {
+        if (typeof type !== 'string' || type.length === 0) {
+          errors.push(`ticketTracker.issueTypes[${index}] must be a non-empty string`);
+        }
+      });
+    }
+  }
+
+  for (const field of ['jql', 'accountEmail'] as const) {
+    const value = ticketTracker[field];
+    if (value !== undefined && !isNonEmptyString(value)) {
+      errors.push(`ticketTracker.${field}, if present, must be a non-empty string`);
     }
   }
 

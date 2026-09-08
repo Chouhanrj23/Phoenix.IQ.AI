@@ -64,6 +64,29 @@ project metadata, and issue-to-issue relationships over the REST API v3.
   invocation layer. No shell, ever, and explicit rejection of option-shaped revisions and paths:
   `spawn` with an argv array removes command injection, but **argument** injection
   (`--upload-pack=<command>`) is the risk that actually applies to git.
+- `SourceTicketTrackerDescriptor`/`TicketTrackerCoordinates` (`descriptor.ts`) and
+  `createJiraConnector` (`jira-connector.ts`) — P6-02's **real Jira connector**, the third
+  source-specific narrowing and its first REAL implementation. Reads issues (as `RawArtifact`s, one
+  per issue, content a normalized JSON summary with the description rendered from Atlassian Document
+  Format to plain text — see `adf.ts`), project metadata (`ConnectorSession.sourceMetadata`), and
+  issue relationships — `issuelinks`/`parent` — as RAW FACTS on `RawArtifact.attributes`, never as
+  canonical relationships (that stays extraction's job, ADR 0013 decision 1). Has NO `revision`
+  concept at all (`TicketTrackerCoordinates` has no `revision` field), a stronger form of ADR 0013
+  decision 6's guarantee than `document-space-connector.ts`'s runtime rejection: the violation is
+  unrepresentable, not merely refused. `list()` pages through Jira's `/search` lazily, one page per
+  iteration step. Assignee/reporter identity is opt-in (`includeUserIdentity`, default false),
+  mirroring the git connector's `includeAuthorMetadata`.
+- `jiraGet`/`JiraApiError`/`resolveAuthorization` (`jira-client.ts`) — the hardened Jira HTTP client
+  layer, playing `git-command.ts`'s role for HTTP. Unlike git, there is no external credential
+  delegate for an HTTP API in this environment, so this is the one place in the package that resolves
+  `credential.scheme: 'environment'` into an actual `Authorization` header (Basic, when
+  `ticketTracker.accountEmail` is set — Jira Cloud API tokens; Bearer otherwise — Jira Server/Data
+  Center PATs), reading only from `process.env`, never from the descriptor itself.
+  `credential.scheme: 'secret-store'` is refused — no such backend is integrated yet.
+- `renderAdfToText` (`adf.ts`) — a minimal Atlassian Document Format renderer (paragraphs, headings,
+  lists, code blocks, blockquotes, hard breaks) so a Jira issue's rich-text description becomes plain
+  text instead of a nested JSON tree extraction would have to re-parse. An unrecognised ADF node type
+  renders its text-bearing children, if any, rather than aborting the whole render.
 
 **The boundary this contract draws:** a connector emits raw artifacts plus the metadata needed to
 trace them. Turning a file into an `architecture.container` is `extraction-engine`'s and

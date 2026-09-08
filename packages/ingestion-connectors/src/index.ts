@@ -34,6 +34,11 @@
  *     rejects a duplicate connector `id` at construction and an ambiguous
  *     descriptor match at resolution, instead of resolving either silently by
  *     array order the way the plain `selectConnector` helper does.
+ *   - `jira-connector.ts`/`jira-client.ts`/`adf.ts` -- P6-02's Jira connector,
+ *     the third source-specific narrowing (`SourceTicketTrackerDescriptor`)
+ *     and its first REAL implementation: issues, project metadata, and
+ *     issue-to-issue links read from a live Jira Cloud/Server instance over
+ *     its REST API v3.
  *
  * The boundary this contract draws (ADR 0013 decision 1): a connector emits
  * RAW ARTIFACTS plus the metadata needed to trace them. Turning a file into
@@ -59,3 +64,6 @@ export * from './document-space-connector.js';
 export * from './registry.js';
 export * from './git-command.js';
 export * from './git-connector.js';
+export * from './adf.js';
+export * from './jira-client.js';
+export * from './jira-connector.js';

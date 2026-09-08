@@ -440,6 +440,32 @@ fintech/fixtures.ts`, "nimbus-financial") — producing structurally analogous, 
   across 2 new files plus additions to `descriptor.test.ts`/`index.test.ts` (208 total in the
   package, up from 178). See
   `docs/architecture/adr/0026-p6-01-connector-framework-hardening.md`.
+- **Phase 6 — P6-02 (Jira connector — a second real evidence source):**
+  `packages/ingestion-connectors/src/` — Phoenix's second REAL connector (after git, P3-02) and its
+  first for a non-repository source, connecting to a Jira Cloud/Server instance over REST API v3.
+  `descriptor.ts` gains the third source-specific narrowing, `SourceTicketTrackerDescriptor`/
+  `TicketTrackerCoordinates` — deliberately with NO `revision` field at all (an issue tracker has no
+  snapshot concept to expose), a stronger form of ADR 0013 decision 6's guarantee than P6-01's
+  runtime rejection: the violation is unrepresentable, not merely refused. `jira-connector.ts`'s
+  `createJiraConnector` reads issues as `RawArtifact`s (content: a normalized JSON summary with the
+  description rendered from Atlassian Document Format to plain text via new `adf.ts`), project
+  metadata (`ConnectorSession.sourceMetadata`), and issue-to-issue relationships (`issuelinks`/
+  `parent`) as RAW FACTS on `RawArtifact.attributes` — never as canonical relationships, keeping ADR
+  0013 decision 1's connector/extraction boundary intact. `jira-client.ts`'s `resolveAuthorization`
+  is a deliberate, documented departure from ADR 0014 decision 4's "Phoenix never handles a
+  credential": unlike git, an HTTP API has no external authentication mechanism in this environment to
+  delegate to, so this is the one place in the package that resolves `credential.scheme:
+'environment'` into a real `Authorization` header (Basic when `ticketTracker.accountEmail` is set —
+  Jira Cloud API tokens; Bearer otherwise — Jira Server/Data Center PATs) by reading `process.env`,
+  never the descriptor itself; `'secret-store'` is refused outright. `list()` pages through Jira's
+  `/search` lazily, one page per iteration step — genuinely streaming, per ADR 0013 decision 4.
+  Assignee/reporter identity is opt-in (`includeUserIdentity`, default false), mirroring the git
+  connector's `includeAuthorMetadata` (ADR 0014 decision 6). Tests fake the HTTP transport
+  (`fetchImpl`, built from real Jira REST API v3 response shapes) — the deliberate opposite of ADR
+  0014's "don't mock git," since no real Jira instance or credentials are available to test against
+  here. 63 new tests across 3 new files (`adf.test.ts`, `jira-client.test.ts`,
+  `jira-connector.test.ts`) plus additions to `descriptor.test.ts`/`index.test.ts` (271 total in the
+  package, up from 208). See `docs/architecture/adr/0027-p6-02-jira-connector.md`.
 
 ### Changed
 
