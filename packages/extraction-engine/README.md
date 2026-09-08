@@ -7,7 +7,7 @@
 
 Extracts exact facts from normalised artifacts using parsing, not model inference.
 
-## Status — Phase 3 (Source Connectors), P3-03 through P3-10: Java Extraction (complete)
+## Status — Phase 3 (Java Extraction, complete) + P6-04 (Jira OKF Mapping)
 
 `src/` turns Java `RawArtifact`s (from `@phoenix-ai/ingestion-connectors`, e.g. its git connector)
 into deterministic facts — source discovery, structural facts, the call graph and type-dependency
@@ -58,6 +58,23 @@ position? }`, mirroring `ArtifactReadResult`'s convention from `ingestion-connec
   other pass has run. `BridgeOptions.sourceVersion?` also now flows into every bridged object's
   `Evidence.sourceVersion` — see ADR 0022.
 
+**P6-04 — Jira OKF mapping** (`jira-bridge.ts`/`jira-okf-mapping.ts`): bridges the Jira connector's
+(`@phoenix-ai/ingestion-connectors`, P6-02) `RawArtifact`s into `@phoenix-ai/knowledge-graph`'s new
+Work Item model. Unlike Java, this is a single mapping step, not two (P3-03..08 → P3-09): the Jira
+connector already normalizes each issue, so there is no separate structural-fact stage to bridge from.
+
+- `bridgeJiraArtifacts` (`jira-bridge.ts`) — one `WorkItemObject` (`workitem.issue`) per issue
+  artifact, plus `contains` (parent/child, from `parentKey`) and `relatesTo` (from `issueLinks`,
+  preserving the tracker's real link type/direction in `attributes`) relationships between issues
+  already bridged in the same batch. Malformed content is reported in the result's `skipped` array,
+  never dropped silently or thrown. `identity.createdAt`/`updatedAt` are always the run's
+  `generatedAt` (when PHOENIX captured this) — the tracker's own dates land on
+  `attributes.reportedCreatedAt`/`reportedUpdatedAt` instead, a deliberate distinction (see ADR 0028
+  decision 3).
+- `buildJiraCanonicalBundle`/`mapJiraToOkfDocument`/`serializeJiraToOkfYaml` (`jira-okf-mapping.ts`)
+  — wraps a Jira bridge result into a real `CanonicalKnowledgeBundle`/`OkfDocument`/OKF YAML string,
+  mirroring `okf-mapping.ts` exactly: no new mapping logic, P2-10's serialization reused unmodified.
+
 `samples/analyze-phoenix-repo.ts` (P3-11) — a dev/demo script, not part of this package's runtime
 API, that runs the real git connector (P3-02) and this whole family against Phoenix.ai-1's own real
 working tree and reports what it finds — run via
@@ -84,9 +101,11 @@ Design rationale, one ADR per ticket:
 `docs/architecture/adr/0019-java-persistence-extraction.md` (P3-07),
 `docs/architecture/adr/0020-java-configuration-extraction.md` (P3-08),
 `docs/architecture/adr/0021-java-okf-mapping.md` (P3-09), and
-`docs/architecture/adr/0022-java-fact-provenance.md` (P3-10). Status tracker:
-`docs/phase-3/README.md`. The canonical objects this package bridges into, and the OKF schema
-`okf-mapping.ts` reuses: `packages/knowledge-graph/README.md`.
+`docs/architecture/adr/0022-java-fact-provenance.md` (P3-10), and
+`docs/architecture/adr/0028-p6-04-jira-okf-mapping.md` (P6-04). Status tracker:
+`docs/phase-3/README.md` and `docs/phase-6/README.md`. The canonical objects this package bridges
+into, and the OKF schema `okf-mapping.ts`/`jira-okf-mapping.ts` reuse:
+`packages/knowledge-graph/README.md`.
 
 **Dependencies:** `java-parser` (pinned `3.0.1`) — the AST/CST library this whole package rests on;
 Java's grammar is not regex-safe, so a real grammar-driven parser is used rather than a hand-rolled
@@ -95,8 +114,11 @@ scanner. `@phoenix-ai/knowledge-graph` (canonical objects/validators). `yaml` (m
 
 Not yet implemented: any language other than Java; JAX-RS, MyBatis, and raw SQL migration (Flyway/
 Liquibase) support; full classpath/type resolution (call-graph and type-dependency resolution stays
-shallow by design); `<parent>` POM inheritance; a custom Gradle `sourceSets` layout. See each
-ticket's ADR "Limitations" section for the full list and why each is deferred.
+shallow by design); `<parent>` POM inheritance; a custom Gradle `sourceSets` layout; a tracker other
+than Jira; bridging Jira comments/attachments (P6-02 never reads them); and any workflow/status-
+transition inference over a Work Item's `attributes.status` (a single-snapshot fact — that is
+`inference-engine`'s job, over evidence this package does not yet produce). See each ticket's ADR
+"Limitations" section for the full list and why each is deferred.
 
 **Relationship bridging** (`bridge-relationships.ts`, a Phase 4 prerequisite fix, ADR 0023):
 `JavaExtractionResult.relationships` is no longer always empty. Resolved type-dependency facts

@@ -466,6 +466,33 @@ fintech/fixtures.ts`, "nimbus-financial") — producing structurally analogous, 
   here. 63 new tests across 3 new files (`adf.test.ts`, `jira-client.test.ts`,
   `jira-connector.test.ts`) plus additions to `descriptor.test.ts`/`index.test.ts` (271 total in the
   package, up from 208). See `docs/architecture/adr/0027-p6-02-jira-connector.md`.
+- **Phase 6 — P6-04 (OKF mapping — represent Jira-derived facts in the common model):** closes the
+  gap ADR 0027 left open ("ready for a future extraction-engine ticket to turn into canonical
+  `domain`/`workflow`-shaped objects and relationships"). `packages/knowledge-graph/src/workitem.ts`
+  adds the fifth domain-specific `kind` vocabulary — `WorkItemObject`/`WorkItemRelationship`
+  (`kind: 'workitem.issue'`), built the same way P2-03 through P2-06 were. ONE object kind covers
+  every tracker issue type (Epic/Story/Bug/Task/Sub-task/custom): a tracker's type taxonomy is
+  project-configurable, so `attributes.issueType` carries the real string verbatim rather than
+  becoming a separate `kind` — the FRD's `Epic`/`Feature`/`Story`/`AcceptanceCriterion` node types
+  are deliberately NOT formalized as distinct kinds here, despite `ontology.ts`'s own doc comment
+  anticipating that shape (see ADR 0028 decision 4 for the three reasons, including that
+  `AcceptanceCriterion` is not a separate Jira entity to bridge from at all).
+  `packages/extraction-engine/src/jira-bridge.ts`'s `bridgeJiraArtifacts` is the deterministic
+  facts-to-canonical mapping, following `bridge-http.ts`/`bridge-relationships.ts`'s exact
+  discipline: one `WorkItemObject` per Jira `RawArtifact`, plus `contains` (parent/child, from
+  `parentKey`) and `relatesTo` (from `issueLinks`, preserving the tracker's real link type/direction
+  in `attributes`) — both relationship kinds REUSED from `domain.ts`, not newly minted — produced only
+  between two objects already bridged in the same batch. `identity.createdAt`/`updatedAt` are always
+  `options.generatedAt` (when PHOENIX captured this), matching `bridge-http.ts`'s exact precedent —
+  never Jira's own `created`/`updated` timestamps, which land instead on
+  `attributes.reportedCreatedAt`/`reportedUpdatedAt`, a deliberate distinction from what
+  `KnowledgeObjectIdentity`'s timestamps actually mean. A malformed artifact is reported in the
+  result's `skipped` array rather than dropped silently or aborting the batch. `jira-okf-mapping.ts`
+  wraps a bridge result into a real `CanonicalKnowledgeBundle`/`OkfDocument`/OKF YAML string,
+  mirroring `okf-mapping.ts` (P3-09) exactly. 34 new tests: `packages/knowledge-graph/tests/
+workitem.test.ts` (16, 280 total in the package, up from 264) and `packages/extraction-engine/
+tests/jira-bridge.test.ts` + `jira-okf-mapping.test.ts` (18, 95 total in the package, up from 77).
+  See `docs/architecture/adr/0028-p6-04-jira-okf-mapping.md`.
 
 ### Changed
 

@@ -7,7 +7,7 @@
 
 The single source of truth from which all OKF outputs are projected; stores every element with provenance.
 
-## Status — Phase 2 (Canonical Knowledge Model)
+## Status — Phase 2 (Canonical Knowledge Model) + P6-04 (Work Item model) + P6-05 (Reconciliation model)
 
 `src/` defines the canonical knowledge model (P2-01), its domain-neutral ontology foundation
 (P2-02), the Architecture model (P2-03), the Domain/Entity model (P2-04), the
@@ -63,6 +63,14 @@ all three cross-cutting metadata models, and the OKF serialization are now compl
   for Architecture/Domain/Integrations/System-identity; confirms Deployment/NFR and
   Review/Gaps/Drift have zero canonical representation (a pre-existing, now-proven condition, not
   fixed here). See `docs/okf/ui-validation.md`.
+- `WorkItemObject`/`WorkItemRelationship` (`workitem.ts`, P6-04) — the fifth domain-specific `kind`
+  vocabulary, `kind: 'workitem.issue'`, representing a ticket-tracker issue (Jira today, via
+  `packages/ingestion-connectors`' P6-02 connector) as a domain-neutral canonical object. ONE object
+  kind covers every tracker issue type (Epic/Story/Bug/Task/Sub-task/custom) — the tracker's own type
+  name lands verbatim in `attributes.issueType` rather than becoming a separate `kind`, since a
+  tracker's type taxonomy is project-configurable. `contains`/`relatesTo` (both REUSED from
+  `domain.ts`, not new) represent parent/child issue hierarchy and cross-issue links respectively,
+  with the tracker's real link-type name and direction preserved in relationship `attributes`.
 
 Design rationale: `docs/architecture/adr/0003-canonical-knowledge-model.md`,
 `docs/architecture/adr/0004-domain-neutral-ontology.md`,
@@ -73,9 +81,13 @@ Design rationale: `docs/architecture/adr/0003-canonical-knowledge-model.md`,
 `docs/architecture/adr/0009-provenance-model.md`,
 `docs/architecture/adr/0010-confidence-model.md`,
 `docs/architecture/adr/0011-evidence-reference-model.md`,
-`docs/architecture/adr/0012-okf-yaml-schema.md`. Status tracker: `docs/phase-2/README.md`.
-Authoritative OKF field-level reference: `docs/okf/README.md`. Sample document: `docs/okf/sample.md`.
-UI compatibility validation: `docs/okf/ui-validation.md`.
+`docs/architecture/adr/0012-okf-yaml-schema.md`,
+`docs/architecture/adr/0028-p6-04-jira-okf-mapping.md` (the Work Item model),
+`docs/architecture/adr/0029-p6-05-source-reconciliation.md` (the Reconciliation model),
+`docs/architecture/adr/0030-p6-06-confidence-calculation.md`, and
+`docs/architecture/adr/0031-p6-08-evidence-aggregation.md`. Status tracker: `docs/phase-2/README.md`
+and `docs/phase-6/README.md`. Authoritative OKF field-level reference: `docs/okf/README.md`. Sample
+document: `docs/okf/sample.md`. UI compatibility validation: `docs/okf/ui-validation.md`.
 
 Not yet implemented: domain/journey/integration inference, schema discovery, architecture
 discovery/repository scanning/Java parsing/Neo4j, real API discovery, real source connectors
@@ -88,3 +100,9 @@ API still has no file-system I/O — the one place this package touches disk is
 `samples/generate-sample.ts`, an opt-in dev script, not the package's build or runtime path.
 `apps/api` declares a dependency on this package but does not import from it yet — Phase 1's API
 areas remain on their own independent contracts in `packages/shared/src/contracts.ts`.
+
+`workitem.ts` (P6-04) is model-only, matching every other domain file's own precedent: no Jira client,
+no fact-to-canonical mapping (that is `packages/extraction-engine`'s `jira-bridge.ts`), no workflow/
+status-transition inference over a Work Item's `attributes.status` (a single-snapshot fact, not a
+history — see ADR 0028 "Limitations"), and no UI rendering (`apps/web`'s graph explorer is unaware of
+`workitem.issue`).

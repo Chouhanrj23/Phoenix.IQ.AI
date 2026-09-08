@@ -53,10 +53,26 @@
  *     `serializeJavaExtractionToOkfYaml`, wrapping a Java extraction result
  *     into a real OKF document/YAML text.
  *
+ * P6-04: bridges Jira issues -- `@phoenix-ai/ingestion-connectors`' Jira
+ * connector output (P6-02) -- into real `WorkItemObject`s/relationships
+ * (`@phoenix-ai/knowledge-graph`'s new P6-04 Work Item model), and wraps
+ * them into OKF the same way P3-09 does for Java. See
+ * `docs/architecture/adr/0028-p6-04-jira-okf-mapping.md`.
+ *
+ *   - `jira-bridge.ts` -- `bridgeJiraArtifacts`, the deterministic
+ *     facts-to-canonical-objects mapping for a batch of Jira `RawArtifact`s:
+ *     one `WorkItemObject` per issue, plus `contains`/`relatesTo`
+ *     relationships between issues already bridged in the same batch.
+ *   - `jira-okf-mapping.ts` -- `buildJiraCanonicalBundle`/
+ *     `mapJiraToOkfDocument`/`serializeJiraToOkfYaml`, wrapping a Jira
+ *     bridge result into a real OKF document/YAML text.
+ *
  * Deliberately NOT implemented here: any language other than Java, JAX-RS,
  * MyBatis, raw SQL migrations (Flyway/Liquibase), full classpath/type
- * resolution, and any architectural/semantic inference (Component/bounded-
- * context boundaries) -- that is `packages/inference-engine`'s job.
+ * resolution, any architectural/semantic inference (Component/bounded-
+ * context boundaries, workflow/state inference over a Jira issue's status)
+ * -- that is `packages/inference-engine`'s job -- and any tracker other than
+ * Jira.
  */
 
 export * from './java-project.js';
@@ -73,3 +89,5 @@ export * from './bridge-http.js';
 export * from './bridge-persistence.js';
 export * from './extract-java.js';
 export * from './okf-mapping.js';
+export * from './jira-bridge.js';
+export * from './jira-okf-mapping.js';

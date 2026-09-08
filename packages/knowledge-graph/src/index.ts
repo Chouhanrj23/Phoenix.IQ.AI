@@ -33,6 +33,11 @@
  * Phase 2. See docs/architecture/adr/0008-integration-api-model.md and
  * docs/phase-2/README.md for the Phase 2 status record.
  *
+ * P6-04: the Work Item model -- typed `WorkItemObject`/`WorkItemRelationship`,
+ * the fifth domain-specific `kind` vocabulary, representing a ticket-tracker
+ * issue (Jira, P6-02's connector) as a domain-neutral canonical object. See
+ * docs/architecture/adr/0028-p6-04-jira-okf-mapping.md.
+ *
  * P2-07: the provenance model -- `Source` (a resolvable description of an
  * origin artifact) and `validateSourceReferences` (cross-checks that every
  * `metadata.provenance[].sourceId`/`evidence[].sourceId` in a bundle
@@ -87,3 +92,4 @@ export * from './architecture.js';
 export * from './domain.js';
 export * from './journey.js';
 export * from './integration.js';
+export * from './workitem.js';

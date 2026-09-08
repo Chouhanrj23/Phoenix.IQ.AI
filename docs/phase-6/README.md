@@ -12,10 +12,11 @@ against other sources when they disagree (P6-05).
 
 ## P6-0X ticket status
 
-| Ticket | Objective                                                    | Status                                                                                                                                                                                       |
-| ------ | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P6-01  | Harden the connector abstraction for multiple source layouts | **Complete.** `ConnectorRegistry` (`registry.ts`) and `SourceDocumentSpaceDescriptor`/`createInMemoryDocumentSpaceConnector` (`descriptor.ts`, `document-space-connector.ts`). See ADR 0026. |
-| P6-02  | Jira connector — a second real evidence source               | **Complete.** `SourceTicketTrackerDescriptor`/`createJiraConnector` (`descriptor.ts`, `jira-connector.ts`, `jira-client.ts`, `adf.ts`). See ADR 0027.                                        |
+| Ticket | Objective                                                      | Status                                                                                                                                                                                                                                                                                          |
+| ------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P6-01  | Harden the connector abstraction for multiple source layouts   | **Complete.** `ConnectorRegistry` (`registry.ts`) and `SourceDocumentSpaceDescriptor`/`createInMemoryDocumentSpaceConnector` (`descriptor.ts`, `document-space-connector.ts`). See ADR 0026.                                                                                                    |
+| P6-02  | Jira connector — a second real evidence source                 | **Complete.** `SourceTicketTrackerDescriptor`/`createJiraConnector` (`descriptor.ts`, `jira-connector.ts`, `jira-client.ts`, `adf.ts`). See ADR 0027.                                                                                                                                           |
+| P6-04  | OKF mapping — represent Jira-derived facts in the common model | **Complete.** `WorkItemObject`/`WorkItemRelationship` (`packages/knowledge-graph/src/workitem.ts`) and `bridgeJiraArtifacts`/`buildJiraCanonicalBundle`/`mapJiraToOkfDocument`/`serializeJiraToOkfYaml` (`packages/extraction-engine/src/jira-bridge.ts`, `jira-okf-mapping.ts`). See ADR 0028. |
 
 ## P6-01 — what changed and why
 
@@ -66,3 +67,35 @@ second REAL connector (after the git connector, P3-02) and its first for a non-r
 Not built here: real-instance validation (all tests fake the transport), comment/attachment/changelog
 reading, a secret-store backend, or any turn of the raw issue-link facts into canonical
 relationships (extraction's job, a future ticket). See ADR 0027 "Limitations" for the full list.
+
+## P6-04 — what changed and why
+
+Full rationale: [ADR 0028](../architecture/adr/0028-p6-04-jira-okf-mapping.md). This is the "future
+extraction-engine ticket" ADR 0027's own Consequences section named — closing the gap between what
+P6-02 observes and what the canonical model can represent.
+
+1. **`packages/knowledge-graph/src/workitem.ts`** — the fifth domain-specific `kind` vocabulary
+   (after Architecture, Domain/Entity, Persona/Journey/State, Integration/API), built the same way
+   P2-03 through P2-06 were. ONE object kind, `workitem.issue`, deliberately covers every tracker
+   issue type — a tracker's type taxonomy is project-configurable, so `attributes.issueType` carries
+   the real string rather than becoming a separate `kind`. `contains`/`relatesTo` are REUSED from
+   `domain.ts`, not newly minted, continuing the precedent already set by `contains` across three
+   other domain files.
+2. **`packages/extraction-engine/src/jira-bridge.ts`'s `bridgeJiraArtifacts`** — the deterministic
+   facts-to-canonical mapping, following `bridge-http.ts`/`bridge-relationships.ts`'s exact
+   discipline: only bridge what P6-02 already, directly observed. A relationship is only produced
+   between two objects already bridged in the same batch. `identity.createdAt`/`updatedAt` are always
+   "when Phoenix captured this" (`options.generatedAt`) — Jira's own dates land on
+   `attributes.reportedCreatedAt`/`reportedUpdatedAt` instead, a deliberate distinction from what
+   `identity`'s timestamps actually mean.
+3. **`jira-okf-mapping.ts`** wraps a bridge result into a real `CanonicalKnowledgeBundle`/
+   `OkfDocument`/OKF YAML string, mirroring `okf-mapping.ts` (P3-09) exactly — no new mapping logic,
+   P2-10's serialization reused unmodified.
+4. **The FRD's `Epic`/`Feature`/`Story`/`AcceptanceCriterion` node types remain unformalized as
+   separate kinds**, despite `ontology.ts`'s own doc comment anticipating that shape — a deliberate
+   choice, not an oversight; see ADR 0028 decision 4 for the three reasons.
+
+Not built here: workflow/status-transition inference over a Work Item's `attributes.status` (a
+single-snapshot fact, not a history — `inference-engine`'s job, over evidence this ticket does not
+produce), any UI rendering, and bridging for any tracker other than Jira. See ADR 0028 "Limitations"
+for the full list.
