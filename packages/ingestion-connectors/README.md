@@ -8,12 +8,17 @@
 Connects to artifact sources (repos, wikis, ticketing, log stores, gateways) and normalises them into
 a common intermediate representation (CIR).
 
-## Status — Phase 3 (Source Connectors)
+## Status — Phase 3 (Source Connectors) + Phase 6 (framework hardening + Jira)
 
 `src/` defines the **common connector contract** (P3-01) — one interface every source connector
 implements, so `packages/orchestration` can drive a repository, a documentation space, or a ticket
-system through identical code — plus the **git repository connector** (P3-02), the first real
-connector, and an in-memory reference implementation used as a test double.
+system through identical code — plus two REAL connectors (**git**, P3-02, and **Jira**, P6-02) and
+two in-memory reference implementations used as test doubles. **P6-01** hardened the framework for a
+world with several connectors across several source layouts: a `ConnectorRegistry` that catches a
+duplicate connector id or an ambiguous descriptor match instead of resolving either silently, and a
+second descriptor narrowing (`SourceDocumentSpaceDescriptor`) proving the contract generalizes past a
+repository. **P6-02** connected Phoenix to Jira as its second real evidence source, reading issues,
+project metadata, and issue-to-issue relationships over the REST API v3.
 
 - `ArtifactFilter`/`matchesArtifactFilter`/`matchesPathPattern` (`filter.ts`) — the ONE shared
   implementation of what `includePaths`/`excludePaths`/`maxSizeBytes`/`changedSince` mean, so the
@@ -37,6 +42,16 @@ connector, and an in-memory reference implementation used as a test double.
 - `createInMemoryRepositoryConnector` (`reference-connector.ts`) — a reference implementation and test
   double. **Not a real connector**: no filesystem, network, or git access; it reads only the artifacts
   handed to it as options.
+- `SourceDocumentSpaceDescriptor`/`DocumentSpaceCoordinates` (`descriptor.ts`) and
+  `createInMemoryDocumentSpaceConnector` (`document-space-connector.ts`) — P6-01's second
+  source-specific narrowing, for a wiki or documentation site: page-addressed rather than
+  filesystem-addressed, and — unlike every prior connector — defaults
+  `capabilities.revisionPinning` to `false` and actually rejects a descriptor that pins a revision
+  anyway, the first real implementation of ADR 0013 decision 6's rejection rule.
+- `ConnectorRegistry`/`createConnectorRegistry` (`registry.ts`) — P6-01's hardened connector
+  selection for a set of several connectors: rejects a duplicate connector `id` at construction and
+  throws `AmbiguousConnectorError`/`NoMatchingConnectorError` at resolution, instead of the silent
+  first-match array order `selectConnector` (still exported, for the single-connector case) uses.
 - `createGitRepositoryConnector` (`git-connector.ts`) — **the real git connector** (P3-02), reading
   repository metadata, revisions, and source files from a local checkout or a remote clone. The
   revision is resolved to an immutable SHA once at `open` and every read is addressed against it;
@@ -58,17 +73,27 @@ trace them. Turning a file into an `architecture.container` is `extraction-engin
 source ──(this package)──> RawArtifact[] + Source ──(extraction/inference)──> canonical objects ──> OKF
 ```
 
-Design rationale: `docs/architecture/adr/0013-source-connector-contract.md` (the contract) and
-`docs/architecture/adr/0014-git-repository-connector.md` (the git connector). Status tracker:
-`docs/phase-3/README.md`. The canonical model and OKF schema this contract feeds:
-`packages/knowledge-graph/README.md` and `docs/okf/README.md`.
+Design rationale: `docs/architecture/adr/0013-source-connector-contract.md` (the contract),
+`docs/architecture/adr/0014-git-repository-connector.md` (the git connector),
+`docs/architecture/adr/0026-p6-01-connector-framework-hardening.md` (the registry and the
+document-space narrowing), and `docs/architecture/adr/0027-p6-02-jira-connector.md` (the Jira
+connector). Status tracker: `docs/phase-3/README.md` and `docs/phase-6/README.md`. The canonical
+model and OKF schema this contract feeds: `packages/knowledge-graph/README.md` and
+`docs/okf/README.md`.
 
-**Prerequisite:** the git connector requires the `git` binary on `PATH`. `isGitAvailable()` probes for
-it without throwing.
+**Prerequisites:** the git connector requires the `git` binary on `PATH` (`isGitAvailable()` probes
+for it without throwing); the Jira connector requires network access to the configured
+`ticketTracker.baseUrl` and, for anything but a fully anonymous-read instance, a `JIRA_...`-style
+environment variable named by `credential.ref` holding an API token or personal access token.
 
-Not yet implemented: connectors for the non-repository source kinds (HTTP, wiki, ticketing, log store,
-gateway) and the `archive` repository kind; any language parsing or extraction; credential resolution
-(the git connector rejects a non-`none` scheme — authenticate git itself via a credential helper or
-SSH agent); submodule traversal and Git LFS object resolution; ingestion scheduling or run
-orchestration; a connector registry with precedence rules; and chunked/streamed reads of a single
-large artifact. See ADR 0013 and ADR 0014 "Limitations" for the full list and why each is deferred.
+Not yet implemented: a REAL connector for a wiki/CMS, a log store, or a gateway
+(`createInMemoryDocumentSpaceConnector` is a reference double, not a client) and the `archive`
+repository kind; any language parsing or extraction (including turning a Jira issue's raw
+`attributes.issueLinks`/`attributes.parentKey` into canonical relationships); a secret-store
+credential backend (`credential.scheme: 'secret-store'` is refused everywhere in this package);
+submodule traversal and Git LFS object resolution; Jira comments, attachments, and changelog/history
+reading; ingestion scheduling or run orchestration; precedence/fallback policy across connectors
+(`ConnectorRegistry` catches a malformed connector SET — a duplicate id or a genuine `supports()`
+ambiguity — not run-level retry or degraded-source fallback, which stays `packages/orchestration`'s
+job); and chunked/streamed reads of a single large artifact. See ADR 0013, ADR 0014, ADR 0026, and
+ADR 0027 "Limitations" for the full list and why each is deferred.

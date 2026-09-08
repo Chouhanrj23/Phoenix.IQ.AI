@@ -5,7 +5,9 @@ import {
   descriptorToSource,
   isSourceLocator,
   validateSourceDescriptor,
+  validateSourceDocumentSpaceDescriptor,
   validateSourceRepositoryDescriptor,
+  type SourceDocumentSpaceDescriptor,
   type SourceRepositoryDescriptor,
 } from '../src/descriptor.js';
 
@@ -22,6 +24,23 @@ function checkoutDescriptor(
     label: 'aurora-commerce/services/checkout',
     locator: 'repo://aurora-commerce/services/checkout',
     repository: { kind: 'git', branch: 'main' },
+    ...overrides,
+  };
+}
+
+// A wiki-shaped descriptor, illustrative rather than drawn from a real Phase
+// 1 fixture (none exists yet for a document space) — the same status as
+// `docs://confluence/payments-architecture` already used below in
+// `validateSourceDescriptor`'s own minimal-descriptor test.
+function paymentsWikiDescriptor(
+  overrides: Partial<SourceDocumentSpaceDescriptor> = {},
+): SourceDocumentSpaceDescriptor {
+  return {
+    id: 'docs://confluence/payments-architecture',
+    sourceType: 'technical-doc',
+    label: 'Confluence: Payments Architecture',
+    locator: 'docs://confluence/payments-architecture',
+    documentSpace: { kind: 'wiki', spaceId: 'PAY' },
     ...overrides,
   };
 }
@@ -226,6 +245,73 @@ describe('validateSourceRepositoryDescriptor', () => {
   });
 });
 
+describe('validateSourceDocumentSpaceDescriptor', () => {
+  it('accepts a minimal document-space descriptor', () => {
+    expect(validateSourceDocumentSpaceDescriptor(paymentsWikiDescriptor())).toEqual({
+      valid: true,
+      errors: [],
+    });
+  });
+
+  it('accepts a fully-populated document-space descriptor', () => {
+    const result = validateSourceDocumentSpaceDescriptor(
+      paymentsWikiDescriptor({
+        documentSpace: {
+          kind: 'static-site',
+          spaceId: 'PAY',
+          pathPrefix: 'payments',
+          revision: 'build-42',
+        },
+        filter: { excludePaths: ['**/*.draft'] },
+      }),
+    );
+    expect(result).toEqual({ valid: true, errors: [] });
+  });
+
+  it('requires documentSpace coordinates', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to omit it
+    const { documentSpace: _documentSpace, ...withoutDocumentSpace } = paymentsWikiDescriptor();
+    expect(validateSourceDocumentSpaceDescriptor(withoutDocumentSpace).errors).toContain(
+      'documentSpace is required',
+    );
+  });
+
+  it('rejects an unknown documentSpace kind', () => {
+    expect(
+      validateSourceDocumentSpaceDescriptor({
+        ...paymentsWikiDescriptor(),
+        documentSpace: { kind: 'confluence-cloud', spaceId: 'PAY' },
+      }).errors,
+    ).toContain('documentSpace.kind must be one of: wiki, static-site');
+  });
+
+  it('requires spaceId', () => {
+    expect(
+      validateSourceDocumentSpaceDescriptor({
+        ...paymentsWikiDescriptor(),
+        documentSpace: { kind: 'wiki' },
+      }).errors,
+    ).toContain('documentSpace.spaceId is required');
+  });
+
+  it('rejects an empty pathPrefix', () => {
+    expect(
+      validateSourceDocumentSpaceDescriptor(
+        paymentsWikiDescriptor({ documentSpace: { kind: 'wiki', spaceId: 'PAY', pathPrefix: '' } }),
+      ).errors,
+    ).toContain('documentSpace.pathPrefix, if present, must be a non-empty string');
+  });
+
+  it('still reports generic descriptor errors alongside document-space ones', () => {
+    const result = validateSourceDocumentSpaceDescriptor({
+      documentSpace: { kind: 'wiki', spaceId: 'PAY' },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('id is required');
+    expect(result.errors).toContain('label is required');
+  });
+});
+
 describe('descriptorToSource — the P2-07 bridge', () => {
   it('produces a Source that passes the real validateSource', () => {
     const source = descriptorToSource(checkoutDescriptor());
@@ -268,6 +354,16 @@ describe('descriptorToSource — the P2-07 bridge', () => {
     expect(source).not.toHaveProperty('credential');
     expect(source).not.toHaveProperty('filter');
     expect(Object.keys(source).sort()).toEqual(['id', 'label', 'locator', 'type']);
+  });
+
+  it('falls back to a declared documentSpace.revision too, not just repository.revision', () => {
+    // P6-01: `descriptorToSource` was generalized off `repository.revision`
+    // alone to also read `documentSpace.revision` -- this is the case that
+    // would have silently dropped the version before that change.
+    const descriptor = paymentsWikiDescriptor({
+      documentSpace: { kind: 'static-site', spaceId: 'PAY', revision: 'build-42' },
+    });
+    expect(descriptorToSource(descriptor).version).toBe('build-42');
   });
 
   it('produces a registry that validates as a whole', () => {

@@ -421,8 +421,40 @@ fintech/fixtures.ts`, "nimbus-financial") — producing structurally analogous, 
   `explainTraceability` now resolves a real state object back to a real source location
   (`OwnerController.java#L48-L179`). 33 new/updated tests (123 total in the package, up from 90). See
   ADR 0025 addendum and `docs/phase-5/README.md` "Corrective fixes."
+- **Phase 6 — P6-01 (Connector framework hardening — multi-source-layout preparation):**
+  `packages/ingestion-connectors/src/` — two additions that hold the P3-01/P3-02 connector contract
+  to its own documented promises now that more than one source layout is in scope: (1)
+  `registry.ts`'s `ConnectorRegistry`/`createConnectorRegistry` replaces silent first-match array
+  scanning for a set of several connectors, rejecting a duplicate connector `id` at construction
+  (`ConnectorRegistrationError`) and an ambiguous descriptor match at resolution
+  (`AmbiguousConnectorError`) instead of resolving either by registration order; `selectConnector`
+  is unchanged and still exported for the single-connector case. (2) `descriptor.ts`'s
+  `SourceDocumentSpaceDescriptor`/`DocumentSpaceCoordinates` is the second source-specific
+  narrowing (after `SourceRepositoryDescriptor`), and `document-space-connector.ts`'s
+  `createInMemoryDocumentSpaceConnector` is its in-memory reference implementation — the first
+  connector in the package to declare `capabilities.revisionPinning: false` and actually enforce
+  ADR 0013 decision 6's rejection rule at `open()` (a promise every prior connector documented but
+  none exercised, since both `createInMemoryRepositoryConnector` and `createGitRepositoryConnector`
+  hardcode `revisionPinning: true`). `descriptorToSource`'s declared-revision lookup, previously
+  reading `repository.revision` alone, is generalized to check either narrowing. 30 new tests
+  across 2 new files plus additions to `descriptor.test.ts`/`index.test.ts` (208 total in the
+  package, up from 178). See
+  `docs/architecture/adr/0026-p6-01-connector-framework-hardening.md`.
 
 ### Changed
+
+- **Domain Model page — ER diagram rendering (`apps/web`):** the Domain Model page now renders
+  each domain as an entity-relationship diagram (`reactflow`) instead of a flat expand/collapse
+  list of entity-name badges — entities as attribute boxes with PK/FK icons, labeled relationship
+  edges, dashed external nodes for cross-domain references, an aggregate-column layout, and a
+  click-to-inspect side panel (aggregate, confidence, rationale, fields, provenance), reusing the
+  existing `FullscreenDiagram` wrapper from the Architecture page. New
+  `apps/web/src/lib/er-model.ts` (`buildDomainErModel`) and
+  `apps/web/src/components/er-entity-node.tsx`. Presentation-only change over the same
+  `dataProvider.getDomains()` data — no `apps/api` route, canonical model, or OKF schema changed.
+  Field-level schema and foreign keys are illustrative, not extracted (Phase 1's
+  `Aggregate.entities` remains a flat `string[]` — the same documented gap as ADR 0006), and the
+  page states this explicitly. See `docs/web-ui/domain-model-er-diagram.md`.
 
 - **P3-01 contract amended additively by P3-02** (ADR 0014; no existing field changed meaning and all
   119 P3-01 tests pass unmodified): `ConnectorSession.sourceMetadata` and `RawArtifact.attributes`

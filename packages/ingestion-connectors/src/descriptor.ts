@@ -12,13 +12,20 @@
  * introduced -- `SourceDescriptor.id` IS `Source.id` IS
  * `Provenance.sourceId` IS `Evidence.sourceId`.
  *
- * `SourceRepositoryDescriptor` is the first (and, in P3-01, only) narrowing:
- * a repository is the only source kind whose coordinates are specified here.
- * Everything else -- documentation, project/issue systems, log stores,
- * gateways, per `packages/ingestion-connectors/README.md`'s remit -- reuses
- * the generic `SourceDescriptor` and adds its own narrowing later, without
- * the `SourceConnector` interface changing. See
- * `docs/architecture/adr/0013-source-connector-contract.md` decisions 2 and 3.
+ * `SourceRepositoryDescriptor` was the first narrowing (P3-01): a repository
+ * is one source kind whose coordinates are specified here.
+ * `SourceDocumentSpaceDescriptor` is the second (P6-01), covering a wiki or
+ * documentation site -- deliberately unlike a repository (no filesystem tree,
+ * usually no immutable revision), which is the point: it proves the same
+ * `SourceConnector` interface holds without change across two irreducibly
+ * different source shapes. `SourceTicketTrackerDescriptor` is the third
+ * (P6-02), covering an issue tracker (Jira) -- addressed by issue key rather
+ * than by path, and with no `revision` concept at all, unlike the first two.
+ * Log stores and gateways remain unnarrowed and reuse the generic
+ * `SourceDescriptor` until a connector needs their coordinates. See
+ * `docs/architecture/adr/0013-source-connector-contract.md` decisions 2 and 3,
+ * `docs/architecture/adr/0026-p6-01-connector-framework-hardening.md`, and
+ * `docs/architecture/adr/0027-p6-02-jira-connector.md`.
  */
 
 import type { SourceType } from '@phoenix-ai/shared';
@@ -147,6 +154,42 @@ export interface SourceRepositoryDescriptor extends SourceDescriptor {
   repository: RepositoryCoordinates;
 }
 
+export const SOURCE_DOCUMENT_SPACE_KINDS = ['wiki', 'static-site'] as const;
+export type SourceDocumentSpaceKind = (typeof SOURCE_DOCUMENT_SPACE_KINDS)[number];
+
+/**
+ * P6-01 -- the second source-specific narrowing, proving ADR 0013 decision
+ * 2's promise that "a later connector adds its own descriptor narrowing
+ * without this interface changing." A document space (a wiki, a static
+ * documentation site) is unlike a repository in the way that matters most:
+ * there is usually no filesystem tree and no immutable revision to pin --
+ * editing a page mutates it in place. `revision` is still modelled here
+ * (mirroring `RepositoryCoordinates.revision`) because SOME backends genuinely
+ * support a snapshot (a static-site build id, an export), but a connector for
+ * a backend that does not must declare `ConnectorCapabilities.revisionPinning:
+ * false` and reject a descriptor that sets it -- see
+ * `document-space-connector.ts`, the first connector in this package to
+ * actually enforce that rule rather than merely documenting it.
+ */
+export interface DocumentSpaceCoordinates {
+  kind: SourceDocumentSpaceKind;
+  /** The space/site identifier at the source, e.g. a wiki space key. */
+  spaceId: string;
+  /**
+   * Restrict to pages whose path starts under this prefix. A convenience over
+   * `filter.includePaths`, mirroring `RepositoryCoordinates.subpaths` --
+   * `pathPrefix` narrows what a connector fetches, `filter` narrows what it
+   * surfaces.
+   */
+  pathPrefix?: string;
+  /** A snapshot identifier, only meaningful when the backend has one. See the interface doc comment. */
+  revision?: string;
+}
+
+export interface SourceDocumentSpaceDescriptor extends SourceDescriptor {
+  documentSpace: DocumentSpaceCoordinates;
+}
+
 function collectForbiddenSecretKeyErrors(
   candidate: Record<string, unknown>,
   path: string,
@@ -249,6 +292,55 @@ export function validateSourceRepositoryDescriptor(candidate: unknown): Validati
   return { valid: errors.length === 0, errors };
 }
 
+/** Validates a `SourceDocumentSpaceDescriptor` -- the generic fields plus `documentSpace`. */
+export function validateSourceDocumentSpaceDescriptor(candidate: unknown): ValidationResult {
+  const base = validateSourceDescriptor(candidate);
+  if (!isPlainObject(candidate)) return base;
+
+  const errors = [...base.errors];
+  const documentSpace = candidate.documentSpace;
+  if (!isPlainObject(documentSpace)) {
+    errors.push('documentSpace is required');
+    return { valid: false, errors };
+  }
+
+  const kind = documentSpace.kind;
+  if (
+    !isNonEmptyString(kind) ||
+    !(SOURCE_DOCUMENT_SPACE_KINDS as readonly string[]).includes(kind)
+  ) {
+    errors.push(`documentSpace.kind must be one of: ${SOURCE_DOCUMENT_SPACE_KINDS.join(', ')}`);
+  }
+  if (!isNonEmptyString(documentSpace.spaceId)) {
+    errors.push('documentSpace.spaceId is required');
+  }
+  for (const field of ['pathPrefix', 'revision'] as const) {
+    const value = documentSpace[field];
+    if (value !== undefined && !isNonEmptyString(value)) {
+      errors.push(`documentSpace.${field}, if present, must be a non-empty string`);
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Reads whatever declared (unresolved) revision a descriptor's source-specific
+ * narrowing carries. Written against `SourceRepositoryDescriptor` alone in
+ * P3-01; generalized here in P6-01 for `SourceDocumentSpaceDescriptor` rather
+ * than adding a second special case at the `descriptorToSource` call site --
+ * a repository-shaped assumption baked into an otherwise-generic bridge is
+ * exactly the kind of thing "harden the abstraction" means to catch, and the
+ * next narrowing after this one gets the same fallback for free only if this
+ * stays a single, extensible lookup.
+ */
+function declaredRevisionOf(descriptor: SourceDescriptor): string | undefined {
+  const repository = (descriptor as Partial<SourceRepositoryDescriptor>).repository;
+  if (repository?.revision !== undefined) return repository.revision;
+  const documentSpace = (descriptor as Partial<SourceDocumentSpaceDescriptor>).documentSpace;
+  return documentSpace?.revision;
+}
+
 /**
  * The descriptor -> `Source` bridge (P2-07). `resolvedVersion` is what the
  * connector actually read (a git SHA it resolved a branch to, an archive
@@ -262,8 +354,7 @@ export function validateSourceRepositoryDescriptor(candidate: unknown): Validati
  * business inside a bundle that gets serialized to OKF YAML.
  */
 export function descriptorToSource(descriptor: SourceDescriptor, resolvedVersion?: string): Source {
-  const declaredRevision = (descriptor as Partial<SourceRepositoryDescriptor>).repository?.revision;
-  const version = resolvedVersion ?? declaredRevision;
+  const version = resolvedVersion ?? declaredRevisionOf(descriptor);
   return {
     id: descriptor.id,
     type: descriptor.sourceType,

@@ -2,11 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   ARTIFACT_FAILURE_REASONS,
   CREDENTIAL_SCHEMES,
+  SOURCE_DOCUMENT_SPACE_KINDS,
   SOURCE_REPOSITORY_KINDS,
+  createConnectorRegistry,
+  createInMemoryDocumentSpaceConnector,
   createInMemoryRepositoryConnector,
   descriptorToSource,
   matchesArtifactFilter,
   validateSourceConnector,
+  validateSourceDocumentSpaceDescriptor,
   validateSourceRepositoryDescriptor,
 } from '../src/index.js';
 
@@ -40,5 +44,22 @@ describe('@phoenix-ai/ingestion-connectors entry point', () => {
       valid: true,
       errors: [],
     });
+  });
+
+  it('exports the document-space narrowing added in P6-01', () => {
+    expect(typeof validateSourceDocumentSpaceDescriptor).toBe('function');
+    expect(SOURCE_DOCUMENT_SPACE_KINDS).toEqual(['wiki', 'static-site']);
+    expect(validateSourceConnector(createInMemoryDocumentSpaceConnector({ pages: [] }))).toEqual({
+      valid: true,
+      errors: [],
+    });
+  });
+
+  it('exports the connector registry added in P6-01', () => {
+    expect(typeof createConnectorRegistry).toBe('function');
+    const registry = createConnectorRegistry([
+      createInMemoryRepositoryConnector({ artifacts: [], id: 'repo-connector' }),
+    ]);
+    expect(registry.get('repo-connector')).toBeDefined();
   });
 });
