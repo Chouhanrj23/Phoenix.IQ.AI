@@ -18,11 +18,12 @@
  * Model only, exactly like every prior domain file: no claim comparison, no
  * confidence computation, no source-type weighting, no evidence aggregation
  * -- that is `packages/reconciliation-engine`'s job (`claim.ts`/
- * `reconcile.ts`/`confidence-scoring.ts`), the same "model here, algorithm
- * downstream" split P6-04 established between this package's `workitem.ts`
- * and `extraction-engine`'s `jira-bridge.ts`.
- * See `docs/architecture/adr/0029-p6-05-source-reconciliation.md` and
- * `docs/architecture/adr/0030-p6-06-confidence-calculation.md`.
+ * `reconcile.ts`/`confidence-scoring.ts`/`evidence-aggregation.ts`), the
+ * same "model here, algorithm downstream" split P6-04 established between
+ * this package's `workitem.ts` and `extraction-engine`'s `jira-bridge.ts`.
+ * See `docs/architecture/adr/0029-p6-05-source-reconciliation.md`,
+ * `docs/architecture/adr/0030-p6-06-confidence-calculation.md`, and
+ * `docs/architecture/adr/0031-p6-08-evidence-aggregation.md`.
  */
 
 import type { CanonicalKnowledgeObject } from './canonical-object.js';
@@ -92,6 +93,17 @@ export interface ConflictPosition {
    * about which position is more likely correct.
    */
   confidence?: ConflictPositionConfidence;
+  /**
+   * Which entries of the conflict object's OWN `evidence` array (P6-08)
+   * specifically back THIS position -- a set of `Evidence.id` references,
+   * not a nested copy. Referencing by id (rather than embedding a second
+   * copy of each `Evidence`) keeps the object's `evidence` array the single
+   * source of truth: every id here is guaranteed present there, since both
+   * are built from the same deduplicated aggregate
+   * (`reconciliation-engine`'s `evidenceForClaims`). Optional, the same
+   * backward-compatibility reasoning as `confidence` above.
+   */
+  evidenceIds?: string[];
 }
 
 export interface ConflictAttributes {
@@ -177,6 +189,21 @@ function validatePositions(candidate: unknown): string[] {
         errors.push(
           `attributes.positions[${index}].confidence.score, if present, must be a number`,
         );
+      }
+    }
+
+    if ('evidenceIds' in position && position.evidenceIds !== undefined) {
+      const evidenceIds = position.evidenceIds;
+      if (!Array.isArray(evidenceIds)) {
+        errors.push(`attributes.positions[${index}].evidenceIds, if present, must be an array`);
+      } else {
+        evidenceIds.forEach((evidenceId, evidenceIndex) => {
+          if (!isNonEmptyString(evidenceId)) {
+            errors.push(
+              `attributes.positions[${index}].evidenceIds[${evidenceIndex}] must be a non-empty string`,
+            );
+          }
+        });
       }
     }
   });

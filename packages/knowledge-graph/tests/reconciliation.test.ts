@@ -201,6 +201,43 @@ describe('validateConflictObject', () => {
     ).toContain('attributes.positions[0].confidence.score, if present, must be a number');
   });
 
+  it('accepts a position with evidenceIds (P6-08)', () => {
+    const object = statusConflict();
+    const positions = object.attributes.positions.map((position) => ({
+      ...position,
+      evidenceIds: ['ev-1', 'ev-2'],
+    }));
+    expect(
+      validateConflictObject({ ...object, attributes: { ...object.attributes, positions } }),
+    ).toEqual({ valid: true, errors: [] });
+  });
+
+  it('does not require evidenceIds — positions without it remain valid', () => {
+    expect(validateConflictObject(statusConflict())).toEqual({ valid: true, errors: [] });
+  });
+
+  it('rejects a non-array evidenceIds', () => {
+    const object = statusConflict();
+    const positions = [
+      { ...object.attributes.positions[0], evidenceIds: 'ev-1' },
+      object.attributes.positions[1],
+    ];
+    expect(
+      validateConflictObject({ ...object, attributes: { ...object.attributes, positions } }).errors,
+    ).toContain('attributes.positions[0].evidenceIds, if present, must be an array');
+  });
+
+  it('rejects a non-string evidenceIds entry', () => {
+    const object = statusConflict();
+    const positions = [
+      { ...object.attributes.positions[0], evidenceIds: ['ev-1', 42] },
+      object.attributes.positions[1],
+    ];
+    expect(
+      validateConflictObject({ ...object, attributes: { ...object.attributes, positions } }).errors,
+    ).toContain('attributes.positions[0].evidenceIds[1] must be a non-empty string');
+  });
+
   it('still runs the base canonical-object checks (e.g. identity)', () => {
     const object = statusConflict();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to omit it

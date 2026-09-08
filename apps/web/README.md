@@ -37,7 +37,9 @@ Architecture & Design:
 
 - **Architecture** — C4 Context and Container diagrams; click a node for description,
   confidence, and provenance.
-- **Domain Model** — domains → aggregates → entities, each with a confidence badge.
+- **Domain Model** — domains → aggregates → entities, rendered as an entity-relationship diagram
+  (fields, PK/FK icons, relationship edges, cross-domain references), each with a confidence badge.
+  See [`docs/web-ui/domain-model-er-diagram.md`](../../docs/web-ui/domain-model-er-diagram.md).
 - **Deployment** — where each container actually runs (environments, instance counts, runtime),
   recovered from infrastructure-as-code.
 - **Integrations** — every external system this platform talks to, protocol, and data exchanged.

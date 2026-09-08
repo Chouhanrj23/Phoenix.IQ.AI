@@ -1,0 +1,29 @@
+{
+  "name": "@phoenix-ai/reconciliation-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Merges signals across sources, surfaces disagreement, and computes confidence for every graph element.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b --watch",
+    "lint": "eslint src",
+    "typecheck": "tsc -b --noEmit",
+    "test": "vitest run",
+    "poc:analyze-phoenix-and-jira": "tsx samples/analyze-phoenix-and-jira.ts",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@phoenix-ai/shared": "workspace:*",
+    "@phoenix-ai/knowledge-graph": "workspace:*"
+  },
+  "devDependencies": {
+    "@phoenix-ai/ingestion-connectors": "workspace:*",
+    "@phoenix-ai/extraction-engine": "workspace:*",
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "vitest": "^2.1.4"
+  }
+}
