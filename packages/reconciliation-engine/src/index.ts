@@ -13,12 +13,19 @@
  *     `SOURCE_TYPE_AUTHORITY`/`authorityOf` (FR-REC-01's source-type
  *     weighting table) and `claimFromObject`, which extracts a `Claim` from
  *     any already-bridged canonical object's own provenance/evidence.
+ *   - `confidence-scoring.ts` -- `computeConfidence` (P6-06, FR-REC-02): the
+ *     dedicated, standalone confidence calculation -- structurally derived
+ *     from supporting-source authority, corroboration, AND (generalized
+ *     beyond P6-05's original agreement-only version) how much contradicting
+ *     evidence exists, so a `ConflictObject` position that is outvoted reads
+ *     as less confident than one that is merely disputed.
  *   - `reconcile.ts` -- `reconcileClaims`, the algorithm: groups claims by
  *     subject/attribute/category and either derives a structural confidence
  *     when sources agree, or builds a real `@phoenix-ai/knowledge-graph`
  *     `ConflictObject` that retains every distinct position and its
- *     sources when they don't (FR-REC-04) -- ranked for review via
- *     `rankConflicts` (FR-REC-05).
+ *     sources when they don't (FR-REC-04) -- each position carrying its own
+ *     `computeConfidence` result -- ranked for review via `rankConflicts`
+ *     (FR-REC-05).
  *   - `composite-confidence.ts` -- `boundCompositeConfidence` (FR-REC-03):
  *     a composite element's confidence bounded by its least-certain
  *     constituent, a separate concern from claim reconciliation.
@@ -41,10 +48,12 @@
  * job, per the FRD's own module split and FR-IF-04's "review interface");
  * and any persistence, run history, or drift comparison across runs (that
  * is `packages/drift-detection`'s job). See
- * `docs/architecture/adr/0029-p6-05-source-reconciliation.md`.
+ * `docs/architecture/adr/0029-p6-05-source-reconciliation.md` and
+ * `docs/architecture/adr/0030-p6-06-confidence-calculation.md`.
  */
 
 export * from './claim.js';
+export * from './confidence-scoring.js';
 export * from './reconcile.js';
 export * from './composite-confidence.js';
 export * from './determinism.js';

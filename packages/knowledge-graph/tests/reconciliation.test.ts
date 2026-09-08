@@ -163,6 +163,44 @@ describe('validateConflictObject', () => {
     expect(errors).toContain('attributes.positions[1].sources[0].authority must be a number');
   });
 
+  it('accepts a position with a per-position confidence (P6-06)', () => {
+    const object = statusConflict();
+    const positions = object.attributes.positions.map((position) => ({
+      ...position,
+      confidence: { level: 'medium', score: 0.6 },
+    }));
+    expect(
+      validateConflictObject({ ...object, attributes: { ...object.attributes, positions } }),
+    ).toEqual({ valid: true, errors: [] });
+  });
+
+  it('does not require a per-position confidence — older/hand-built conflicts remain valid', () => {
+    // statusConflict()'s own positions carry no `confidence` field at all.
+    expect(validateConflictObject(statusConflict())).toEqual({ valid: true, errors: [] });
+  });
+
+  it('rejects a position confidence with no level', () => {
+    const object = statusConflict();
+    const positions = [
+      { ...object.attributes.positions[0], confidence: { score: 0.6 } },
+      object.attributes.positions[1],
+    ];
+    expect(
+      validateConflictObject({ ...object, attributes: { ...object.attributes, positions } }).errors,
+    ).toContain('attributes.positions[0].confidence.level is required when confidence is present');
+  });
+
+  it('rejects a position confidence with a non-numeric score', () => {
+    const object = statusConflict();
+    const positions = [
+      { ...object.attributes.positions[0], confidence: { level: 'medium', score: 'high' } },
+      object.attributes.positions[1],
+    ];
+    expect(
+      validateConflictObject({ ...object, attributes: { ...object.attributes, positions } }).errors,
+    ).toContain('attributes.positions[0].confidence.score, if present, must be a number');
+  });
+
   it('still runs the base canonical-object checks (e.g. identity)', () => {
     const object = statusConflict();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to omit it

@@ -18,10 +18,11 @@
  * Model only, exactly like every prior domain file: no claim comparison, no
  * confidence computation, no source-type weighting, no evidence aggregation
  * -- that is `packages/reconciliation-engine`'s job (`claim.ts`/
- * `reconcile.ts`), the same "model here, algorithm downstream" split P6-04
- * established between this package's `workitem.ts` and `extraction-engine`'s
- * `jira-bridge.ts`.
- * See `docs/architecture/adr/0029-p6-05-source-reconciliation.md`.
+ * `reconcile.ts`/`confidence-scoring.ts`), the same "model here, algorithm
+ * downstream" split P6-04 established between this package's `workitem.ts`
+ * and `extraction-engine`'s `jira-bridge.ts`.
+ * See `docs/architecture/adr/0029-p6-05-source-reconciliation.md` and
+ * `docs/architecture/adr/0030-p6-06-confidence-calculation.md`.
  */
 
 import type { CanonicalKnowledgeObject } from './canonical-object.js';
@@ -55,6 +56,21 @@ export interface ConflictPositionSource {
 }
 
 /**
+ * Structurally mirrors `@phoenix-ai/shared`'s `Confidence`, narrowed to
+ * `level: string` (rather than the closed `ConfidenceLevel` union) and given
+ * its own index signature -- the same "loosened to satisfy `KnowledgeValue`"
+ * move `ConflictPositionSource.sourceType` already makes for `SourceType`,
+ * for the identical reason: a real `Confidence` cannot be assigned into an
+ * indexed `KnowledgeValue` bag without an index signature of its own.
+ */
+export interface ConflictPositionConfidence {
+  [key: string]: KnowledgeValue;
+  level: string;
+  score?: number;
+  rationale?: string;
+}
+
+/**
  * ONE of the (at least two) mutually exclusive values sources disagreed on
  * for the same subject/attribute -- "a position", in FR-REC-04's own words.
  * Every position that had at least one source is retained; none is dropped
@@ -65,6 +81,17 @@ export interface ConflictPosition {
   value: KnowledgeValue;
   /** Every source that claimed THIS value, most-authoritative first. */
   sources: ConflictPositionSource[];
+  /**
+   * How confident this SPECIFIC position is, given its own supporting
+   * sources weighed against every OTHER position's contradicting ones --
+   * `reconciliation-engine`'s `computeConfidence` (P6-06). Optional: a
+   * conflict object built without it (e.g. a hand-authored fixture, or an
+   * older caller) remains valid -- see `validateConflictObject`. Distinct
+   * from the conflict object's own `metadata.confidence`, which is always
+   * high (the conflict's EXISTENCE is directly observed) and says nothing
+   * about which position is more likely correct.
+   */
+  confidence?: ConflictPositionConfidence;
 }
 
 export interface ConflictAttributes {
@@ -135,6 +162,23 @@ function validatePositions(candidate: unknown): string[] {
         );
       }
     });
+
+    if ('confidence' in position && position.confidence !== undefined) {
+      const confidence = position.confidence;
+      if (!isPlainObject(confidence) || !isNonEmptyString(confidence.level)) {
+        errors.push(
+          `attributes.positions[${index}].confidence.level is required when confidence is present`,
+        );
+      } else if (
+        'score' in confidence &&
+        confidence.score !== undefined &&
+        typeof confidence.score !== 'number'
+      ) {
+        errors.push(
+          `attributes.positions[${index}].confidence.score, if present, must be a number`,
+        );
+      }
+    }
   });
 
   return errors;

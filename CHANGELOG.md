@@ -521,6 +521,29 @@ ui-coverage.test.ts` since P2-12. `ConflictAttributes.positions` retains EVERY d
   `packages/knowledge-graph/tests/reconciliation.test.ts` (13, 293 total in the package, up from 280)
   and `packages/reconciliation-engine/tests/` (36 across 4 files, replacing a 2-test scaffold suite).
   See `docs/architecture/adr/0029-p6-05-source-reconciliation.md`.
+- **Phase 6 — P6-06 (confidence calculation — from source agreement/corroboration):** completes
+  FR-REC-02, which P6-05 had only half-implemented: a private `confidenceFor` helper existed but ran
+  only on the claim-agreement path, so every `ConflictObject` position went out with no computed
+  confidence at all — backwards, since FR-REC-02 names "source agreement" as an input specifically
+  because it is a matter of degree, not a boolean gate. `packages/reconciliation-engine/src/
+confidence-scoring.ts`'s `computeConfidence` extracts and generalizes it into its own dedicated,
+  exported, directly-testable module: unchanged three-tier behaviour (`high`/`medium`/`low`) for the
+  uncontested case (all 36 P6-05 tests pass unmodified against the new implementation), plus a new
+  contested case taking an explicit `contradictingSources` count — `high` is always capped to
+  `medium` when any contradiction exists, however authoritative the supporting side; `medium` is
+  further capped to `low` only when genuinely OUTNUMBERED (`contradictingSources >
+supportingSources`), so a 1-vs-1 tie or a clear majority keeps `medium` rather than collapsing to
+  the same floor as the losing side. `reconcile.ts`'s `buildConflictObject` now calls
+  `computeConfidence` once PER POSITION (previously zero times), weighing each position's own sources
+  against every other position's as the contradicting evidence.
+  `@phoenix-ai/knowledge-graph`'s `reconciliation.ts` gains a purely additive
+  `ConflictPosition.confidence?: ConflictPositionConfidence` field (a structural mirror of
+  `@phoenix-ai/shared`'s `Confidence`, self-indexed for the same reason `ConflictPositionSource
+.sourceType` already is) — every pre-P6-06 `ConflictObject` fixture remains valid unchanged. 25 new
+  tests: `confidence-scoring.test.ts` (18, dedicated unit coverage for both the uncontested and
+  contested cases), plus additions to `reconcile.test.ts`/`index.test.ts` (57 total in the package, up
+  from 36) and `knowledge-graph/tests/reconciliation.test.ts` (+4, 297 total in the package, up from
+  293). See `docs/architecture/adr/0030-p6-06-confidence-calculation.md`.
 
 ### Changed
 

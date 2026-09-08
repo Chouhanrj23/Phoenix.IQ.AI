@@ -4,6 +4,7 @@ import {
   authorityOf,
   boundCompositeConfidence,
   claimFromObject,
+  computeConfidence,
   deterministicId,
   rankConflicts,
   reconcileClaims,
@@ -11,9 +12,10 @@ import {
 
 // P6-05 replaced the scaffold's MODULE_NAME/placeholder() with the real
 // Reconciliation & Confidence Engine (see claim.test.ts, reconcile.test.ts,
-// composite-confidence.test.ts for the substantive coverage) — the same
-// thing every other package's P-0X ticket did to its own scaffold. This
-// file just confirms the package's public entry point re-exports each part.
+// composite-confidence.test.ts, confidence-scoring.test.ts for the
+// substantive coverage) — the same thing every other package's P-0X ticket
+// did to its own scaffold. This file just confirms the package's public
+// entry point re-exports each part.
 
 describe('@phoenix-ai/reconciliation-engine entry point', () => {
   it('exports the claim contract', () => {
@@ -25,6 +27,11 @@ describe('@phoenix-ai/reconciliation-engine entry point', () => {
   it('exports the reconciliation algorithm', () => {
     expect(typeof reconcileClaims).toBe('function');
     expect(typeof rankConflicts).toBe('function');
+  });
+
+  it('exports the dedicated confidence calculation added in P6-06', () => {
+    expect(typeof computeConfidence).toBe('function');
+    expect(computeConfidence({ supportingAuthority: 3, supportingSources: 2 }).level).toBe('high');
   });
 
   it('exports composite confidence bounding', () => {

@@ -4,18 +4,21 @@
  * for each group either:
  *
  *  - **agrees** -- every claim asserts the same value: derive a structural
- *    confidence via a small private `confidenceFor` helper (FR-REC-02), or
+ *    confidence via `confidence-scoring.ts`'s `computeConfidence`
+ *    (FR-REC-02), or
  *  - **conflicts** -- claims disagree: build a real
  *    `@phoenix-ai/knowledge-graph` `ConflictObject` that RETAINS every
  *    distinct position and every source behind it (FR-REC-04: "shall not
- *    silently resolve it"), ranked for review (FR-REC-05).
+ *    silently resolve it"), each position carrying its OWN computed
+ *    confidence (P6-06), ranked for review (FR-REC-05).
  *
  * No claim comparison logic lives in `@phoenix-ai/knowledge-graph`'s
  * `reconciliation.ts` -- that file is the model only, exactly like every
  * other domain file; this is the algorithm layer on top of it, the same
  * split P6-04 established between `workitem.ts` (model) and
  * `jira-bridge.ts` (algorithm). See
- * `docs/architecture/adr/0029-p6-05-source-reconciliation.md`.
+ * `docs/architecture/adr/0029-p6-05-source-reconciliation.md` and
+ * `docs/architecture/adr/0030-p6-06-confidence-calculation.md`.
  */
 
 import {
@@ -24,8 +27,9 @@ import {
   type ConflictPosition,
   type KnowledgeValue,
 } from '@phoenix-ai/knowledge-graph';
-import type { Confidence, ConfidenceLevel } from '@phoenix-ai/shared';
+import type { Confidence } from '@phoenix-ai/shared';
 import { authorityOf, type Claim, type ClaimCategory } from './claim.js';
+import { computeConfidence } from './confidence-scoring.js';
 import { deterministicId } from './determinism.js';
 
 export interface ReconciliationOptions {
@@ -40,7 +44,7 @@ export interface ReconciledClaim {
   attribute: string;
   claimCategory: ClaimCategory;
   value: KnowledgeValue;
-  /** Derived structurally from source-type authority + corroboration -- see `confidenceFor`. Never a model self-report (FR-REC-02). */
+  /** Derived structurally from source-type authority + corroboration -- see `confidence-scoring.ts`'s `computeConfidence`. Never a model self-report (FR-REC-02). */
   confidence: Confidence;
   /** Every claim that agreed, for traceability. */
   claims: readonly Claim[];
@@ -58,32 +62,6 @@ export interface ReconciliationResult {
    * directly into a bundle's `objects`.
    */
   conflicts: ConflictObject[];
-}
-
-/**
- * Derives a `Confidence` purely from the strongest supporting source
- * authority and how many independent sources corroborate it -- never a
- * model self-report (FR-REC-02). Only ever runs on the all-agree case:
- *  - `high`   an authoritative source (authority 3), corroborated by at
- *             least one other independent source.
- *  - `medium` an authoritative source alone, OR a moderately-authoritative
- *             source (authority 2) corroborated by another.
- *  - `low`    everything else.
- */
-function confidenceFor(maxAuthority: 1 | 2 | 3, corroboration: number): Confidence {
-  const corroborated = corroboration >= 2;
-  const level: ConfidenceLevel =
-    maxAuthority === 3 && corroborated
-      ? 'high'
-      : maxAuthority === 3 || (maxAuthority === 2 && corroborated)
-        ? 'medium'
-        : 'low';
-
-  const base = maxAuthority / 3;
-  const corroborationBonus = Math.min(0.15, Math.max(0, corroboration - 1) * 0.05);
-  const score = Math.round(Math.max(0, Math.min(1, base + corroborationBonus)) * 100) / 100;
-
-  return { level, score };
 }
 
 /** Deterministic structural equality for a `KnowledgeValue`, independent of object-key order. */
@@ -125,6 +103,21 @@ function buildConflictObject(
         throw new Error('unreachable: a grouped position has no claims');
       }
 
+      // P6-06: this position's OWN confidence, weighed against every OTHER
+      // position's sources as the contradicting evidence -- not just "a
+      // conflict exists" (that lives on the object's own metadata.confidence,
+      // see below), but "how well-supported is THIS specific value."
+      const supportingSourceIds = new Set(claimsForValue.map((claim) => claim.sourceId));
+      const supportingAuthority = claimsForValue.reduce<1 | 2 | 3>((max, claim) => {
+        const authority = authorityOf(claim.claimCategory, claim.sourceType);
+        return authority > max ? authority : max;
+      }, 1);
+      const contradictingSourceIds = new Set(
+        groupClaims
+          .filter((claim) => !supportingSourceIds.has(claim.sourceId))
+          .map((claim) => claim.sourceId),
+      );
+
       return {
         value: representative.value,
         sources: claimsForValue.map((claim) => ({
@@ -132,6 +125,11 @@ function buildConflictObject(
           sourceType: claim.sourceType,
           authority: authorityOf(claim.claimCategory, claim.sourceType),
         })),
+        confidence: computeConfidence({
+          supportingAuthority,
+          supportingSources: supportingSourceIds.size,
+          contradictingSources: contradictingSourceIds.size,
+        }),
       };
     })
     .sort((a, b) => {
@@ -242,7 +240,10 @@ export function reconcileClaims(
         attribute: representative.attribute,
         claimCategory: representative.claimCategory,
         value: representative.value,
-        confidence: confidenceFor(maxAuthority, corroboration),
+        confidence: computeConfidence({
+          supportingAuthority: maxAuthority,
+          supportingSources: corroboration,
+        }),
         claims: groupClaims,
       });
       continue;

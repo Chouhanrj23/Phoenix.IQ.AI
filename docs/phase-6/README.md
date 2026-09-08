@@ -18,6 +18,7 @@ against other sources when they disagree (P6-05).
 | P6-02  | Jira connector — a second real evidence source                          | **Complete.** `SourceTicketTrackerDescriptor`/`createJiraConnector` (`descriptor.ts`, `jira-connector.ts`, `jira-client.ts`, `adf.ts`). See ADR 0027.                                                                                                                                           |
 | P6-04  | OKF mapping — represent Jira-derived facts in the common model          | **Complete.** `WorkItemObject`/`WorkItemRelationship` (`packages/knowledge-graph/src/workitem.ts`) and `bridgeJiraArtifacts`/`buildJiraCanonicalBundle`/`mapJiraToOkfDocument`/`serializeJiraToOkfYaml` (`packages/extraction-engine/src/jira-bridge.ts`, `jira-okf-mapping.ts`). See ADR 0028. |
 | P6-05  | Source-to-source reconciliation — compare claims, retain contradictions | **Complete.** `ConflictObject` (`packages/knowledge-graph/src/reconciliation.ts`) and `reconcileClaims`/`rankConflicts`/`boundCompositeConfidence` (`packages/reconciliation-engine/src/`). See ADR 0029.                                                                                       |
+| P6-06  | Confidence calculation — from source agreement/corroboration            | **Complete.** `computeConfidence` (`packages/reconciliation-engine/src/confidence-scoring.ts`), extracted and generalized from P6-05's original agreement-only helper to also score each `ConflictObject` position. See ADR 0030.                                                               |
 
 ## P6-01 — what changed and why
 
@@ -132,3 +133,28 @@ FRD's §3.6 "Reconciliation & Confidence Engine" module — the first real code 
 Not built here: FR-REC-06 (human-confirmed corrections — `packages/review-loop`'s job), a `SourceType`
 for "config/IaC", configurable/tunable authority scores, and any persistence or cross-run comparison
 (`packages/drift-detection`'s job). See ADR 0029 "Limitations" for the full list.
+
+## P6-06 — what changed and why
+
+Full rationale: [ADR 0030](../architecture/adr/0030-p6-06-confidence-calculation.md). P6-05's own
+confidence calculation was half-built: a private `confidenceFor` helper existed, but it only ever ran
+on the agreement path — every `ConflictObject` position went out with NO computed confidence at all,
+exactly backwards given FR-REC-02 names "source agreement" as an input specifically because it varies.
+
+1. **`confidence-scoring.ts`'s `computeConfidence`** — extracted into its own dedicated, exported,
+   directly-testable module, and generalized to take an explicit `contradictingSources` count
+   (defaulting to 0, reproducing P6-05's original behaviour exactly for the uncontested case — all 36
+   P6-05 tests pass unmodified against the new implementation).
+2. **`buildConflictObject` now calls it once PER POSITION**, not zero times — each retained position
+   gets its own differentiated confidence, weighed against every OTHER position's sources as the
+   contradicting evidence. A live dispute is capped to `medium` at most (never `high`, however
+   authoritative); a position OUTNUMBERED by contradicting sources is capped further to `low`; a clear
+   majority keeps `medium` rather than collapsing to the same floor as the minority side.
+3. **`ConflictPosition` gains an optional `confidence?: ConflictPositionConfidence` field**
+   (`@phoenix-ai/knowledge-graph`'s `reconciliation.ts`) — purely additive, the same P2-08/P2-09
+   precedent this codebase uses for extending an existing shape without breaking prior fixtures.
+
+Not built here: authority-weighted (vs. plain source-count) outnumbered/majority comparison,
+configurable thresholds, or anything else already named in ADR 0029's own Limitations — this ticket
+completes FR-REC-02's calculation, it does not revisit FR-REC-01's weighting table or FR-REC-06's
+human-override path. See ADR 0030 "Limitations" for the full list.

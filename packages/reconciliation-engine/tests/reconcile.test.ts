@@ -126,6 +126,23 @@ describe('reconcileClaims — conflict (FR-REC-04: retain both positions, never 
     ]);
   });
 
+  it('gives each position its OWN differentiated confidence (P6-06), not a shared flat value', () => {
+    const [conflict] = reconcileClaims([JIRA_CLAIM, DOC_CLAIM], options()).conflicts;
+    expect(conflict).toBeDefined();
+    if (conflict === undefined) return;
+
+    const done = conflict.attributes.positions.find((p) => p.value === 'Done');
+    const inProgress = conflict.attributes.positions.find((p) => p.value === 'In Progress');
+
+    // A 1-vs-1 tie between an authority-3 and an authority-2 source: the
+    // stronger side keeps "medium", the weaker one is "low" — see
+    // confidence-scoring.test.ts for the underlying formula this exercises
+    // end to end.
+    expect(done?.confidence?.level).toBe('medium');
+    expect(inProgress?.confidence?.level).toBe('low');
+    expect(done?.confidence?.score).toBeGreaterThan(inProgress?.confidence?.score ?? 1);
+  });
+
   it('never picks a winner — the conflict itself carries no settled value', () => {
     const [conflict] = reconcileClaims([JIRA_CLAIM, DOC_CLAIM], options()).conflicts;
     expect(conflict).toBeDefined();
@@ -164,6 +181,15 @@ describe('reconcileClaims — conflict (FR-REC-04: retain both positions, never 
     expect(result.conflicts).toHaveLength(1);
     const done = result.conflicts[0]?.attributes.positions.find((p) => p.value === 'Done');
     expect(done?.sources).toHaveLength(2);
+  });
+
+  it('a corroborated majority position keeps "medium" confidence rather than being crushed to "low"', () => {
+    const secondJiraLikeSource: Claim = { ...JIRA_CLAIM, sourceId: 'ticket://other-tracker/AUR-1' };
+    const result = reconcileClaims([JIRA_CLAIM, secondJiraLikeSource, DOC_CLAIM], options());
+    const done = result.conflicts[0]?.attributes.positions.find((p) => p.value === 'Done');
+    // 2 supporting vs. 1 contradicting — a clear majority, but the dispute
+    // is still live, so "high" is never claimed (see confidence-scoring.ts).
+    expect(done?.confidence?.level).toBe('medium');
   });
 
   it('is deterministic — the same claims produce the same conflict id across runs', () => {
