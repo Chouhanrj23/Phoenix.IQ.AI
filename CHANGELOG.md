@@ -493,6 +493,34 @@ fintech/fixtures.ts`, "nimbus-financial") — producing structurally analogous, 
 workitem.test.ts` (16, 280 total in the package, up from 264) and `packages/extraction-engine/
 tests/jira-bridge.test.ts` + `jira-okf-mapping.test.ts` (18, 95 total in the package, up from 77).
   See `docs/architecture/adr/0028-p6-04-jira-okf-mapping.md`.
+- **Phase 6 — P6-05 (source-to-source reconciliation — requested as "P6-04 Reconciliation", tracked
+  under this number to avoid duplicating the ticket above):** implements the FRD's §3.6
+  "Reconciliation & Confidence Engine" module (FR-REC-01/02/03/04/05) as `packages/
+reconciliation-engine`'s first real code, replacing its scaffold. `packages/knowledge-graph/src/
+reconciliation.ts` adds the sixth domain-specific `kind` vocabulary — `ConflictObject`
+  (`kind: 'reconciliation.conflict'`) — and is the FIRST to use `category: 'observation'`, the
+  structural category P2-02 reserved since Phase 2 and documented as unfilled by `tests/
+ui-coverage.test.ts` since P2-12. `ConflictAttributes.positions` retains EVERY distinct value
+  sources claimed about a subject/attribute, each with every source behind it — never collapsed to
+  one (FR-REC-04: "shall not silently resolve it"). `packages/reconciliation-engine/src/claim.ts`'s
+  `Claim` (the FRD's own "structured claims", §2.1) and `SOURCE_TYPE_AUTHORITY` implement FR-REC-01's
+  source-type weighting (code authoritative for structure, logs for behaviour, docs/tickets for
+  intent — a deliberately coarse 1-3 scale, not invented decimals); `claimFromObject` extracts a
+  claim from ANY already-bridged canonical object (not Jira-specific — Jira's `WorkItemObject`,
+  P6-04, is one example among others). `reconcile.ts`'s `reconcileClaims` groups claims by subject/
+  attribute/category: agreement derives a structural `Confidence` from source authority and
+  corroboration (FR-REC-02: "not from model self-report"); disagreement builds a real `ConflictObject`
+  (FR-REC-04), ranked by `rankConflicts` for review (FR-REC-05). `composite-confidence.ts`'s
+  `boundCompositeConfidence` separately implements FR-REC-03 (a composite element's confidence
+  bounded by its least-certain constituent, returned verbatim). A `ConflictObject` needs no OKF-wrap
+  step, unlike Java/Jira — it is already a valid `CanonicalKnowledgeObject`. Cross-source entity
+  resolution (deciding which claims from different sources describe "the same" real-world thing) is
+  deliberately left to the caller (`Claim.subjectId`), and the FRD's full mandatory
+  `status: extracted|inferred|conflicted|human-confirmed` field is NOT added to every canonical
+  object/relationship in this ticket — both disclosed scope boundaries, not oversights. 49 new tests:
+  `packages/knowledge-graph/tests/reconciliation.test.ts` (13, 293 total in the package, up from 280)
+  and `packages/reconciliation-engine/tests/` (36 across 4 files, replacing a 2-test scaffold suite).
+  See `docs/architecture/adr/0029-p6-05-source-reconciliation.md`.
 
 ### Changed
 

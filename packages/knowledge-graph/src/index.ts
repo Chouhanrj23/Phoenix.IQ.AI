@@ -38,6 +38,13 @@
  * issue (Jira, P6-02's connector) as a domain-neutral canonical object. See
  * docs/architecture/adr/0028-p6-04-jira-okf-mapping.md.
  *
+ * P6-05: the Reconciliation model -- typed `ConflictObject`, the sixth
+ * domain-specific `kind` vocabulary and the first to use
+ * `category: 'observation'` (reserved since P2-02, unfilled until now).
+ * Represents FR-REC-04's "record a conflict retaining both positions and
+ * their sources" as a real canonical object. See
+ * docs/architecture/adr/0029-p6-05-source-reconciliation.md.
+ *
  * P2-07: the provenance model -- `Source` (a resolvable description of an
  * origin artifact) and `validateSourceReferences` (cross-checks that every
  * `metadata.provenance[].sourceId`/`evidence[].sourceId` in a bundle
@@ -93,3 +100,4 @@ export * from './domain.js';
 export * from './journey.js';
 export * from './integration.js';
 export * from './workitem.js';
+export * from './reconciliation.js';

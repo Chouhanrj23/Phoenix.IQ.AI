@@ -7,7 +7,7 @@
 
 The single source of truth from which all OKF outputs are projected; stores every element with provenance.
 
-## Status — Phase 2 (Canonical Knowledge Model) + P6-04 (Work Item model) + P6-05 (Reconciliation model)
+## Status — Phase 2 (Canonical Knowledge Model) + P6-04 (Work Item model) + P6-05 (Reconciliation model) + P6-05 (Reconciliation model)
 
 `src/` defines the canonical knowledge model (P2-01), its domain-neutral ontology foundation
 (P2-02), the Architecture model (P2-03), the Domain/Entity model (P2-04), the
@@ -71,6 +71,12 @@ all three cross-cutting metadata models, and the OKF serialization are now compl
   tracker's type taxonomy is project-configurable. `contains`/`relatesTo` (both REUSED from
   `domain.ts`, not new) represent parent/child issue hierarchy and cross-issue links respectively,
   with the tracker's real link-type name and direction preserved in relationship `attributes`.
+- `ConflictObject` (`reconciliation.ts`, P6-05) — the sixth domain-specific `kind` vocabulary,
+  `kind: 'reconciliation.conflict'`, and the FIRST to use `category: 'observation'` — the structural
+  category P2-02 reserved for "a meta-statement ABOUT other knowledge objects" but that no real kind
+  had filled until now (`tests/ui-coverage.test.ts` documented the gap since P2-12). Retains EVERY
+  distinct value multiple sources claimed about the same subject/attribute, each with every source
+  behind it — `packages/reconciliation-engine`'s job to build, this file's job only to shape.
 
 Design rationale: `docs/architecture/adr/0003-canonical-knowledge-model.md`,
 `docs/architecture/adr/0004-domain-neutral-ontology.md`,
@@ -82,10 +88,9 @@ Design rationale: `docs/architecture/adr/0003-canonical-knowledge-model.md`,
 `docs/architecture/adr/0010-confidence-model.md`,
 `docs/architecture/adr/0011-evidence-reference-model.md`,
 `docs/architecture/adr/0012-okf-yaml-schema.md`,
-`docs/architecture/adr/0028-p6-04-jira-okf-mapping.md` (the Work Item model),
-`docs/architecture/adr/0029-p6-05-source-reconciliation.md` (the Reconciliation model),
-`docs/architecture/adr/0030-p6-06-confidence-calculation.md`, and
-`docs/architecture/adr/0031-p6-08-evidence-aggregation.md`. Status tracker: `docs/phase-2/README.md`
+`docs/architecture/adr/0028-p6-04-jira-okf-mapping.md` (the Work Item model), and
+`docs/architecture/adr/0029-p6-05-source-reconciliation.md` (the Reconciliation model).
+Status tracker: `docs/phase-2/README.md`
 and `docs/phase-6/README.md`. Authoritative OKF field-level reference: `docs/okf/README.md`. Sample
 document: `docs/okf/sample.md`. UI compatibility validation: `docs/okf/ui-validation.md`.
 
@@ -106,3 +111,9 @@ no fact-to-canonical mapping (that is `packages/extraction-engine`'s `jira-bridg
 status-transition inference over a Work Item's `attributes.status` (a single-snapshot fact, not a
 history — see ADR 0028 "Limitations"), and no UI rendering (`apps/web`'s graph explorer is unaware of
 `workitem.issue`).
+
+`reconciliation.ts` (P6-05) is likewise model-only: no claim comparison, no confidence computation, no
+source-type weighting (all `packages/reconciliation-engine`'s job). It does not add the FRD's full
+`status: extracted|inferred|conflicted|human-confirmed` field to every canonical object/relationship
+— a `ConflictObject` records a dispute as its own object rather than stamping the disputed objects
+themselves; see ADR 0029 "Limitations".

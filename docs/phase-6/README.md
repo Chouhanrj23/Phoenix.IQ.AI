@@ -12,11 +12,12 @@ against other sources when they disagree (P6-05).
 
 ## P6-0X ticket status
 
-| Ticket | Objective                                                      | Status                                                                                                                                                                                                                                                                                          |
-| ------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P6-01  | Harden the connector abstraction for multiple source layouts   | **Complete.** `ConnectorRegistry` (`registry.ts`) and `SourceDocumentSpaceDescriptor`/`createInMemoryDocumentSpaceConnector` (`descriptor.ts`, `document-space-connector.ts`). See ADR 0026.                                                                                                    |
-| P6-02  | Jira connector — a second real evidence source                 | **Complete.** `SourceTicketTrackerDescriptor`/`createJiraConnector` (`descriptor.ts`, `jira-connector.ts`, `jira-client.ts`, `adf.ts`). See ADR 0027.                                                                                                                                           |
-| P6-04  | OKF mapping — represent Jira-derived facts in the common model | **Complete.** `WorkItemObject`/`WorkItemRelationship` (`packages/knowledge-graph/src/workitem.ts`) and `bridgeJiraArtifacts`/`buildJiraCanonicalBundle`/`mapJiraToOkfDocument`/`serializeJiraToOkfYaml` (`packages/extraction-engine/src/jira-bridge.ts`, `jira-okf-mapping.ts`). See ADR 0028. |
+| Ticket | Objective                                                               | Status                                                                                                                                                                                                                                                                                          |
+| ------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P6-01  | Harden the connector abstraction for multiple source layouts            | **Complete.** `ConnectorRegistry` (`registry.ts`) and `SourceDocumentSpaceDescriptor`/`createInMemoryDocumentSpaceConnector` (`descriptor.ts`, `document-space-connector.ts`). See ADR 0026.                                                                                                    |
+| P6-02  | Jira connector — a second real evidence source                          | **Complete.** `SourceTicketTrackerDescriptor`/`createJiraConnector` (`descriptor.ts`, `jira-connector.ts`, `jira-client.ts`, `adf.ts`). See ADR 0027.                                                                                                                                           |
+| P6-04  | OKF mapping — represent Jira-derived facts in the common model          | **Complete.** `WorkItemObject`/`WorkItemRelationship` (`packages/knowledge-graph/src/workitem.ts`) and `bridgeJiraArtifacts`/`buildJiraCanonicalBundle`/`mapJiraToOkfDocument`/`serializeJiraToOkfYaml` (`packages/extraction-engine/src/jira-bridge.ts`, `jira-okf-mapping.ts`). See ADR 0028. |
+| P6-05  | Source-to-source reconciliation — compare claims, retain contradictions | **Complete.** `ConflictObject` (`packages/knowledge-graph/src/reconciliation.ts`) and `reconcileClaims`/`rankConflicts`/`boundCompositeConfidence` (`packages/reconciliation-engine/src/`). See ADR 0029.                                                                                       |
 
 ## P6-01 — what changed and why
 
@@ -99,3 +100,35 @@ Not built here: workflow/status-transition inference over a Work Item's `attribu
 single-snapshot fact, not a history — `inference-engine`'s job, over evidence this ticket does not
 produce), any UI rendering, and bridging for any tracker other than Jira. See ADR 0028 "Limitations"
 for the full list.
+
+## P6-05 — what changed and why
+
+Full rationale: [ADR 0029](../architecture/adr/0029-p6-05-source-reconciliation.md). Implements the
+FRD's §3.6 "Reconciliation & Confidence Engine" module — the first real code in
+`packages/reconciliation-engine`, previously an untouched scaffold.
+
+1. **`packages/knowledge-graph/src/reconciliation.ts`** — the sixth domain-specific `kind`
+   vocabulary, `ConflictObject` (`kind: 'reconciliation.conflict'`), and the FIRST to use
+   `category: 'observation'` — reserved since P2-02, documented as unfilled by
+   `tests/ui-coverage.test.ts` since P2-12, filled here. Retains EVERY distinct value sources
+   claimed about a subject/attribute, each with every source behind it — never collapsed to one
+   (FR-REC-04).
+2. **`packages/reconciliation-engine/src/claim.ts`** — `Claim` (the FRD's own "structured claims")
+   and `SOURCE_TYPE_AUTHORITY`, FR-REC-01's source-type weighting table (code authoritative for
+   structure, logs for behaviour, docs/tickets for intent — a deliberately coarse 1–3 scale, not
+   invented decimals). `claimFromObject` extracts a claim from ANY already-bridged canonical object
+   — not Jira-specific, satisfying the ticket's own "Jira, and other sources as well."
+3. **`reconcile.ts`'s `reconcileClaims`** groups claims by subject/attribute/category: agreement
+   yields a structurally-derived `Confidence` (FR-REC-02); disagreement yields a real `ConflictObject`
+   retaining both (or all) positions (FR-REC-04), ranked for review via `rankConflicts` (FR-REC-05).
+   `composite-confidence.ts`'s `boundCompositeConfidence` separately implements FR-REC-03.
+4. **Cross-source entity resolution — deciding WHICH claims from different sources describe the same
+   real-world thing — is deliberately left to the caller** (`Claim.subjectId`), not solved here; see
+   ADR 0029 decision 3 for why that is a distinct, harder problem out of scope for this ticket.
+5. **The FRD's mandatory `status: extracted|inferred|conflicted|human-confirmed` field is NOT added
+   to every canonical object/relationship** — a much larger, cross-cutting change than FR-REC-04
+   itself requires; see ADR 0029 decision 5.
+
+Not built here: FR-REC-06 (human-confirmed corrections — `packages/review-loop`'s job), a `SourceType`
+for "config/IaC", configurable/tunable authority scores, and any persistence or cross-run comparison
+(`packages/drift-detection`'s job). See ADR 0029 "Limitations" for the full list.
