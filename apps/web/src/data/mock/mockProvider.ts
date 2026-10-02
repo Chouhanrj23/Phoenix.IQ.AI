@@ -52,6 +52,21 @@ function providerFor(bundle: CompanyBundle): OkfDataProvider {
     getDriftHistory: () => delay(bundle.driftHistory),
 
     getFullGraph: () => delay(bundle.fullGraph),
+
+    /**
+     * P7-01 — the mock provider is a fixture dataset with no backend behind
+     * it, so there is genuinely nowhere to persist a review decision. It
+     * reports that honestly (`durability: 'none'`) instead of pretending to
+     * save, or quietly inventing browser storage the rest of Phoenix knows
+     * nothing about. Run the app against the API (`VITE_DATA_SOURCE=api`)
+     * for real persisted review.
+     */
+    submitReviewDecision: () =>
+      delay({
+        durability: 'none' as const,
+        reason:
+          'This is the demo dataset, which has no backend. Review decisions are not saved. Run Phoenix against the API to record real review decisions.',
+      }),
   };
 }
 

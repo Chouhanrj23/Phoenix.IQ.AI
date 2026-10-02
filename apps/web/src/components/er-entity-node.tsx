@@ -4,6 +4,8 @@ import type { ErEntityNode } from '../lib/er-model.js';
 import { CONFIDENCE_COLORS } from './confidence-badge.js';
 import { cn } from '../lib/utils.js';
 
+import type { JSX } from 'react';
+
 export interface ErEntityNodeData {
   entity: ErEntityNode;
   isSelected: boolean;

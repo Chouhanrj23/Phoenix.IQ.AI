@@ -1,0 +1,548 @@
+{
+  "planHash": "ac2dcb6367f23b23c67d03505fa9d8d8fc517cf56cf0291d796fa7291f655c85",
+  "phase": "postupgrade",
+  "recordedAtUtc": "2026-10-02T21:40:50.6894952Z",
+  "retryCount": 3,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 1540,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "workspace-builds",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E phoenix-ai@0.1.0 build C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\r\n\u003E turbo run build\r\n\r\n\u2022 turbo 2.10.5\r\n\r\n   \u2022 Packages in scope: @phoenix-ai/api, @phoenix-ai/drift-detection, @phoenix-ai/evaluation-harness, @phoenix-ai/extraction-engine, @phoenix-ai/gap-analysis, @phoenix-ai/graph-persistence, @phoenix-ai/inference-engine, @phoenix-ai/ingestion-connectors, @phoenix-ai/knowledge-graph, @phoenix-ai/okf-renderers, @phoenix-ai/orchestration, @phoenix-ai/reconciliation-engine, @phoenix-ai/redaction-hardening, @phoenix-ai/review-loop, @phoenix-ai/shared, @phoenix-ai/web\r\n   \u2022 Running build in 16 packages\r\n   \u2022 Remote caching disabled\r\n\r\n@phoenix-ai/shared:build: cache hit, replaying logs fd79dccca675cf76\r\n@phoenix-ai/shared:build: \r\n@phoenix-ai/shared:build: \u003E @phoenix-ai/shared@0.1.0 build C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\shared\r\n@phoenix-ai/shared:build: \u003E tsgo -b\r\n@phoenix-ai/shared:build: \r\n@phoenix-ai/web:build: cache miss, executing a530864cab935fe2\r\n@phoenix-ai/gap-analysis:build: cache hit, replaying logs de2049f59d5ec698\r\n@phoenix-ai/gap-analysis:build: \r\n@phoenix-ai/gap-analysis:build: \u003E @phoenix-ai/gap-analysis@0.1.0 build C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\gap-analysis\r\n@phoenix-ai/gap-analysis:build: \u003E tsgo -b\r\n@phoenix-ai/gap-analysis:build: \r\n@phoenix-ai/orchestration:build: cache hit, replaying logs 0b191a201a34e23b\r\n@phoenix-ai/orchestration:build: \r\n@phoenix-ai/orchestration:build: \u003E @phoenix-ai/orchestration@0.1.0 build C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\orchestration\r\n@phoenix-ai/orchestration:build: \u003E tsgo -b\r\n@phoenix-ai/orchestration:build: \r\n@phoenix-ai/redaction-hardening:build: cache hit, replaying logs 9c6b3f6304447d52\r\n@phoenix-ai/evaluation-harness:build: cache hit, replaying logs e477a90832a39a59\r\n@phoenix-ai/redaction-hardening:build: \r\n@phoenix-ai/redaction-hardening:build: \u003E @phoenix-ai/redaction-hardening@0.1.0 build C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\redaction-hardening\r\n@phoenix-ai/redaction-hardening:build: \u003E tsgo -b\r\n@phoenix-ai/redaction-hardening:build: \r\n@phoenix-ai/evaluation-harness:build: \r\n@phoenix-ai/evaluation-harness:build: \u003E @phoenix-ai/evaluation-harness@0.1.0 build C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\evaluation-harness\r\n@phoenix-ai/evaluation-harness:build: \u003E tsgo -b\r\n@phoenix-ai/evaluation-harness:build: \r\n@phoenix-ai/drift-detection:build: cache hit, replaying logs 29f219743b8102a5\r\n@phoenix-ai/drift-detection:build: \r\n@phoenix-ai/drift-detection:build: \u003E @phoenix-ai/drift-detection@0.1.0 build C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\drift-detection\r\n@phoenix-ai/drift-detection:build: \u003E tsgo -b\r\n@phoenix-ai/drift-detection:build: \r\n@phoenix-ai/knowledge-graph:build: cache hit, replaying logs d67268b686dde066\r\n@phoenix-ai/knowledge-graph:build: \r\n@phoenix-ai/knowledge-graph:build: \u003E @phoenix-ai/knowledge-graph@0.1.0 build C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\knowledge-graph\r\n@phoenix-ai/knowledge-graph:build: \u003E tsgo -b\r\n@phoenix-ai/knowledge-graph:build: \r\n@phoenix-ai/inference-engine:build: cache miss, executing e0a1b0bbebfd9521\r\n@phoenix-ai/ingestion-connectors:build: cache miss, executing 62a54fc05aa986a4\r\n@phoenix-ai/reconciliation-engine:build: cache miss, executing e5ae0cdf74210fc2\r\n@phoenix-ai/web:build: \r\n@phoenix-ai/web:build: \u003E @phoenix-ai/web@0.1.0 build C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\apps\\web\r\n@phoenix-ai/web:build: \u003E vite build\r\n@phoenix-ai/web:build: \r\n@phoenix-ai/inference-engine:build: \r\n@phoenix-ai/inference-engine:build: \u003E @phoenix-ai/inference-engine@0.1.0 build C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\inference-engine\r\n@phoenix-ai/inference-engine:build: \u003E tsgo -b\r\n@phoenix-ai/inference-engine:build: \r\n@phoenix-ai/ingestion-connectors:build: \r\n@phoenix-ai/ingestion-connectors:build: \u003E @phoenix-ai/ingestion-connectors@0.1.0 build C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\ingestion-connectors\r\n@phoenix-ai/ingestion-connectors:build: \u003E\n\u2026[truncated]",
+        "durationMs": 8295
+      },
+      {
+        "name": "api-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/api@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\apps\\api\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/apps/api\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/deployment.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 686\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m GET /api/deployment-topology \u001B[2m(2)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns environment and instance nodes matching the DeploymentNode contract, instances pointing at a valid environment (response shape)\u001B[33m 667\u001B[2mms\u001B[22m\u001B[39m\r\n\u001B[90mstderr\u001B[2m | tests/deployment.error.test.ts\u001B[2m \u003E \u001B[22m\u001B[2mGET /api/deployment-topology \u2014 server error handling\u001B[2m \u003E \u001B[22m\u001B[2mreturns a masked 500 when the service throws\r\n\u001B[22m\u001B[39m{\u0022level\u0022:\u0022error\u0022,\u0022message\u0022:\u0022unhandled request error\u0022,\u0022time\u0022:\u00222026-10-02T21:39:42.071Z\u0022,\u0022method\u0022:\u0022GET\u0022,\u0022url\u0022:\u0022/api/deployment-topology\u0022,\u0022err\u0022:\u0022Error: seed data unavailable\u0022}\r\n\r\n \u001B[32m\u2713\u001B[39m tests/gap-items.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 719\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m GET /api/gap-items \u001B[2m(2)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns gap items matching the GapItem contract (response shape)\u001B[33m 692\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/deployment.error.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 718\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m GET /api/deployment-topology \u2014 server error handling \u001B[2m(1)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns a masked 500 when the service throws\u001B[33m 706\u001B[2mms\u001B[22m\u001B[39m\r\n\u001B[90mstderr\u001B[2m | tests/integrations.error.test.ts\u001B[2m \u003E \u001B[22m\u001B[2mGET /api/integrations \u2014 server error handling\u001B[2m \u003E \u001B[22m\u001B[2mreturns a masked 500 when the service throws\r\n\u001B[22m\u001B[39m{\u0022level\u0022:\u0022error\u0022,\u0022message\u0022:\u0022unhandled request error\u0022,\u0022time\u0022:\u00222026-10-02T21:39:42.195Z\u0022,\u0022method\u0022:\u0022GET\u0022,\u0022url\u0022:\u0022/api/integrations\u0022,\u0022err\u0022:\u0022Error: seed data unavailable\u0022}\r\n\r\n \u001B[32m\u2713\u001B[39m tests/integrations.error.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 752\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m GET /api/integrations \u2014 server error handling \u001B[2m(1)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns a masked 500 when the service throws\u001B[33m 744\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/review-items.empty.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 816\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m GET /api/review-items \u2014 empty data \u001B[2m(1)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns 200 with an empty array\u001B[33m 808\u001B[2mms\u001B[22m\u001B[39m\r\n\u001B[90mstderr\u001B[2m | tests/system-summary.error.test.ts\u001B[2m \u003E \u001B[22m\u001B[2mGET /api/system-summary \u2014 server error handling\u001B[2m \u003E \u001B[22m\u001B[2mreturns a masked 500 when the service throws\r\n\u001B[22m\u001B[39m{\u0022level\u0022:\u0022error\u0022,\u0022message\u0022:\u0022unhandled request error\u0022,\u0022time\u0022:\u00222026-10-02T21:39:42.290Z\u0022,\u0022method\u0022:\u0022GET\u0022,\u0022url\u0022:\u0022/api/system-summary\u0022,\u0022err\u0022:\u0022Error: seed data unavailable\u0022}\r\n\r\n \u001B[32m\u2713\u001B[39m tests/system-summary.error.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 759\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m GET /api/system-summary \u2014 server error handling \u001B[2m(1)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns a masked 500 when the service throws\u001B[33m 754\u001B[2mms\u001B[22m\u001B[39m\r\n\u001B[90mstderr\u001B[2m | tests/architecture.error.test.ts\u001B[2m \u003E \u001B[22m\u001B[2mGET /api/architecture \u2014 server error handling\u001B[2m \u003E \u001B[22m\u001B[2mreturns a masked 500 when the service throws\r\n\u001B[22m\u001B[39m{\u0022level\u0022:\u0022error\u0022,\u0022message\u0022:\u0022unhandled request error\u0022,\u0022time\u0022:\u00222026-10-02T21:39:42.320Z\u0022,\u0022method\u0022:\u0022GET\u0022,\u0022url\u0022:\u0022/api/architecture\u0022,\u0022err\u0022:\u0022Error: seed data unavailable\u0022}\r\n\r\n \u001B[32m\u2713\u001B[39m tests/architecture.error.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 970\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m GET /api/architecture \u2014 server error handling \u001B[2m(1)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns a masked 500 when the service throws\u001B[33m 966\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/architecture.test.ts \u001B[2m(\u001B[22m\u001B[2m5 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 1158\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m GET /api/architecture \u001B[2m(5)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns the context view by default, matching the C4Node/C4Edge contract (response contract)\u001B[33m 868\u001B[2mms\u001B[22m\u001B[39m\r\n\n\u2026[truncated]",
+        "durationMs": 9325,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 81,
+          "testsPassed": 81,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "drift-detection-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/drift-detection@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\drift-detection\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/drift-detection\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 3\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m1 passed\u001B[39m\u001B[22m\u001B[90m (1)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m2 passed\u001B[39m\u001B[22m\u001B[90m (2)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:09:49\r\n\u001B[2m   Duration \u001B[22m 313ms\u001B[2m (transform 55%, import 30%, worker 9%, tests 5%)\u001B[22m\r\n\r\n",
+        "durationMs": 1936,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 2,
+          "testsPassed": 2,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "evaluation-harness-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/evaluation-harness@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\evaluation-harness\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/evaluation-harness\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 3\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m1 passed\u001B[39m\u001B[22m\u001B[90m (1)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m2 passed\u001B[39m\u001B[22m\u001B[90m (2)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:09:51\r\n\u001B[2m   Duration \u001B[22m 214ms\u001B[2m (transform 52%, import 34%, worker 8%, tests 5%)\u001B[22m\r\n\r\n",
+        "durationMs": 1360,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 2,
+          "testsPassed": 2,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "extraction-engine-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/extraction-engine@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\extraction-engine\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/extraction-engine\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/jira-bridge.test.ts \u001B[2m(\u001B[22m\u001B[2m14 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 72\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/jira-okf-mapping.test.ts \u001B[2m(\u001B[22m\u001B[2m4 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 113\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/java-project.test.ts \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 100\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/fact-provenance.test.ts \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 27\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/java-http.test.ts \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 183\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/java-structure.test.ts \u001B[2m(\u001B[22m\u001B[2m9 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 405\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/bridge-persistence.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 183\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/java-calls.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 187\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/java-persistence.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 205\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/java-config.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 266\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/bridge-http.test.ts \u001B[2m(\u001B[22m\u001B[2m4 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 142\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/bridge-relationships.test.ts \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 190\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/extract-java.test.ts \u001B[2m(\u001B[22m\u001B[2m14 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 507\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/okf-mapping.test.ts \u001B[2m(\u001B[22m\u001B[2m4 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 234\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/java-parser-adapter.test.ts \u001B[2m(\u001B[22m\u001B[2m4 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 43\u001B[2mms\u001B[22m\u001B[39m\r\nwarning: in the working copy of \u0027pom.xml\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027src/main/java/com/phoenix/sample/catalog/Product.java\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027src/main/java/com/phoenix/sample/catalog/ProductController.java\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027src/main/java/com/phoenix/sample/catalog/ProductRepository.java\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027src/main/resources/application.yml\u0027, LF will be replaced by CRLF the next time Git touches it\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 4\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/pipeline-e2e.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 2153\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m full pipeline \u2014 real git ingestion through OKF validation \u001B[2m(1)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m ingests a real repository, extracts real Java facts, maps them to the canonical model, and produces a valid OKF document\u001B[33m 1327\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m17 passed\u001B[39m\u001B[22m\u001B[90m (17)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m95 passed\u001B[39m\u001B[22m\u001B[90m (95)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:09:52\r\n\u001B[2m   Duration \u001B[22m 8.62s\u001B[2m (import 85%, transform 7%, tests 7%)\u001B[22m\r\n\r\n",
+        "durationMs": 9669,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 95,
+          "testsPassed": 95,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "gap-analysis-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/gap-analysis@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\gap-analysis\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/gap-analysis\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 3\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m1 passed\u001B[39m\u001B[22m\u001B[90m (1)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m2 passed\u001B[39m\u001B[22m\u001B[90m (2)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:10:02\r\n\u001B[2m   Duration \u001B[22m 262ms\u001B[2m (transform 57%, import 28%, worker 10%, tests 4%)\u001B[22m\r\n\r\n",
+        "durationMs": 1317,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 2,
+          "testsPassed": 2,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "graph-persistence-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 1,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/graph-persistence@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\graph-persistence\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/graph-persistence\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/transform.test.ts \u001B[2m(\u001B[22m\u001B[2m10 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 14\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/graph-mapping.test.ts \u001B[2m(\u001B[22m\u001B[2m28 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 37\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/consistency.test.ts \u001B[2m(\u001B[22m\u001B[2m13 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 43\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[31m\u276F\u001B[39m tests/ingest.test.ts \u001B[2m(\u001B[22m\u001B[2m8 tests\u001B[22m\u001B[2m | \u001B[22m\u001B[33m8 skipped\u001B[39m\u001B[2m)\u001B[22m\u001B[32m 27\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m ingestGraphWriteOperations -- node creation (P4-03) \u001B[2m(3)\u001B[22m\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m persists a real node with its label and properties into a real Neo4j instance\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m is idempotent -- ingesting the same node twice creates exactly one node, not two\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m rolls back the whole transaction when one node operation is malformed -- no partial commit\r\n   \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m ingestGraphWriteOperations -- relationship creation (P4-04) \u001B[2m(4)\u001B[22m\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m persists a real relationship between two already-persisted nodes\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m is idempotent -- ingesting the same relationship twice creates exactly one edge, not two\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m refuses to silently succeed when a relationship references a node that does not exist, and rolls back its valid nodes too\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m never creates a relationship that was not in the write operations (no fabrication)\r\n   \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m ingestGraphWriteOperations -- Neo4j unavailable (P4-03/P4-04 failure handling) \u001B[2m(1)\u001B[22m\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m throws Neo4jUnavailableError, not GraphIngestionError, when Neo4j cannot be reached\r\n \u001B[31m\u276F\u001B[39m tests/neo4j-client.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m | \u001B[22m\u001B[33m3 skipped\u001B[39m\u001B[2m)\u001B[22m\u001B[32m 27\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m verifyNeo4jConnectivity \u001B[2m(3)\u001B[22m\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m connects to a real Neo4j instance and runs a real query\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m throws Neo4jUnavailableError (not a raw driver error) when the instance is unreachable\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m throws Neo4jUnavailableError when credentials are wrong (auth failure, not a connection failure)\r\n \u001B[31m\u276F\u001B[39m tests/query.test.ts \u001B[2m(\u001B[22m\u001B[2m5 tests\u001B[22m\u001B[2m | \u001B[22m\u001B[33m5 skipped\u001B[39m\u001B[2m)\u001B[22m\u001B[32m 23\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m getFullGraph (P4-07) \u001B[2m(2)\u001B[22m\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m retrieves every real node and relationship, with real Neo4j labels/types (not the UI vocabulary)\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m returns an empty graph, not an error, when nothing has been ingested\r\n   \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m getNodeById (P4-07) \u001B[2m(2)\u001B[22m\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m retrieves a single node by its stable id\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m returns undefined for a node id that does not exist\r\n   \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m getRelationshipsForNode (P4-07) \u001B[2m(1)\u001B[22m\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m retrieves relationships touching a node regardless of direction\r\n \u001B[31m\u276F\u001B[39m tests/provenance-confidence.test.ts \u001B[2m(\u001B[22m\u001B[2m6 tests\u001B[22m\u001B[2m | \u001B[22m\u001B[33m6 skipped\u001B[39m\u001B[2m)\u001B[22m\u001B[32m 19\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m fixture sanity \u001B[2m(1)\u001B[22m\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m the fixture object/relationship are real, valid Phase 2 OKF shapes\r\n   \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m P4-05 -- provenance survives OKF -\u003E mapping -\u003E transform -\u003E real Neo4j \u001B[2m(2)\u001B[22m\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m preserves all provenance entries (not just the first) through the full real pipeline\r\n     \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m preserves relationship provenance through the full real pipeline\r\n   \u001B[2m\u001B[90m\u2193\u001B[39m\u001B[22m P4-06 -- confidence and evidence survive OKF -\u003E mapping -\u003E transform -\u003E real Neo4j \u001B[2m(3)\u001B[22m\r\n     \u001B[2m\u001B[90m\u2193\u001B\n\u2026[truncated]",
+        "durationMs": 3333,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 73,
+          "testsPassed": 51,
+          "testsFailed": 0,
+          "testsSkipped": 22,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "inference-engine-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/inference-engine@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\inference-engine\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/inference-engine\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/inference-contract.test.ts \u001B[2m(\u001B[22m\u001B[2m13 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 28\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/vocabulary.test.ts \u001B[2m(\u001B[22m\u001B[2m15 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 44\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/concept-inference.test.ts \u001B[2m(\u001B[22m\u001B[2m12 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 53\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/capability-inference.test.ts \u001B[2m(\u001B[22m\u001B[2m10 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 49\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 10\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/domain-agnostic.test.ts \u001B[2m(\u001B[22m\u001B[2m14 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 25\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/state-inference.test.ts \u001B[2m(\u001B[22m\u001B[2m6 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 70\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/journey-inference.test.ts \u001B[2m(\u001B[22m\u001B[2m9 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 85\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/journey-mapping.test.ts \u001B[2m(\u001B[22m\u001B[2m5 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 65\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/traceability.test.ts \u001B[2m(\u001B[22m\u001B[2m11 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 78\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/aurora-fintech-validation.test.ts \u001B[2m(\u001B[22m\u001B[2m27 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 36\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m11 passed\u001B[39m\u001B[22m\u001B[90m (11)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m123 passed\u001B[39m\u001B[22m\u001B[90m (123)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:10:06\r\n\u001B[2m   Duration \u001B[22m 1.34s\u001B[2m (transform 51%, import 41%, tests 6%, worker 2%)\u001B[22m\r\n\r\n\u001B[2m  Transform \u001B[22m \u001B[33mtransforming modules took 4.58s\u001B[39m\u001B[2m \u00B7 51% of tracked time, re-done on every run\u001B[22m\r\n\u001B[2m            \u001B[22m \u001B[2mpersist transforms across runs with \u001B[22m\u001B[33mfsModuleCache: true\u001B[39m\r\n\u001B[2m            \u001B[22m \u001B[2mlearn more: https://vitest.dev/guide/improving-performance#caching-between-reruns\u001B[22m\r\n\r\n",
+        "durationMs": 2513,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 123,
+          "testsPassed": 123,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "ingestion-connectors-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/ingestion-connectors@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\ingestion-connectors\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/ingestion-connectors\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/adf.test.ts \u001B[2m(\u001B[22m\u001B[2m11 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 14\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/jira-client.test.ts \u001B[2m(\u001B[22m\u001B[2m14 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 75\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/artifact.test.ts \u001B[2m(\u001B[22m\u001B[2m24 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 19\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/filter.test.ts \u001B[2m(\u001B[22m\u001B[2m30 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 17\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/document-space-connector.test.ts \u001B[2m(\u001B[22m\u001B[2m12 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 21\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/registry.test.ts \u001B[2m(\u001B[22m\u001B[2m8 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 20\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/descriptor.test.ts \u001B[2m(\u001B[22m\u001B[2m53 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 42\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 20\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/connector.test.ts \u001B[2m(\u001B[22m\u001B[2m30 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 69\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/jira-connector.test.ts \u001B[2m(\u001B[22m\u001B[2m25 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 107\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/git-command.test.ts \u001B[2m(\u001B[22m\u001B[2m16 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 850\u001B[2mms\u001B[22m\u001B[39m\r\nwarning: in the working copy of \u0027README.md\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027pom.xml\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027src/main/java/com/aurora/checkout/CheckoutController.java\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027src/main/java/com/aurora/checkout/PaymentClient.java\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027README.md\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027pom.xml\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027src/main/java/com/aurora/checkout/CheckoutController.java\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027src/main/java/com/aurora/checkout/PaymentClient.java\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027node_modules/left-pad/index.js\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027src/main/resources/application.yml\u0027, LF will be replaced by CRLF the next time Git touches it\r\n \u001B[32m\u2713\u001B[39m tests/git-connector.test.ts \u001B[2m(\u001B[22m\u001B[2m41 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 19432\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m repository metadata \u001B[2m(5)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m reports what git actually says about the repository\u001B[33m 669\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m omits author identity by default \u2014 it is personal data upstream of redaction\u001B[33m 678\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m includes author identity only on explicit opt-in\u001B[33m 629\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m records the ref the descriptor asked for, separately from what it resolved to\u001B[33m 631\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m omits remoteUrl and defaultBranch for a repository that has neither\u001B[33m 558\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m revisions \u001B[2m(5)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m resolves a branch to an immutable SHA and records it as Source.version\u001B[33m 562\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m resolves a tag to the same SHA the branch points at\u001B[33m 603\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m reads an older revision as it was, not as HEAD is\u001B[33m 675\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m source files \u001B[2m(6)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m lists the tracked tree at the revision\u001B[33m 559\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m ignores uncommitted edits and unt\n\u2026[truncated]",
+        "durationMs": 21864,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 271,
+          "testsPassed": 271,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "knowledge-graph-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/knowledge-graph@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\knowledge-graph\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/knowledge-graph\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/domain.test.ts \u001B[2m(\u001B[22m\u001B[2m20 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 20\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/reconciliation.test.ts \u001B[2m(\u001B[22m\u001B[2m21 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 28\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/evidence.test.ts \u001B[2m(\u001B[22m\u001B[2m22 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 30\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/confidence.test.ts \u001B[2m(\u001B[22m\u001B[2m21 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 31\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/integration.test.ts \u001B[2m(\u001B[22m\u001B[2m22 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 39\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/provenance.test.ts \u001B[2m(\u001B[22m\u001B[2m29 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 45\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/okf.test.ts \u001B[2m(\u001B[22m\u001B[2m20 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 204\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/journey.test.ts \u001B[2m(\u001B[22m\u001B[2m24 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 41\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/workitem.test.ts \u001B[2m(\u001B[22m\u001B[2m16 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 34\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/architecture.test.ts \u001B[2m(\u001B[22m\u001B[2m19 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 34\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/review.test.ts \u001B[2m(\u001B[22m\u001B[2m21 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 34\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/okf-sample.test.ts \u001B[2m(\u001B[22m\u001B[2m26 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 173\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/ui-coverage.test.ts \u001B[2m(\u001B[22m\u001B[2m20 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 40\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/relationships.test.ts \u001B[2m(\u001B[22m\u001B[2m8 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 11\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/bundle.test.ts \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 21\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/canonical-object.test.ts \u001B[2m(\u001B[22m\u001B[2m16 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 20\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/ontology.test.ts \u001B[2m(\u001B[22m\u001B[2m6 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 16\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/phase1-compatibility.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 13\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 7\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m19 passed\u001B[39m\u001B[22m\u001B[90m (19)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m322 passed\u001B[39m\u001B[22m\u001B[90m (322)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:10:31\r\n\u001B[2m   Duration \u001B[22m 1.76s\u001B[2m (transform 55%, import 28%, tests 13%, worker 4%)\u001B[22m\r\n\r\n\u001B[2m  Transform \u001B[22m \u001B[33mtransforming modules took 3.67s\u001B[39m\u001B[2m \u00B7 55% of tracked time, re-done on every run\u001B[22m\r\n\u001B[2m            \u001B[22m \u001B[2mpersist transforms across runs with \u001B[22m\u001B[33mfsModuleCache: true\u001B[39m\r\n\u001B[2m            \u001B[22m \u001B[2mlearn more: https://vitest.dev/guide/improving-performance#caching-between-reruns\u001B[22m\r\n\r\n",
+        "durationMs": 2746,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 322,
+          "testsPassed": 322,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "okf-renderers-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/okf-renderers@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\okf-renderers\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/okf-renderers\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/traceability.test.ts \u001B[2m(\u001B[22m\u001B[2m17 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 22\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m19 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 41\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m2 passed\u001B[39m\u001B[22m\u001B[90m (2)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m36 passed\u001B[39m\u001B[22m\u001B[90m (36)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:10:34\r\n\u001B[2m   Duration \u001B[22m 1.14s\u001B[2m (transform 51%, import 45%, tests 3%, worker 1%)\u001B[22m\r\n\r\n",
+        "durationMs": 2409,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 36,
+          "testsPassed": 36,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "orchestration-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/orchestration@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\orchestration\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/orchestration\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 4\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m1 passed\u001B[39m\u001B[22m\u001B[90m (1)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m2 passed\u001B[39m\u001B[22m\u001B[90m (2)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:10:36\r\n\u001B[2m   Duration \u001B[22m 204ms\u001B[2m (transform 52%, import 30%, worker 11%, tests 7%)\u001B[22m\r\n\r\n",
+        "durationMs": 1266,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 2,
+          "testsPassed": 2,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "reconciliation-engine-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/reconciliation-engine@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\reconciliation-engine\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/reconciliation-engine\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/confidence-scoring.test.ts \u001B[2m(\u001B[22m\u001B[2m18 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 10\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/composite-confidence.test.ts \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 7\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/evidence-aggregation.test.ts \u001B[2m(\u001B[22m\u001B[2m9 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 9\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/claim.test.ts \u001B[2m(\u001B[22m\u001B[2m8 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 9\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m5 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 7\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/reconcile.test.ts \u001B[2m(\u001B[22m\u001B[2m19 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 22\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m6 passed\u001B[39m\u001B[22m\u001B[90m (6)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m66 passed\u001B[39m\u001B[22m\u001B[90m (66)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:10:37\r\n\u001B[2m   Duration \u001B[22m 702ms\u001B[2m (transform 61%, import 32%, tests 4%, worker 3%)\u001B[22m\r\n\r\n",
+        "durationMs": 1843,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 66,
+          "testsPassed": 66,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "redaction-hardening-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/redaction-hardening@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\redaction-hardening\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/redaction-hardening\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 3\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m1 passed\u001B[39m\u001B[22m\u001B[90m (1)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m2 passed\u001B[39m\u001B[22m\u001B[90m (2)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:10:39\r\n\u001B[2m   Duration \u001B[22m 218ms\u001B[2m (transform 54%, import 29%, worker 11%, tests 6%)\u001B[22m\r\n\r\n",
+        "durationMs": 1364,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 2,
+          "testsPassed": 2,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "review-loop-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/review-loop@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\review-loop\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/review-loop\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/propagation.test.ts \u001B[2m(\u001B[22m\u001B[2m26 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 24\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/graph-store.integration.test.ts \u001B[2m(\u001B[22m\u001B[2m4 tests\u001B[22m\u001B[2m | \u001B[22m\u001B[33m4 skipped\u001B[39m\u001B[2m)\u001B[22m\u001B[32m 49\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/audit.test.ts \u001B[2m(\u001B[22m\u001B[2m15 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 35\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/graph-store.test.ts \u001B[2m(\u001B[22m\u001B[2m8 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 15\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/index.test.ts \u001B[2m(\u001B[22m\u001B[2m19 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 51\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/queue-metrics-claims.test.ts \u001B[2m(\u001B[22m\u001B[2m19 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 33\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m6 passed\u001B[39m\u001B[22m\u001B[90m (6)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m87 passed\u001B[39m\u001B[22m\u001B[2m | \u001B[22m\u001B[33m4 skipped\u001B[39m\u001B[90m (91)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:10:40\r\n\u001B[2m   Duration \u001B[22m 1.42s\u001B[2m (import 64%, transform 31%, tests 4%, worker 1%)\u001B[22m\r\n\r\n",
+        "durationMs": 2478,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 91,
+          "testsPassed": 87,
+          "testsFailed": 0,
+          "testsSkipped": 4,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "shared-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/shared@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\packages\\shared\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/packages/shared\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/provenance.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 4\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m1 passed\u001B[39m\u001B[22m\u001B[90m (1)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m1 passed\u001B[39m\u001B[22m\u001B[90m (1)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 03:10:43\r\n\u001B[2m   Duration \u001B[22m 214ms\u001B[2m (transform 48%, import 33%, worker 10%, tests 9%)\u001B[22m\r\n\r\n",
+        "durationMs": 1482,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 1,
+          "testsPassed": 1,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "web-tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "No projects matched the filters \u0022c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022 in \u0022C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\u0022\r\n\r\n\u003E @phoenix-ai/web@0.1.0 test C:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai\\apps\\web\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[30m\u001B[46m RUN \u001B[49m\u001B[39m\u001B[22m \u001B[36mv5.0.3 \u001B[39m\u001B[90mC:/Users/OPEN_OS/Desktop/Phoenix.IQ.AI/Phoenix.ai/apps/web\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m tests/representative-view.test.ts \u001B[2m(\u001B[22m\u001B[2m8 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 31\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/evidence.test.ts \u001B[2m(\u001B[22m\u001B[2m4 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 7\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/pairwise.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 4\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/confidence-stats.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 5\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/apiProvider.test.ts \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 538\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/search-index.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 536\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/radial-layout.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 4\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/mockProvider.test.ts \u001B[2m(\u001B[22m\u001B[2m5 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 1584\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m mockProvider \u001B[2m(5)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns context and container architecture views\u001B[33m 529\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/review-decision-provider.test.ts \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 1566\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m mockProvider.submitReviewDecision (P7-01) \u2014 the demo dataset cannot persist \u001B[2m(3)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m never invents browser storage \u2014 a second call still reports nothing persisted\u001B[33m 529\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m leaves the review queue unchanged, since nothing was recorded\u001B[33m 765\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/technical-trace.test.ts \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 1585\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/system-map.test.ts \u001B[2m(\u001B[22m\u001B[2m9 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 1853\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m countFor (PC-05) \u2014 real Aurora fixture data \u001B[2m(3)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m produces different, genuinely data-driven counts for a different company (fintech)\u001B[33m 530\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/graph-detail.test.ts \u001B[2m(\u001B[22m\u001B[2m8 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 2117\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/review-sync-flow.test.ts \u001B[2m(\u001B[22m\u001B[2m12 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 2105\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/connected-sources.test.ts \u001B[2m(\u001B[22m\u001B[2m10 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 2364\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m computeConnectedSources (PC-06) \u2014 real Aurora fixture data \u001B[2m(10)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m produces genuinely different counts for a different company (fintech has no wiki reference, Aurora does)\u001B[33m 517\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/journey-detail.test.ts \u001B[2m(\u001B[22m\u001B[2m9 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 2376\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/App.test.ts \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 4\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/mockProvider-extended.test.ts \u001B[2m(\u001B[22m\u001B[2m9 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 4205\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[32m\u2713\u001B[39m mockProvider \u2014 extended demo data \u001B[2m(9)\u001B[22m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns business capabilities that each reference a real domain\u001B[33m 530\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns genuinely different business capabilities for each company (never a single hard-coded set)\u001B[33m 527\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns personas and journeys that reference valid personas\u001B[33m 517\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m every journey references at least one real execution flow\u001B[33m 516\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns a deployment topology with instances tied to real containers\u001B[33m 531\u001B[2mms\u001B[22m\u001B[39m\r\n     \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m returns NFRs, integrations, and gap items\u001B[33m 779\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m tests/correlation.test.ts \u001B[2m(\u001B[22m\u001B[2m20 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 4497\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m18 passed\u001B[39m\u001B[22m\u001B[90m (18)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m123 passed\u001B[39m\u001B[22m\u001B[90m (123\n\u2026[truncated]",
+        "durationMs": 6889,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "output_banner",
+          "testsTotal": 123,
+          "testsPassed": 123,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "webapp-serves-home",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!doctype html\u003E\r\n\u003Chtml lang=\u0022en\u0022\u003E\r\n  \u003Chead\u003E\n    \u003Cscript type=\u0022module\u0022\u003Eimport { injectIntoGlobalHook } from \u0022/@react-refresh\u0022;\ninjectIntoGlobalHook(window);\nwindow.$RefreshReg$ = () =\u003E {};\nwindow.$RefreshSig$ = () =\u003E (type) =\u003E type;\u003C/script\u003E\n\n    \u003Cscript type=\u0022module\u0022 src=\u0022/@vite/client\u0022\u003E\u003C/script\u003E\n\r\n    \u003Cmeta charset=\u0022UTF-8\u0022 /\u003E\r\n    \u003Ctitle\u003EPhoenix.ai \u2014 Review\u003C/title\u003E\r\n  \u003C/head\u003E\r\n  \u003Cbody\u003E\r\n    \u003Cdiv id=\u0022root\u0022\u003E\u003C/div\u003E\r\n    \u003Cscript type=\u0022module\u0022 src=\u0022/src/main.tsx\u0022\u003E\u003C/script\u003E\r\n  \u003C/body\u003E\r\n\u003C/html\u003E\r\n",
+        "durationMs": 21
+      }
+    ],
+    "executions": [
+      {
+        "source": "setup[0]",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["install", "--frozen-lockfile"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "workspace-builds",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["run", "build"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "api-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/api", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "drift-detection-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/drift-detection", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "evaluation-harness-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/evaluation-harness", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "extraction-engine-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/extraction-engine", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "gap-analysis-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/gap-analysis", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "graph-persistence-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/graph-persistence", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "inference-engine-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/inference-engine", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "ingestion-connectors-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/ingestion-connectors", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "knowledge-graph-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/knowledge-graph", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "okf-renderers-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/okf-renderers", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "orchestration-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/orchestration", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "reconciliation-engine-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/reconciliation-engine", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "redaction-hardening-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/redaction-hardening", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "review-loop-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/review-loop", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "shared-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/shared", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "web-tests-pass",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/web", "test"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "webapp-serves-home",
+        "resolvedExecutable": "C:\\Users\\OPEN_OS\\AppData\\Roaming\\npm\\pnpm.CMD",
+        "args": ["--filter", "@phoenix-ai/web", "dev"],
+        "cwd": "c:\\Users\\OPEN_OS\\Desktop\\Phoenix.IQ.AI\\Phoenix.ai",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

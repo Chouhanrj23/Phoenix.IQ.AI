@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, JSX } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -28,13 +28,7 @@ const CROSSREF_META: Record<
   deployment: { icon: Server, tone: 'secondary' },
 };
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}): JSX.Element {
+function Section({ title, children }: { title: string; children: ReactNode }): JSX.Element {
   return (
     <section className="border-t border-border pt-3">
       <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -165,7 +159,10 @@ export function NodeDetailPanel({
                   <ArrowLeft className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
                   <span>
                     <span className="font-medium text-foreground">{other.label}</span>
-                    <span className="text-muted-foreground"> {edge.label ?? 'relates to'} this</span>
+                    <span className="text-muted-foreground">
+                      {' '}
+                      {edge.label ?? 'relates to'} this
+                    </span>
                   </span>
                 </button>
               </li>

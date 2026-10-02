@@ -6,11 +6,11 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsgo -b",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "lint": "eslint src",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsgo -b --noEmit",
     "test": "vitest run",
     "clean": "rm -rf dist .turbo"
   },
@@ -20,12 +20,12 @@
     "@phoenix-ai/graph-persistence": "workspace:*",
     "@phoenix-ai/okf-renderers": "workspace:*",
     "@phoenix-ai/review-loop": "workspace:*",
-    "fastify": "^5.1.0",
+    "fastify": "^5.12.5",
     "neo4j-driver": "^6.2.0"
   },
   "devDependencies": {
-    "@types/node": "^22.9.0",
-    "tsx": "^4.19.2",
-    "vitest": "^2.1.4"
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "vitest": "^5.0.3"
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode, type JSX } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '../lib/utils.js';
 

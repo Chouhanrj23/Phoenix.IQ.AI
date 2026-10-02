@@ -13,6 +13,28 @@ async function getJson<T>(path: string): Promise<T> {
 }
 
 /**
+ * P7-01 — the first write this provider makes. A non-2xx response throws
+ * with the API's own message (the API explains, for example, that a decision
+ * was NOT recorded because storage is unavailable), so a failed save can
+ * never be mistaken for a successful one.
+ */
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const message = await res
+      .json()
+      .then((payload: { message?: string }) => payload.message)
+      .catch(() => undefined);
+    throw new Error(message ?? `Request to ${path} failed: ${res.status} ${res.statusText}`);
+  }
+  return (await res.json()) as T;
+}
+
+/**
  * DEMO/FALLBACK DATA — not real backend data.
  *
  * @phoenix-ai/api has no route yet for execution flows, personas, journeys,
@@ -65,4 +87,5 @@ export const apiProvider: OkfDataProvider = {
   getGapItems: () => getJson('/api/gap-items'),
   getDriftHistory: () => getJson('/api/drift-history'),
   getFullGraph: () => getJson('/api/full-graph'),
+  submitReviewDecision: (submission) => postJson('/api/review-decisions', submission),
 };

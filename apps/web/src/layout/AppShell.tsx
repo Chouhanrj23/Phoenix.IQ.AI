@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, JSX } from 'react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '../lib/utils.js';
 import { GlobalSearch } from '../components/global-search.js';

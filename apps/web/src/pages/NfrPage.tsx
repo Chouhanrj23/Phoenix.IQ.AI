@@ -8,6 +8,8 @@ import { ConfidenceBadge } from '../components/confidence-badge.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card.js';
 import { Badge } from '../components/ui/badge.js';
 
+import type { JSX } from 'react';
+
 const ICON_BY_CATEGORY: Record<NfrCategory, typeof Gauge> = {
   performance: Gauge,
   availability: TrendingUp,

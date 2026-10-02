@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type JSX } from 'react';
 import { HelpCircle } from 'lucide-react';
 import type { GapItem, GapSeverity } from '../data/index.js';
 import { dataProvider } from '../data/index.js';

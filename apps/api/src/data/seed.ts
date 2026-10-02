@@ -1187,6 +1187,7 @@ export const reviewItems: ReviewItem[] = [
   {
     id: 'rev-1',
     elementType: 'Container',
+    elementId: 'ctr-payments',
     elementName: 'Payments Gateway Adapter — technology',
     currentValue: 'Node.js/Express (from source code)',
     metadata: meta(
@@ -1218,6 +1219,7 @@ export const reviewItems: ReviewItem[] = [
   {
     id: 'rev-2',
     elementType: 'Container',
+    elementId: 'ctr-erp-connector',
     elementName: 'Legacy ERP Connector — status',
     currentValue: 'Active nightly batch sync',
     metadata: meta(
@@ -1253,6 +1255,7 @@ export const reviewItems: ReviewItem[] = [
   {
     id: 'rev-3',
     elementType: 'Aggregate',
+    elementId: 'agg-loyalty',
     elementName: 'LoyaltyAccount — domain ownership',
     currentValue: 'Owned by Customer domain (inferred)',
     metadata: meta(
@@ -1290,6 +1293,7 @@ export const reviewItems: ReviewItem[] = [
   {
     id: 'rev-5',
     elementType: 'Aggregate',
+    elementId: 'agg-devicefp',
     elementName: 'DeviceFingerprint — retention policy',
     currentValue: 'Unknown',
     metadata: meta(
@@ -1305,6 +1309,7 @@ export const reviewItems: ReviewItem[] = [
   {
     id: 'rev-6',
     elementType: 'Entity',
+    elementId: 'agg-order',
     elementName: 'Order — schema',
     currentValue: 'Order(id, customer_id, status, total, currency, created_at, ...)',
     metadata: meta(

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type JSX } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './layout/AppShell.js';
 import { CompanySelectPage } from './pages/CompanySelectPage.js';

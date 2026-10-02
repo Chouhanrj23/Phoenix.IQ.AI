@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowRight, Target, AlertCircle, Users } from 'lucide-react';
 import { dataProvider } from '../data/index.js';

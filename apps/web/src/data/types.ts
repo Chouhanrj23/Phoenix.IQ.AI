@@ -206,6 +206,47 @@ export interface GraphEdge {
   label?: string;
 }
 
+/**
+ * P7-01 — what a reviewer submits when they confirm or correct an element.
+ * `targetObjectId` is the canonical element id (`ReviewItem.elementId`,
+ * falling back to the item's own id), so the decision binds to the specific
+ * extracted element rather than to a display name.
+ */
+export interface ReviewDecisionSubmission {
+  targetObjectId: string;
+  targetLabel: string;
+  /** `rejected` (FR-REV-02) contradicts the extracted value without supplying a replacement. */
+  decision: 'confirmed' | 'corrected' | 'rejected';
+  /** The extracted value as it stood before this decision — kept for auditability. */
+  previousValue: string;
+  /** Required when `decision` is 'corrected'; must be absent otherwise. */
+  correctedValue?: string;
+  reviewerId: string;
+  previousStatus?: 'pending' | 'confirmed' | 'corrected' | 'rejected';
+}
+
+/**
+ * The outcome of a submission. `durability` is deliberately part of the
+ * result rather than assumed by the caller: `'graph'` survives an API
+ * restart, `'memory'` survives only a page refresh, and `'none'` means
+ * nothing was stored at all. The UI reports exactly what happened.
+ */
+export interface ReviewDecisionOutcome {
+  durability: 'graph' | 'memory' | 'none';
+  /** Present when nothing was persisted — shown to the reviewer verbatim rather than swallowed. */
+  reason?: string;
+  /**
+   * P7-02 — how far the correction travelled beyond being recorded: whether
+   * it was actually applied to the canonical graph representation. Reported
+   * separately from `durability` because the two can differ — a decision can
+   * be durably stored while the reviewed element has no graph node to update.
+   */
+  propagation?: {
+    outcome: 'propagated' | 'target-missing' | 'graph-unavailable' | 'failed';
+    reason: string;
+  };
+}
+
 export interface OkfDataProvider {
   getSystemSummary(): Promise<SystemSummary>;
   getArchitecture(level: C4Level): Promise<{ nodes: C4Node[]; edges: C4Edge[] }>;
@@ -223,4 +264,11 @@ export interface OkfDataProvider {
   getGapItems(): Promise<GapItem[]>;
   getDriftHistory(): Promise<DriftRun[]>;
   getFullGraph(): Promise<{ nodes: GraphNode[]; edges: GraphEdge[] }>;
+  /**
+   * P7-01 — the provider's first write. Persists a human review decision
+   * against a specific extracted element. Implementations must never report
+   * success for a write that did not happen: return `durability: 'none'`
+   * with a reason, or throw.
+   */
+  submitReviewDecision(submission: ReviewDecisionSubmission): Promise<ReviewDecisionOutcome>;
 }

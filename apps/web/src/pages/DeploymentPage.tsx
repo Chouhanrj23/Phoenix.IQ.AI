@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type JSX } from 'react';
 import ReactFlow, { Background, Controls, type Node } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { dataProvider, type DeploymentNode } from '../data/index.js';

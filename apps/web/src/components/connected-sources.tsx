@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type JSX } from 'react';
 import { ChevronDown, ChevronRight, PlugZap } from 'lucide-react';
 import type { ConnectedSourceGroup } from '../lib/connected-sources.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card.js';

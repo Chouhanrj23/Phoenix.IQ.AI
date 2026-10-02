@@ -7,10 +7,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -b",
-    "dev": "tsc -b --watch",
+    "build": "tsgo -b",
+    "dev": "tsgo -b --watch",
     "lint": "eslint src",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsgo -b --noEmit",
     "test": "vitest run",
     "clean": "rm -rf dist .turbo"
   },
@@ -18,6 +18,6 @@
     "@phoenix-ai/shared": "workspace:*"
   },
   "devDependencies": {
-    "vitest": "^2.1.4"
+    "vitest": "^5.0.3"
   }
 }

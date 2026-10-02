@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type JSX } from 'react';
 import type { ReactNode } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 

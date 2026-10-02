@@ -442,7 +442,7 @@ export const CORRELATION_KIND_LABEL: Readonly<Record<CorrelationKind, string>> =
  * "Human Corrected" rather than reporting both as one undifferentiated
  * status.
  */
-export type ReviewStatus = 'pending' | 'confirmed' | 'corrected' | 'none';
+export type ReviewStatus = 'pending' | 'confirmed' | 'corrected' | 'rejected' | 'none';
 
 /**
  * PC-09/PC-HR-03 — every real review item that currently references this
@@ -453,8 +453,21 @@ export type ReviewStatus = 'pending' | 'confirmed' | 'corrected' | 'none';
 export function reviewMatchesFor(
   reviewItems: readonly ReviewItem[] | undefined,
   label: string,
+  /**
+   * P7-04 — the reviewed object's canonical id (a `CorrelationNode.id`). When
+   * supplied and a queue item carries the matching `elementId`, that EXACT
+   * binding wins over name matching: it is the same id a persisted review
+   * decision is recorded against, so the panel and the audit trail agree on
+   * which element is under review. Name matching remains the fallback for
+   * queue items that have no canonical id yet.
+   */
+  elementId?: string,
 ): readonly ReviewItem[] {
   if (!reviewItems || reviewItems.length === 0) return [];
+  if (elementId !== undefined) {
+    const byCanonicalId = reviewItems.filter((item) => item.elementId === elementId);
+    if (byCanonicalId.length > 0) return byCanonicalId;
+  }
   return reviewItems.filter((item) => mentions(item.elementName, label));
 }
 
@@ -469,10 +482,17 @@ export function reviewMatchesFor(
 export function reviewStatusFor(
   reviewItems: readonly ReviewItem[] | undefined,
   label: string,
+  /** See `reviewMatchesFor` — an exact canonical-id binding takes precedence over name matching. */
+  elementId?: string,
 ): ReviewStatus {
-  const matches = reviewMatchesFor(reviewItems, label);
+  const matches = reviewMatchesFor(reviewItems, label, elementId);
   if (matches.length === 0) return 'none';
+  // Precedence, most-attention-needed first. `rejected` must be checked
+  // explicitly: without it a rejected item would fall through to the
+  // `confirmed` default and be shown to the client as "Validated by Human" —
+  // the exact opposite of what the reviewer said.
   if (matches.some((item) => item.status === 'pending')) return 'pending';
+  if (matches.some((item) => item.status === 'rejected')) return 'rejected';
   if (matches.some((item) => item.status === 'corrected')) return 'corrected';
   return 'confirmed';
 }

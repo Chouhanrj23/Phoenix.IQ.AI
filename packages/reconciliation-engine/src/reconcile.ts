@@ -109,7 +109,7 @@ function buildConflictObject(
       // see below), but "how well-supported is THIS specific value."
       const supportingSourceIds = new Set(claimsForValue.map((claim) => claim.sourceId));
       const supportingAuthority = claimsForValue.reduce<1 | 2 | 3>((max, claim) => {
-        const authority = authorityOf(claim.claimCategory, claim.sourceType);
+        const authority = authorityOf(claim.claimCategory, claim.sourceType, claim.authority);
         return authority > max ? authority : max;
       }, 1);
       const contradictingSourceIds = new Set(
@@ -123,7 +123,7 @@ function buildConflictObject(
         sources: claimsForValue.map((claim) => ({
           sourceId: claim.sourceId,
           sourceType: claim.sourceType,
-          authority: authorityOf(claim.claimCategory, claim.sourceType),
+          authority: authorityOf(claim.claimCategory, claim.sourceType, claim.authority),
         })),
         confidence: computeConfidence({
           supportingAuthority,
@@ -231,7 +231,7 @@ export function reconcileClaims(
       if (representative === undefined) continue;
       const corroboration = new Set(groupClaims.map((claim) => claim.sourceId)).size;
       const maxAuthority = groupClaims.reduce<1 | 2 | 3>((max, claim) => {
-        const authority = authorityOf(claim.claimCategory, claim.sourceType);
+        const authority = authorityOf(claim.claimCategory, claim.sourceType, claim.authority);
         return authority > max ? authority : max;
       }, 1);
 

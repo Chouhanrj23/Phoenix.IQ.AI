@@ -10,6 +10,8 @@ import {
   HelpCircle,
 } from 'lucide-react';
 
+import type { JSX } from 'react';
+
 const ICON_BY_SOURCE_TYPE: Record<Provenance['sourceType'], typeof FileText> = {
   'source-code': Code2,
   'technical-doc': FileText,

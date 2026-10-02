@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type JSX } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ReactFlow, { Background, Controls, type Edge, type Node } from 'reactflow';
 import 'reactflow/dist/style.css';
@@ -17,6 +17,11 @@ import {
   type CorrelationKind,
   type CorrelationNode,
 } from '../lib/correlation.js';
+import {
+  describeReviewOutcome,
+  REVIEWER_ID,
+  type ReviewActionOutcome,
+} from '../lib/review-feedback.js';
 import { PageHeader } from '../components/page-header.js';
 import { LoadingState, ErrorState } from '../components/loading-state.js';
 import { FullscreenDiagram } from '../components/fullscreen-diagram.js';
@@ -83,20 +88,22 @@ export function CorrelationExplorerPage(): JSX.Element {
   const architecture = useAsync(() => dataProvider.getArchitecture('container'), []);
   const deployment = useAsync(() => dataProvider.getDeploymentTopology(), []);
   const integrations = useAsync(() => dataProvider.getIntegrations(), []);
-  const reviewItems = useAsync(() => dataProvider.getReviewItems(), []);
-
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   /**
-   * PC-HR-05 — real, working Confirm/Correct actions in the detail panel,
-   * mirroring `ReviewPage.tsx`'s own local-state pattern exactly. There is
-   * no write method anywhere on `OkfDataProvider`, so this is genuinely
-   * local to this page's session — never persisted, and never pretended to
-   * be (see the panel's own disclaimer text).
+   * P7-04 — bumped after a decision is successfully persisted, which re-runs
+   * the review-items fetch below. Review status therefore always comes from
+   * the server, never from a local override map: navigating away and back
+   * shows the same state because both readings come from the same persisted
+   * source.
    */
-  const [reviewOverrides, setReviewOverrides] = useState<Record<string, ReviewItem>>({});
+  const [reviewReloadKey, setReviewReloadKey] = useState(0);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewOutcome, setReviewOutcome] = useState<ReviewActionOutcome | undefined>(undefined);
+
+  const reviewItems = useAsync(() => dataProvider.getReviewItems(), [reviewReloadKey]);
 
   const loading =
     personas.loading ||
@@ -119,11 +126,8 @@ export function CorrelationExplorerPage(): JSX.Element {
     integrations.error ??
     reviewItems.error;
 
-  /** Real review items, with any in-session Confirm/Correct decisions applied on top — never a second data source, just the same list with local overrides layered in. */
-  const effectiveReviewItems = useMemo(
-    () => (reviewItems.data ?? []).map((item) => reviewOverrides[item.id] ?? item),
-    [reviewItems.data, reviewOverrides],
-  );
+  /** The persisted review queue, exactly as the API serves it (decisions already applied server-side). No local overlay. */
+  const effectiveReviewItems = useMemo(() => reviewItems.data ?? [], [reviewItems.data]);
 
   const graph: CorrelationGraph | null = useMemo(() => {
     if (loading || error) return null;
@@ -163,35 +167,64 @@ export function CorrelationExplorerPage(): JSX.Element {
     return getRelated(graph, centerKey);
   }, [graph, centerKey]);
 
+  /** Matched by canonical id first (`CorrelationNode.id` === `ReviewItem.elementId`), falling back to name. */
   const centerReviewStatus = useMemo(() => {
     if (!related) return 'none' as const;
-    return reviewStatusFor(effectiveReviewItems, related.center.label);
+    return reviewStatusFor(effectiveReviewItems, related.center.label, related.center.id);
   }, [related, effectiveReviewItems]);
 
   const centerPendingReviewItem = useMemo(() => {
     if (!related || centerReviewStatus !== 'pending') return undefined;
-    return reviewMatchesFor(effectiveReviewItems, related.center.label).find(
+    return reviewMatchesFor(effectiveReviewItems, related.center.label, related.center.id).find(
       (item) => item.status === 'pending',
     );
   }, [related, centerReviewStatus, effectiveReviewItems]);
 
-  /** True only when the CURRENT user actually confirmed/corrected this object in this session — distinct from an object that simply started out confirmed/corrected in the underlying data. */
-  const centerReviewIsSessionOverride = useMemo(() => {
-    if (!related) return false;
-    return reviewMatchesFor(effectiveReviewItems, related.center.label).some(
-      (item) => item.id in reviewOverrides,
-    );
-  }, [related, effectiveReviewItems, reviewOverrides]);
+  /**
+   * P7-04 — submits a real review decision for the selected object, then
+   * reloads the queue so the status shown comes back from the server.
+   *
+   * Nothing is updated optimistically: if the decision was not persisted, the
+   * panel keeps showing the old status and reports why. That is what makes
+   * step 7-8 of the flow (navigate away, come back, still see it) true rather
+   * than a local illusion.
+   */
+  async function submitReview(
+    item: ReviewItem,
+    decision: 'confirmed' | 'corrected' | 'rejected',
+    correctedValue?: string,
+  ): Promise<boolean> {
+    setReviewBusy(true);
+    setReviewOutcome(undefined);
+    try {
+      const result = await dataProvider.submitReviewDecision({
+        targetObjectId: item.elementId ?? item.id,
+        targetLabel: item.elementName,
+        decision,
+        previousValue: item.currentValue,
+        reviewerId: REVIEWER_ID,
+        previousStatus: item.status,
+        ...(correctedValue === undefined ? {} : { correctedValue }),
+      });
 
-  function handleConfirmReview(item: ReviewItem): void {
-    setReviewOverrides((prev) => ({ ...prev, [item.id]: { ...item, status: 'confirmed' } }));
-  }
-
-  function handleCorrectReview(item: ReviewItem, value: string): void {
-    setReviewOverrides((prev) => ({
-      ...prev,
-      [item.id]: { ...item, status: 'corrected', currentValue: value },
-    }));
+      const outcome = describeReviewOutcome(result);
+      setReviewOutcome(outcome);
+      if (outcome.kind === 'error') return false;
+      // Re-read from the server rather than patching local state.
+      setReviewReloadKey((key) => key + 1);
+      return true;
+    } catch (submitError) {
+      setReviewOutcome({
+        kind: 'error',
+        message:
+          submitError instanceof Error
+            ? `Not saved — ${submitError.message}`
+            : 'Not saved — the review decision could not be recorded.',
+      });
+      return false;
+    } finally {
+      setReviewBusy(false);
+    }
   }
 
   const searchResults = useMemo(() => {
@@ -382,10 +415,12 @@ export function CorrelationExplorerPage(): JSX.Element {
               <ObjectDetailPanel
                 node={related.center}
                 reviewStatus={centerReviewStatus}
-                reviewIsSessionOverride={centerReviewIsSessionOverride}
+                reviewBusy={reviewBusy}
+                {...(reviewOutcome === undefined ? {} : { reviewOutcome })}
                 {...(centerPendingReviewItem ? { pendingReviewItem: centerPendingReviewItem } : {})}
-                onConfirmReview={handleConfirmReview}
-                onCorrectReview={handleCorrectReview}
+                onConfirmReview={(item) => submitReview(item, 'confirmed')}
+                onCorrectReview={(item, value) => submitReview(item, 'corrected', value)}
+                onRejectReview={(item) => submitReview(item, 'rejected')}
                 groups={related.groups}
                 immediateCount={related.immediateNeighborKeys.size}
                 onSelect={selectNode}

@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 export function LoadingState({ label = 'Loading…' }: { label?: string }): JSX.Element {
   return <div className="py-12 text-center text-sm text-muted-foreground">{label}</div>;
 }

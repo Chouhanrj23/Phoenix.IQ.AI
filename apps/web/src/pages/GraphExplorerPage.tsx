@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type JSX } from 'react';
 import ReactFlow, { Background, Controls, MiniMap, type Edge, type Node } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Maximize2 } from 'lucide-react';

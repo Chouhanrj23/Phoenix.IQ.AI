@@ -52,6 +52,19 @@ export interface Claim {
   derivedAt: string;
   /** Concrete supporting material, carried through unmodified from wherever this claim came from. */
   evidence: Evidence[];
+  /**
+   * P7 (FR-REV-03) -- an explicit authority that SUPERSEDES the
+   * `SOURCE_TYPE_AUTHORITY` lookup for this one claim.
+   *
+   * Exists because authority is a property of a claim's PROVENANCE, not only
+   * of its source type: a human attestation recorded through the review loop
+   * is authoritative for the attribute a reviewer examined, but its
+   * `sourceType` is necessarily `other` (Phoenix has no human source type,
+   * and adding one to `@phoenix-ai/shared`'s closed `SourceType` would ripple
+   * through every exhaustive map in the monorepo). Optional and additive:
+   * omit it and every pre-P7 claim weighs exactly as before.
+   */
+  authority?: 1 | 2 | 3;
 }
 
 /**
@@ -117,9 +130,19 @@ export const SOURCE_TYPE_AUTHORITY: Record<ClaimCategory, Record<SourceType, 1 |
   },
 };
 
-/** Looks up a source's authority for a claim category -- FR-REC-01. */
-export function authorityOf(claimCategory: ClaimCategory, sourceType: SourceType): 1 | 2 | 3 {
-  return SOURCE_TYPE_AUTHORITY[claimCategory][sourceType];
+/**
+ * Looks up a source's authority for a claim category -- FR-REC-01.
+ *
+ * `override` (P7) wins when supplied, for the reason `Claim.authority`
+ * documents. Callers pass `claim.authority` through; omitting it preserves the
+ * original table-only behaviour exactly.
+ */
+export function authorityOf(
+  claimCategory: ClaimCategory,
+  sourceType: SourceType,
+  override?: 1 | 2 | 3,
+): 1 | 2 | 3 {
+  return override ?? SOURCE_TYPE_AUTHORITY[claimCategory][sourceType];
 }
 
 /**

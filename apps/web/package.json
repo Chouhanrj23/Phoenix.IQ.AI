@@ -8,31 +8,32 @@
     "build": "vite build",
     "dev": "vite",
     "lint": "eslint src",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsgo -b --noEmit",
     "test": "vitest run",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
     "@phoenix-ai/shared": "workspace:*",
-    "@radix-ui/react-tabs": "^1.1.1",
+    "@radix-ui/react-tabs": "^1.1.21",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.462.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0",
+    "lucide-react": "^1.50.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.4",
     "reactflow": "^11.11.4",
-    "recharts": "^2.13.3",
-    "tailwind-merge": "^2.5.4"
+    "recharts": "^3.10.1",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.3",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.14",
-    "vite": "^5.4.11",
-    "vitest": "^2.1.4"
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
   }
 }

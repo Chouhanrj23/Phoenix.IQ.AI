@@ -15,6 +15,8 @@ import {
 } from '../components/ui/card.js';
 import { Badge } from '../components/ui/badge.js';
 
+import type { JSX } from 'react';
+
 const ICON_BY_DIRECTION: Record<IntegrationDirection, typeof ArrowRight> = {
   outbound: ArrowRight,
   inbound: ArrowLeft,

@@ -1,0 +1,177 @@
+{
+  "generatedAt": "2026-10-03T02:29:06Z",
+  "generatedOnPlatform": "win32",
+  "projectType": "webapp",
+  "setup": [
+    {
+      "command": "pnpm",
+      "args": ["install", "--frozen-lockfile"],
+      "timeoutSeconds": 600
+    }
+  ],
+  "assertions": [
+    {
+      "name": "workspace-builds",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["run", "build"],
+      "verificationMethod": "exit-code",
+      "expected": "0",
+      "timeoutSeconds": 600
+    },
+    {
+      "name": "api-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/api", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "drift-detection-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/drift-detection", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "evaluation-harness-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/evaluation-harness", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "extraction-engine-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/extraction-engine", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "gap-analysis-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/gap-analysis", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "graph-persistence-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/graph-persistence", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "inference-engine-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/inference-engine", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "ingestion-connectors-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/ingestion-connectors", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "knowledge-graph-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/knowledge-graph", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "okf-renderers-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/okf-renderers", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "orchestration-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/orchestration", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "reconciliation-engine-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/reconciliation-engine", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "redaction-hardening-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/redaction-hardening", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "review-loop-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/review-loop", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "shared-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/shared", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "web-tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["--filter", "@phoenix-ai/web", "test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "webapp-serves-home",
+      "kind": "http-probe",
+      "startCommand": "pnpm",
+      "startArgs": ["--filter", "@phoenix-ai/web", "dev"],
+      "url": "http://localhost:3000/",
+      "verificationMethod": "http-status",
+      "expected": "200",
+      "timeoutSeconds": 120
+    }
+  ]
+}

@@ -8,6 +8,8 @@ import { ConfidenceBadge } from './confidence-badge.js';
 import { ProvenanceList } from './provenance-list.js';
 import { DisclosureSection } from './disclosure-section.js';
 
+import type { JSX } from 'react';
+
 function EmptyNote({ children }: { children: string }): JSX.Element {
   return <p className="text-sm text-muted-foreground">{children}</p>;
 }

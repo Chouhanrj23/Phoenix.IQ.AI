@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@config '../tailwind.config.js';
 
 :root {
   /* KPMG brand palette — KPMG Blue #00338D, KPMG Cobalt #0091DA. */

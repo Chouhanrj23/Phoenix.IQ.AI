@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 import { AlertTriangle, ChevronDown, ChevronRight, Plus, Minus, Pencil } from 'lucide-react';
 import type { DriftAlert } from '../data/index.js';
 import { dataProvider } from '../data/index.js';

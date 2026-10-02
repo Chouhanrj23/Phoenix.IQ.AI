@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type JSX } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Boxes, Briefcase, Route, Server, Users } from 'lucide-react';

@@ -7,10 +7,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -b",
-    "dev": "tsc -b --watch",
+    "build": "tsgo -b",
+    "dev": "tsgo -b --watch",
     "lint": "eslint src",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsgo -b --noEmit",
     "test": "vitest run",
     "poc:demo-spring-petclinic-graph": "tsx samples/demo-spring-petclinic-graph.ts",
     "clean": "rm -rf dist .turbo"
@@ -23,9 +23,9 @@
   "devDependencies": {
     "@phoenix-ai/ingestion-connectors": "workspace:*",
     "@phoenix-ai/extraction-engine": "workspace:*",
-    "@testcontainers/neo4j": "^12.1.0",
-    "@types/node": "^22.9.0",
-    "tsx": "^4.19.2",
-    "vitest": "^2.1.4"
+    "@testcontainers/neo4j": "^12.2.0",
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "vitest": "^5.0.3"
   }
 }

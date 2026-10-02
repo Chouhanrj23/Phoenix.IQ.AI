@@ -7,10 +7,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -b",
-    "dev": "tsc -b --watch",
+    "build": "tsgo -b",
+    "dev": "tsgo -b --watch",
     "lint": "eslint src",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsgo -b --noEmit",
     "test": "vitest run",
     "poc:analyze-phoenix": "tsx samples/analyze-phoenix-repo.ts",
     "poc:analyze-spring-petclinic": "tsx samples/analyze-spring-petclinic.ts",
@@ -21,11 +21,11 @@
     "@phoenix-ai/ingestion-connectors": "workspace:*",
     "@phoenix-ai/knowledge-graph": "workspace:*",
     "java-parser": "3.0.1",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "@types/node": "^22.9.0",
-    "tsx": "^4.19.2",
-    "vitest": "^2.1.4"
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "vitest": "^5.0.3"
   }
 }

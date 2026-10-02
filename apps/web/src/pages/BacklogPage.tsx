@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type JSX } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { dataProvider } from '../data/index.js';
 import { useAsync } from '../lib/useAsync.js';

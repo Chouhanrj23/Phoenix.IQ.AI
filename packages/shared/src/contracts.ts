@@ -134,10 +134,21 @@ export interface ReviewItem {
   id: string;
   elementType: string;
   elementName: string;
+  /**
+   * P7-01: canonical `identity.id` of the element under review, when one is
+   * known — what a persisted review decision is recorded against, so a
+   * decision binds to a specific extracted element rather than to a display
+   * name. Optional because not every queue item resolves to a canonical
+   * object yet (the queue is still seed-derived; a later work package makes
+   * it graph-derived). Where it is absent, `review-loop` falls back to the
+   * item's own stable `id` — see `targetIdForReviewItem`.
+   */
+  elementId?: string;
   currentValue: string;
   metadata: GraphElementMetadata;
   conflict?: ConflictingValue[];
-  status: 'pending' | 'confirmed' | 'corrected';
+  /** P7: `rejected` (FR-REV-02) means a human contradicted the extracted value without supplying a replacement. */
+  status: 'pending' | 'confirmed' | 'corrected' | 'rejected';
 }
 
 // ---------------------------------------------------------------------------

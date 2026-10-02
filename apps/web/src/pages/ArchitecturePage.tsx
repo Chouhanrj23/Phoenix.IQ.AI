@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type JSX } from 'react';
 import ReactFlow, { Background, Controls, MiniMap, type Edge, type Node } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { dataProvider, type C4Level, type C4Node } from '../data/index.js';
@@ -76,7 +76,9 @@ function Diagram({ level }: { level: C4Level }): JSX.Element {
   return (
     <FullscreenDiagram>
       {(isFullscreen) => (
-        <div className={cn('grid grid-cols-1 gap-4 pt-12 lg:grid-cols-3', isFullscreen && 'h-full')}>
+        <div
+          className={cn('grid grid-cols-1 gap-4 pt-12 lg:grid-cols-3', isFullscreen && 'h-full')}
+        >
           <div
             className={cn(
               'overflow-hidden rounded-lg border border-border lg:col-span-2',
@@ -132,8 +134,8 @@ function Diagram({ level }: { level: C4Level }): JSX.Element {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Click any node in the diagram to see its description, confidence, and provenance
-                  — every element traces back to the source it was derived from.
+                  Click any node in the diagram to see its description, confidence, and provenance —
+                  every element traces back to the source it was derived from.
                 </p>
               )}
             </CardContent>

@@ -11,6 +11,8 @@ import {
 import { COMPANIES, type CompanyId, type CompanyOption } from '../data/index.js';
 import { cn } from '../lib/utils.js';
 
+import type { JSX } from 'react';
+
 const ICONS: Record<CompanyId, typeof ShoppingCart> = {
   aurora: ShoppingCart,
   fintech: Banknote,
@@ -39,7 +41,10 @@ interface CompanySelectPageProps {
   onSelect: (companyId: CompanyId) => void;
 }
 
-export function CompanySelectPage({ selectedCompany, onSelect }: CompanySelectPageProps): JSX.Element {
+export function CompanySelectPage({
+  selectedCompany,
+  onSelect,
+}: CompanySelectPageProps): JSX.Element {
   const navigate = useNavigate();
 
   function handlePick(id: CompanyId): void {
@@ -155,7 +160,9 @@ export function CompanySelectPage({ selectedCompany, onSelect }: CompanySelectPa
                     accent.button,
                   )}
                 >
-                  {isSelected ? 'Continue with this engagement' : `Reverse engineer ${company.shortName}`}
+                  {isSelected
+                    ? 'Continue with this engagement'
+                    : `Reverse engineer ${company.shortName}`}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </span>
               </button>

@@ -45,6 +45,7 @@ import {
   JOURNEY_RELATIONSHIP_KINDS,
   INTEGRATION_OBJECT_KINDS,
   INTEGRATION_RELATIONSHIP_KINDS,
+  REVIEW_OBJECT_KINDS,
   type CanonicalKnowledgeBundle,
   type CanonicalKnowledgeObject,
   type CanonicalKnowledgeRelationship,
@@ -77,6 +78,9 @@ export const OBJECT_KIND_TO_LABEL: Readonly<Record<string, string>> = {
   'integration.interface': 'Interface',
   'integration.integration': 'Integration',
   'integration.dataflow': 'DataFlow',
+  // P7-01: the human review decision (`category: 'observation'`), so a
+  // persisted decision is a first-class graph node rather than a side table.
+  'review.decision': 'ReviewDecision',
 };
 
 /** Every OKF object `kind` this module knows a Neo4j label for -- exported for the exhaustiveness test and for future callers (e.g. a P4-08 UI adapter) that need the full known-kind list. */
@@ -85,6 +89,7 @@ export const KNOWN_OBJECT_KINDS: readonly string[] = [
   ...DOMAIN_OBJECT_KINDS,
   ...JOURNEY_OBJECT_KINDS,
   ...INTEGRATION_OBJECT_KINDS,
+  ...REVIEW_OBJECT_KINDS,
 ];
 
 // ---------------------------------------------------------------------------
@@ -123,6 +128,10 @@ export const RELATIONSHIP_KIND_TO_TYPE: Readonly<Record<string, string>> = {
   // any closed per-domain vocabulary.
   dependsOn: 'DEPENDS_ON',
   hasAssociation: 'HAS_ASSOCIATION',
+  // P7-01: links a `review.decision` to the element it reviewed. Additive
+  // for the same reason -- a review decision is not part of any closed
+  // per-domain relationship vocabulary.
+  reviewOf: 'REVIEW_OF',
 };
 
 /** The closed, schema-defined relationship kinds only (excludes `dependsOn`/`hasAssociation`) -- exported for the exhaustiveness test. */

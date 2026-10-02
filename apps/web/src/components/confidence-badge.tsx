@@ -1,6 +1,8 @@
 import type { ConfidenceLevel } from '@phoenix-ai/shared';
 import { Badge } from './ui/badge.js';
 
+import type { JSX } from 'react';
+
 const VARIANT_BY_LEVEL: Record<ConfidenceLevel, 'success' | 'warning' | 'danger' | 'info'> = {
   high: 'success',
   medium: 'warning',

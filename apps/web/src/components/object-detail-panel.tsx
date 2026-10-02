@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type JSX } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -7,6 +7,7 @@ import {
   HelpCircle,
   PencilLine,
   Waypoints,
+  XCircle,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ReviewItem } from '../data/index.js';
@@ -18,6 +19,8 @@ import {
   type ReviewStatus,
 } from '../lib/correlation.js';
 import { physicalModelProvenance, technicalEvidenceServices } from '../lib/technical-trace.js';
+import type { ReviewActionOutcome } from '../lib/review-feedback.js';
+import { cn } from '../lib/utils.js';
 import { distinctSourceTypes } from '../lib/evidence.js';
 import { Badge } from './ui/badge.js';
 import { Button } from './ui/button.js';
@@ -29,13 +32,14 @@ const REVIEW_STATUS_META: Record<
   ReviewStatus,
   {
     label: string;
-    variant: 'warning' | 'success' | 'info' | 'secondary';
+    variant: 'warning' | 'success' | 'info' | 'danger' | 'secondary';
     icon: typeof AlertTriangle;
   }
 > = {
   pending: { label: 'Awaiting Human Review', variant: 'warning', icon: AlertTriangle },
   confirmed: { label: 'Validated by Human', variant: 'success', icon: CheckCircle2 },
   corrected: { label: 'Human Corrected', variant: 'info', icon: PencilLine },
+  rejected: { label: 'Rejected by Human', variant: 'danger', icon: XCircle },
   none: {
     label: 'No review item recorded for this object',
     variant: 'secondary',
@@ -57,12 +61,16 @@ function Field({ label, children }: { label: string; children: ReactNode }): JSX
 interface ObjectDetailPanelProps {
   node: CorrelationNode;
   reviewStatus: ReviewStatus;
-  /** True only when the CURRENT user confirmed/corrected this object in this session — distinct from an object that simply started out confirmed/corrected in the underlying data (e.g. Aurora's real "Order — schema" review item). Controls whether the "not persisted" disclaimer is shown, so it never appears next to a status the user didn't just set. */
-  reviewIsSessionOverride: boolean;
+  /** A submission is in flight — actions disable so a decision cannot be double-submitted. */
+  reviewBusy?: boolean;
+  /** The result of the last submission, reported verbatim: a save is stated, never implied. */
+  reviewOutcome?: ReviewActionOutcome;
   /** The real pending ReviewItem for this object, when `reviewStatus === 'pending'` — enables the inline Confirm/Correct actions and the "Review" deep-link. Undefined otherwise. */
   pendingReviewItem?: ReviewItem;
-  onConfirmReview: (item: ReviewItem) => void;
-  onCorrectReview: (item: ReviewItem, value: string) => void;
+  /** Resolves true only when the decision was actually persisted. */
+  onConfirmReview: (item: ReviewItem) => Promise<boolean>;
+  onCorrectReview: (item: ReviewItem, value: string) => Promise<boolean>;
+  onRejectReview: (item: ReviewItem) => Promise<boolean>;
   groups: readonly RelatedGroup[];
   immediateCount: number;
   onSelect: (node: CorrelationNode) => void;
@@ -86,22 +94,22 @@ interface ObjectDetailPanelProps {
  * shows "Confidence unavailable" / "No evidence recorded" rather than
  * borrowing a neighboring object's numbers.
  *
- * PC-HR-03/PC-HR-05 — Confirm/Correct are real, working actions (mirroring
- * `ReviewPage.tsx`'s own Confirm/Correct interaction exactly) but they
- * update the SAME kind of local, in-memory state `ReviewPage.tsx` already
- * uses — there is no write method anywhere on `OkfDataProvider`, so nothing
- * here ever claims persistence that doesn't exist. The parent page owns
- * this local state (so the Review Status field above updates immediately
- * after acting); this component only renders it and reports the decision
- * upward.
+ * P7 — Confirm / Correct / Reject (FR-REV-02) are REAL, PERSISTED actions:
+ * the parent page submits them through `OkfDataProvider.submitReviewDecision`
+ * and re-reads the review queue from the server, so the status shown here is
+ * the persisted one, never a local optimistic patch. `reviewOutcome` reports
+ * verbatim where the decision was stored and whether it reached the graph, so
+ * nothing is ever presented as saved when it was not.
  */
 export function ObjectDetailPanel({
   node,
   reviewStatus,
-  reviewIsSessionOverride,
+  reviewBusy = false,
+  reviewOutcome,
   pendingReviewItem,
   onConfirmReview,
   onCorrectReview,
+  onRejectReview,
   groups,
   immediateCount,
   onSelect,
@@ -150,10 +158,14 @@ export function ObjectDetailPanel({
             </Link>
           ) : null}
         </div>
-        {reviewIsSessionOverride ? (
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            Recorded for this browser session only — not written back to the underlying knowledge
-            graph, and independent of the Review Queue page's own session state.
+        {reviewOutcome ? (
+          <p
+            className={cn(
+              'mt-1 text-[11px]',
+              reviewOutcome.kind === 'error' ? 'text-rose-700' : 'text-muted-foreground',
+            )}
+          >
+            {reviewOutcome.message}
           </p>
         ) : null}
       </Field>
@@ -294,31 +306,44 @@ export function ObjectDetailPanel({
                 rows={2}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
+                disabled={reviewBusy}
                 autoFocus
               />
               <div className="flex gap-2">
                 <Button
                   size="sm"
+                  disabled={reviewBusy}
                   onClick={() => {
-                    onCorrectReview(pendingReviewItem, draft);
-                    setCorrecting(false);
+                    void onCorrectReview(pendingReviewItem, draft).then((ok) => {
+                      if (ok) setCorrecting(false);
+                    });
                   }}
                 >
-                  Save correction
+                  {reviewBusy ? 'Saving…' : 'Save correction'}
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setCorrecting(false)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={reviewBusy}
+                  onClick={() => setCorrecting(false)}
+                >
                   Cancel
                 </Button>
               </div>
             </div>
           ) : (
             <div className="flex gap-2">
-              <Button size="sm" onClick={() => onConfirmReview(pendingReviewItem)}>
-                <CheckCircle2 className="h-3.5 w-3.5" /> Confirm
+              <Button
+                size="sm"
+                disabled={reviewBusy}
+                onClick={() => void onConfirmReview(pendingReviewItem)}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" /> {reviewBusy ? 'Saving…' : 'Confirm'}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
+                disabled={reviewBusy}
                 onClick={() => {
                   setDraft(pendingReviewItem.currentValue);
                   setCorrecting(true);
@@ -326,12 +351,17 @@ export function ObjectDetailPanel({
               >
                 <PencilLine className="h-3.5 w-3.5" /> Correct
               </Button>
+              {/* FR-REV-02's third action: contradict the value without replacing it. */}
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={reviewBusy}
+                onClick={() => void onRejectReview(pendingReviewItem)}
+              >
+                <XCircle className="h-3.5 w-3.5" /> Reject
+              </Button>
             </div>
           )}
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Recorded for this browser session only — not written back to the underlying knowledge
-            graph.
-          </p>
         </div>
       ) : null}
     </div>
