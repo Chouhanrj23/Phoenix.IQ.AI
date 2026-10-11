@@ -126,7 +126,63 @@ const COLOR_CLASSES: Record<
   },
 };
 
-const STAGES: Stage[] = [
+/**
+ * P8 -- what this build actually implements, per stage. The stage `detail`
+ * text describes the FRD's target design; without this, the page presented
+ * scaffolded modules (gap analysis, drift detection, evaluation) and model
+ * inference as working capabilities.
+ */
+export type StageImplementation = 'implemented' | 'partial' | 'not-implemented';
+
+export const STAGE_IMPLEMENTATION: Readonly<
+  Record<string, { status: StageImplementation; note: string }>
+> = {
+  '01': {
+    status: 'partial',
+    note: 'Git repositories and Jira are implemented; other source types have no connector yet.',
+  },
+  '02': {
+    status: 'implemented',
+    note: 'Secret/PII redaction gate with quarantine. Model-context hardening does not apply yet: no stage calls a model.',
+  },
+  '03': { status: 'implemented', note: 'Java (Spring MVC, JPA, configuration).' },
+  '04': {
+    status: 'implemented',
+    note: 'Rule-based, over extracted facts. No AI model is used in this build.',
+  },
+  '05': {
+    status: 'implemented',
+    note: 'Canonical model, Neo4j persistence, provenance on every element.',
+  },
+  '06': {
+    status: 'implemented',
+    note: 'Cross-source reconciliation, conflicts retained, structural confidence.',
+  },
+  '07': {
+    status: 'partial',
+    note: 'OKF YAML output and regeneration after review. The eleven rendered artifacts (C4, DBML, …) are not implemented.',
+  },
+  '08': { status: 'not-implemented', note: 'Module scaffold only.' },
+  '09': {
+    status: 'not-implemented',
+    note: 'Module scaffold only; the Drift page shows demo data.',
+  },
+  '10': {
+    status: 'implemented',
+    note: 'Persisted confirm/correct/reject, audit trail, propagation to the graph.',
+  },
+  '11': { status: 'not-implemented', note: 'Module scaffold only.' },
+};
+
+/** Shown above the walkthrough so the scripted run is never mistaken for a real one. */
+export const WALKTHROUGH_NOTICE =
+  'Illustrative walkthrough. "Run demo" plays a scripted run in your browser: its log lines and the approve / reject gates are not executed against any system, and nothing is saved. Each stage shows what this build actually implements.';
+
+/** The orchestrator's capabilities as implemented -- not the FRD's full list. */
+export const ORCHESTRATOR_DESCRIPTION =
+  'Sequences the stages with explicit dependencies and guarantees identical inputs yield an identical graph (@phoenix-ai/orchestration). Model-tier routing and per-tenant isolation are not implemented.';
+
+export const STAGES: Stage[] = [
   {
     code: '01',
     name: 'Ingestion & connectors',
@@ -175,10 +231,10 @@ const STAGES: Stage[] = [
   {
     code: '04',
     name: 'Semantic inference',
-    role: 'AI agent — reads structured facts only, never raw source',
+    role: 'Interprets structured facts only, never raw source — rule-based in this build (an AI agent is the target design)',
     color: 'violet',
     icon: Sparkles,
-    badges: ['AI agent', 'no tools'],
+    badges: ['rule-based', 'no tools'],
     detail:
       'Infers bounded contexts by combining dependency clustering, shared vocabulary and data ownership. Retrieves rationale from commits, PRs, tickets and docs — never fabricates it. Inferred elements are flagged distinct from extracted facts.',
     log: [
@@ -220,10 +276,10 @@ const STAGES: Stage[] = [
   {
     code: '07',
     name: 'OKF renderers',
-    role: 'Projects the graph into 11 output artifact types',
+    role: 'Projects the graph into the OKF output (target design: 11 artifact types)',
     color: 'blue',
     icon: Layers,
-    badges: ['x11 outputs'],
+    badges: ['OKF'],
     detail:
       'Renders logical data models, domains, personas/journeys, screens, execution flows, C4 architecture, deployment diagrams, NFRs, epics/features/stories, integrations & data flows, and flow-to-journey relationships. Renderers read the graph — they do not analyze independently.',
     log: [
@@ -301,7 +357,7 @@ const JUDGMENT_STAGE_INDICES = [3, 5, 7, 8];
 
 const LEGEND: Array<{ color: StageColor; label: string }> = [
   { color: 'slate', label: 'Deterministic (parsing, no AI)' },
-  { color: 'violet', label: 'AI agent — no tools / no write access' },
+  { color: 'violet', label: 'Inference — structured facts only (rule-based in this build)' },
   { color: 'emerald', label: 'Human-in-the-loop' },
   { color: 'teal', label: 'Shared knowledge graph' },
   { color: 'orange', label: 'Governance / quality' },
@@ -968,8 +1024,14 @@ export function AgentPipelinePage(): JSX.Element {
     <div>
       <PageHeader
         title="Agent Pipeline"
-        description="A staged pipeline of specialized agents over one shared knowledge graph. Deterministic parsers extract exact facts first; AI agents interpret only structured facts, never raw source; every element carries provenance and confidence. Each gated stage pauses for human approval before the next stage runs — click a node to inspect it, or run the demo against a sample legacy system."
+        description="A staged pipeline over one shared knowledge graph. Deterministic parsers extract exact facts first; inference interprets only structured facts, never raw source; every element carries provenance and confidence. Each gated stage pauses for human approval before the next stage runs — click a node to inspect it, or play the scripted walkthrough."
       />
+      <div
+        role="note"
+        className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900"
+      >
+        {WALKTHROUGH_NOTICE}
+      </div>
 
       <Card className="mb-6 overflow-hidden">
         <CardContent className="flex items-center gap-3 p-4">
@@ -979,15 +1041,12 @@ export function AgentPipelinePage(): JSX.Element {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-semibold">Orchestrator</span>
-              <span
-                className="text-muted-foreground/70"
-                title="Sequences all 11 stages with explicit dependencies · routes bulk extraction to lower-tier models and hard synthesis to higher-tier models · isolates each tenant's data · guarantees identical inputs always yield an identical graph."
-              >
+              <span className="text-muted-foreground/70" title={ORCHESTRATOR_DESCRIPTION}>
                 <Info className="h-3.5 w-3.5" />
               </span>
             </div>
             <p className="truncate text-xs text-muted-foreground">
-              11 staged agents · deterministic-first · reproducible runs
+              11 stages · deterministic-first · reproducible runs
             </p>
           </div>
         </CardContent>
@@ -1178,6 +1237,29 @@ export function AgentPipelinePage(): JSX.Element {
                 ) : null}
               </div>
               <p className="text-sm text-muted-foreground">{selectedStage.detail}</p>
+              {STAGE_IMPLEMENTATION[selectedStage.code] ? (
+                <p
+                  className={cn(
+                    'rounded-md border px-3 py-2 text-xs',
+                    STAGE_IMPLEMENTATION[selectedStage.code]?.status === 'implemented'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                      : STAGE_IMPLEMENTATION[selectedStage.code]?.status === 'partial'
+                        ? 'border-amber-200 bg-amber-50 text-amber-900'
+                        : 'border-rose-200 bg-rose-50 text-rose-900',
+                  )}
+                >
+                  <span className="font-semibold">
+                    In this build:{' '}
+                    {STAGE_IMPLEMENTATION[selectedStage.code]?.status === 'implemented'
+                      ? 'implemented'
+                      : STAGE_IMPLEMENTATION[selectedStage.code]?.status === 'partial'
+                        ? 'partly implemented'
+                        : 'not implemented'}
+                  </span>
+                  {' — '}
+                  {STAGE_IMPLEMENTATION[selectedStage.code]?.note}
+                </p>
+              ) : null}
               <div>
                 <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
                   Sample output

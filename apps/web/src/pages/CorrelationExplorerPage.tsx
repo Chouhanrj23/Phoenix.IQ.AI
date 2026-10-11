@@ -36,6 +36,7 @@ import {
 import { Badge } from '../components/ui/badge.js';
 import { Button } from '../components/ui/button.js';
 import { cn } from '../lib/utils.js';
+import { FixtureNotice } from '../components/fixture-notice.js';
 
 const MAX_SEARCH_RESULTS = 10;
 
@@ -301,6 +302,7 @@ export function CorrelationExplorerPage(): JSX.Element {
         title="Cross-Correlation"
         description="Personas, journeys, business capabilities, domain entities, services, technology, deployment, and integrations are different views of the same underlying knowledge graph. Pick anything below to see how it connects to everything else."
       />
+      <FixtureNotice areas={['personas', 'journeys', 'businessCapabilities', 'executionFlows']} />
 
       <div className="mb-4 flex items-center gap-2">
         {centerKey ? (

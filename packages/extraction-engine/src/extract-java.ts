@@ -62,6 +62,7 @@ import { bridgeJpaAssociations, bridgeTypeDependencies } from './bridge-relation
 import type { BridgeOptions } from './bridge-shared.js';
 import { stampFactProvenance, type FactProvenance } from './fact-provenance.js';
 import type { CstNode } from 'java-parser';
+import type { JavaParseCache } from './parse-cache.js';
 
 export interface JavaExtractionOptions {
   systemId: string;
@@ -70,6 +71,8 @@ export interface JavaExtractionOptions {
   generatedAt?: string;
   /** The source's revision (e.g. a git SHA), when the caller tracks one. Stamped onto every returned fact's `provenance` and every bridged object's `Evidence.sourceVersion`. */
   sourceVersion?: string;
+  /** P8 -- FR-DFT-01: reuse parses of unchanged files across runs. See `parse-cache.ts`. */
+  parseCache?: JavaParseCache;
 }
 
 export interface JavaExtractionResult {
@@ -141,14 +144,21 @@ export function extractJavaProject(
   for (const path of mainJavaPaths) {
     const artifact = byPath.get(path);
     if (artifact === undefined) continue;
-    const result = parseJavaSource(path, artifact.content);
-    if (!result.ok) {
-      parseFailures.push(result);
+    let cached = options.parseCache?.get(path, artifact.content);
+    if (cached === undefined) {
+      const result = parseJavaSource(path, artifact.content);
+      cached = result.ok
+        ? { result, facts: extractJavaStructure(path, artifact.content, result.cst) }
+        : { result };
+      options.parseCache?.set(path, artifact.content, cached);
+    }
+    if (!cached.result.ok) {
+      parseFailures.push(cached.result);
       continue;
     }
-    cstsByPath.set(path, result.cst);
+    cstsByPath.set(path, cached.result.cst);
     sourcesByPath.set(path, artifact.content);
-    files.push(extractJavaStructure(path, artifact.content, result.cst));
+    files.push((cached as { facts: JavaFileFacts }).facts);
   }
 
   const { calls, typeDependencies } = extractJavaCallGraph(files, cstsByPath, sourcesByPath);

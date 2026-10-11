@@ -36,6 +36,7 @@ import {
   type WorkItemObject,
 } from '@phoenix-ai/knowledge-graph';
 import { deterministicId } from './bridge-shared.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 export interface JiraBridgeOptions {
   systemId: string;
@@ -294,7 +295,7 @@ export function bridgeJiraArtifacts(
     }
   }
 
-  relationships.sort((a, b) => a.id.localeCompare(b.id));
+  relationships.sort((a, b) => compareCodeUnits(a.id, b.id));
 
   return { objects, relationships, skipped };
 }

@@ -7,6 +7,7 @@ import { LoadingState, ErrorState } from '../components/loading-state.js';
 import { ConfidenceBadge } from '../components/confidence-badge.js';
 import { Card, CardContent, CardDescription, CardTitle } from '../components/ui/card.js';
 import { Badge } from '../components/ui/badge.js';
+import { FixtureNotice } from '../components/fixture-notice.js';
 
 export function BacklogPage(): JSX.Element {
   const { data, loading, error } = useAsync(() => dataProvider.getEpics(), []);
@@ -30,6 +31,7 @@ export function BacklogPage(): JSX.Element {
         title="Backlog"
         description="Epics, features, and user stories reconstructed from execution flows, tickets, and source code — a requirements baseline for a product that was never formally specified."
       />
+      <FixtureNotice areas={['epics']} />
       <div className="space-y-3">
         {(data ?? []).map((epic) => {
           const isOpen = expanded.has(epic.id);

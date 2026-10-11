@@ -4,11 +4,39 @@ import { DEFAULT_COMPANY } from '../companies.js';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
+/**
+ * P8 -- the API's own error message (e.g. "The knowledge graph is
+ * temporarily unavailable") when it sent one; reads used to discard it and
+ * show only the status line, while writes already surfaced it.
+ */
+async function errorMessage(res: Response, path: string): Promise<string> {
+  const message = await res
+    .json()
+    .then((payload: { message?: string }) => payload.message)
+    .catch(() => undefined);
+  return message ?? `Request to ${path} failed: ${res.status} ${res.statusText}`;
+}
+
+/**
+ * P8 -- where the API says a response's data came from: `pipeline` (a real
+ * analysis run) or `seed` (the Phase 1 sample data it serves before any run
+ * exists), from the `x-phoenix-data-origin` header. Recorded per path so the
+ * page showing it can say which one it is.
+ */
+export type ResponseDataOrigin = 'pipeline' | 'seed';
+const responseOrigins = new Map<string, ResponseDataOrigin>();
+
+/** The origin the API reported for the last response from `path`; `undefined` if it reported none. */
+export function responseDataOrigin(path: string): ResponseDataOrigin | undefined {
+  return responseOrigins.get(path);
+}
+
 async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`);
-  if (!res.ok) {
-    throw new Error(`Request to ${path} failed: ${res.status} ${res.statusText}`);
-  }
+  if (!res.ok) throw new Error(await errorMessage(res, path));
+  const origin = res.headers?.get?.('x-phoenix-data-origin');
+  if (origin === 'pipeline' || origin === 'seed') responseOrigins.set(path, origin);
+  else responseOrigins.delete(path);
   return (await res.json()) as T;
 }
 
@@ -24,13 +52,7 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const message = await res
-      .json()
-      .then((payload: { message?: string }) => payload.message)
-      .catch(() => undefined);
-    throw new Error(message ?? `Request to ${path} failed: ${res.status} ${res.statusText}`);
-  }
+  if (!res.ok) throw new Error(await errorMessage(res, path));
   return (await res.json()) as T;
 }
 
@@ -59,6 +81,22 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
  * looks like a normal, populated graph.
  */
 const fallback = mockProviderFor(DEFAULT_COMPANY);
+
+/**
+ * P8 -- the areas the Phoenix API does NOT serve. In API mode these are
+ * answered from the bundled demo fixtures, and the UI must say so
+ * (`lib/data-origin.ts`): presenting them under "Live API mode" claimed a
+ * backend capability that does not exist. Declared once, here, next to the
+ * fallback that implements it, so the two cannot drift apart.
+ */
+export const API_FIXTURE_FALLBACK_AREAS = [
+  'executionFlows',
+  'personas',
+  'journeys',
+  'businessCapabilities',
+  'epics',
+] as const;
+export type ApiFixtureFallbackArea = (typeof API_FIXTURE_FALLBACK_AREAS)[number];
 
 /**
  * Real backend implementation of OkfDataProvider — REAL BACKEND DATA.

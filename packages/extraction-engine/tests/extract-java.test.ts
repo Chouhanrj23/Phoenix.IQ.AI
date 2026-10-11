@@ -300,3 +300,47 @@ describe('extractJavaProject -- end to end', () => {
     expect(JSON.stringify(first.config)).toBe(JSON.stringify(second.config));
   });
 });
+
+describe('parse cache -- FR-DFT-01 re-process only changed artifacts', () => {
+  it('a warm cache reuses unchanged files and produces identical output', async () => {
+    const { createJavaParseCache } = await import('../src/parse-cache.js');
+    const cold = extractJavaProject(ARTIFACTS, OPTIONS);
+    const cache = createJavaParseCache();
+    const first = extractJavaProject(ARTIFACTS, { ...OPTIONS, parseCache: cache });
+    expect(cache.stats).toEqual({ parsed: 3, reused: 0 });
+
+    cache.resetStats();
+    const warm = extractJavaProject(ARTIFACTS, { ...OPTIONS, parseCache: cache });
+    expect(cache.stats).toEqual({ parsed: 0, reused: 3 });
+    expect(JSON.stringify(warm)).toBe(JSON.stringify(cold));
+    expect(JSON.stringify(first)).toBe(JSON.stringify(cold));
+  });
+
+  it('a changed file is re-parsed; the others are reused', async () => {
+    const { createJavaParseCache } = await import('../src/parse-cache.js');
+    const cache = createJavaParseCache();
+    extractJavaProject(ARTIFACTS, { ...OPTIONS, parseCache: cache });
+    cache.resetStats();
+    const edited = ARTIFACTS.map((a) =>
+      a.path.endsWith('CheckoutItem.java')
+        ? {
+            ...a,
+            content: a.content.replace(
+              'private String sku;',
+              'private String sku;\n  private int qty;',
+            ),
+          }
+        : a,
+    );
+    const warm = extractJavaProject(edited, { ...OPTIONS, parseCache: cache });
+    expect(cache.stats).toEqual({ parsed: 1, reused: 2 });
+    expect(JSON.stringify(warm)).toBe(JSON.stringify(extractJavaProject(edited, OPTIONS)));
+  });
+
+  it('evicts least-recently-used entries beyond its bound', async () => {
+    const { createJavaParseCache } = await import('../src/parse-cache.js');
+    const cache = createJavaParseCache(2);
+    extractJavaProject(ARTIFACTS, { ...OPTIONS, parseCache: cache });
+    expect(cache.size).toBe(2);
+  });
+});

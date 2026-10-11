@@ -44,7 +44,11 @@
  */
 
 import type { Driver } from 'neo4j-driver';
-import { verifyNeo4jConnectivity } from './neo4j-client.js';
+import {
+  Neo4jUnavailableError,
+  asNeo4jUnavailable,
+  verifyNeo4jConnectivity,
+} from './neo4j-client.js';
 import type { GraphWriteOperations } from './transform.js';
 
 /** Thrown for any ingestion-logic failure (malformed write operation, missing relationship endpoint, ...) -- distinct from `Neo4jUnavailableError` (connectivity/auth), which is thrown separately and never wrapped by this type. */
@@ -131,6 +135,12 @@ export async function ingestGraphWriteOperations(
     });
   } catch (error) {
     if (error instanceof GraphIngestionError) throw error;
+    // A connection lost AFTER the up-front connectivity check is still an
+    // availability failure, not an ingestion-logic one: the transaction was
+    // rolled back and nothing was written. Reported as such so callers can
+    // say "unavailable" rather than "your data was malformed".
+    const unavailable = asNeo4jUnavailable(error, database);
+    if (unavailable instanceof Neo4jUnavailableError) throw unavailable;
     throw new GraphIngestionError(
       `Graph ingestion failed: ${error instanceof Error ? error.message : String(error)}`,
       { cause: error },

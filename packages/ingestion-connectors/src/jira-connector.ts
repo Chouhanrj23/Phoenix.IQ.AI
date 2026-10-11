@@ -254,7 +254,12 @@ function buildJql(coordinates: {
   if (coordinates.jql !== undefined && coordinates.jql.length > 0) {
     clauses.push(`(${coordinates.jql})`);
   }
-  return clauses.join(' AND ');
+  // P8: an explicit, total order. Without one, Jira pages through whatever
+  // order its index yields, which can change between page requests -- an
+  // issue can be skipped or read twice -- and every downstream object comes
+  // out in a different order run to run. The caller's own `jql` is wrapped in
+  // parentheses above, where Jira forbids ORDER BY, so this cannot clash.
+  return `${clauses.join(' AND ')} ORDER BY key ASC`;
 }
 
 function classifyReadFailure(error: unknown): ArtifactFailureReason {

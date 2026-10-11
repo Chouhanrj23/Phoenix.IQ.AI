@@ -63,8 +63,9 @@ const REPO_SOURCE_ID = 'repo://phoenix-ai-1';
 const JIRA_SOURCE_ID = `ticket://phoenix-internal/${PHOENIX_JIRA_PROJECT_KEY}`;
 const SYSTEM_ID = 'phoenix-ai-1';
 
+/** Percent-encoded, as a `file://` URL must be: a locator may not contain whitespace, and this repository may live under a path that does (P8). */
 function fileLocator(path: string): string {
-  return `file://${path.replace(/\\/g, '/')}`;
+  return `file://${encodeURI(path.replace(/\\/g, '/'))}`;
 }
 
 const NOISE_EXCLUDES = [

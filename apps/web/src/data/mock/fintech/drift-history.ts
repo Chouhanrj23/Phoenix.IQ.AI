@@ -17,14 +17,16 @@ export const driftHistory: DriftRun[] = [
         id: 'drift-hist-1',
         elementName: 'Onboarding & KYC Service',
         changeType: 'modified',
-        description: 'New outbound dependency on Fraud & AML Monitoring Service added directly to the onboarding path (previously async via event bus only).',
+        description:
+          'New outbound dependency on Fraud & AML Monitoring Service added directly to the onboarding path (previously async via event bus only).',
         detectedAt: '2026-07-07T09:00:00.000Z',
       },
       {
         id: 'drift-hist-2',
         elementName: 'Payments & Transfers Service',
         changeType: 'modified',
-        description: 'Schema change: new column added to Transfer for split/partial transfer support.',
+        description:
+          'Schema change: new column added to Transfer for split/partial transfer support.',
         detectedAt: '2026-07-07T09:00:00.000Z',
       },
     ],
@@ -38,7 +40,8 @@ export const driftHistory: DriftRun[] = [
         id: 'drift-hist-3',
         elementName: 'Fintech - Banking System (Dummy company used for reverse engineering)',
         changeType: 'added',
-        description: 'Baseline established: 131 elements extracted across 6 domains, 10 containers, and 2 execution flows.',
+        description:
+          'Baseline established: 131 elements extracted across 6 domains, 10 containers, and 2 execution flows.',
         detectedAt: '2026-06-23T09:00:00.000Z',
       },
     ],

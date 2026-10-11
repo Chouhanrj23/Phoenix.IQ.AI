@@ -26,7 +26,9 @@ import {
   type ApiObject,
   type CanonicalKnowledgeObject,
   type CanonicalKnowledgeRelationship,
+  type Evidence,
 } from '@phoenix-ai/knowledge-graph';
+import type { Provenance } from '@phoenix-ai/shared';
 import { deterministicId, deriveInferenceConfidence } from './inference-contract.js';
 import { normalizeIdentifierText, type NormalizedAction } from './vocabulary.js';
 import type { BusinessConceptCandidate } from './concept-inference.js';
@@ -124,6 +126,7 @@ export function inferJourneys(
   generatedAt: string,
 ): JourneyInferenceResult {
   const apiObjects = objects.filter(isApiObject);
+  const apiById = new Map(apiObjects.map((api) => [api.identity.id, api]));
   const conceptsByName = new Map(concepts.map((c) => [c.name.toLowerCase(), c]));
 
   const stepsByConcept = new Map<string, OperationStep[]>();
@@ -176,14 +179,16 @@ export function inferJourneys(
     const journeyId = deterministicId('journey', 'journey', conceptId);
     const flowId = deterministicId('journey', 'flow', conceptId);
 
-    const provenance = [
-      {
-        sourceId: systemId,
-        sourceType: 'source-code' as const,
-        derivedBy: 'inference-engine',
-        derivedAt: generatedAt,
-      },
-    ];
+    // P8 -- provenance and evidence come from the API objects the steps were
+    // actually observed on. Before P8 every journey/flow/action claimed
+    // `sourceId: systemId` -- a source that does not exist in any registry,
+    // so a validated bundle rejected it -- and carried no evidence at all,
+    // although each step is grounded in a real, evidenced operation.
+    const groundingApis = [...distinctApiObjectIds]
+      .map((id) => apiById.get(id))
+      .filter((api): api is ApiObject => api !== undefined);
+    const provenance = inferredProvenance(groundingApis, generatedAt);
+    const evidence = groundedEvidence(groundingApis);
 
     objectsOut.push({
       identity: {
@@ -200,7 +205,7 @@ export function inferJourneys(
         purpose: `Carry a ${conceptName} through its real, observed operations (${sortedSteps.map((s) => s.operationName).join(', ')}).`,
       },
       metadata: { provenance, confidence },
-      evidence: [],
+      evidence,
       confidenceDetail,
     });
 
@@ -217,7 +222,7 @@ export function inferJourneys(
       label: `${conceptName} Lifecycle Flow`,
       attributes: {},
       metadata: { provenance, confidence },
-      evidence: [],
+      evidence,
       confidenceDetail,
     });
 
@@ -245,8 +250,11 @@ export function inferJourneys(
         kind: 'journey.action',
         label: step.operationName,
         attributes: { description: step.description },
-        metadata: { provenance, confidence },
-        evidence: [],
+        metadata: {
+          provenance: inferredProvenance(stepApis(step.apiObjectId), generatedAt),
+          confidence,
+        },
+        evidence: groundedEvidence(stepApis(step.apiObjectId)),
         confidenceDetail,
       });
 
@@ -266,4 +274,35 @@ export function inferJourneys(
   }
 
   return { objects: objectsOut, relationships: relationshipsOut, actionGroundingLinks };
+
+  function stepApis(apiObjectId: string): ApiObject[] {
+    const api = apiById.get(apiObjectId);
+    return api === undefined ? [] : [api];
+  }
+}
+
+/** One inference provenance entry per distinct real source behind the grounding objects -- never a source that was not observed. */
+function inferredProvenance(apis: readonly ApiObject[], generatedAt: string): Provenance[] {
+  const seen = new Map<string, Provenance>();
+  for (const api of apis) {
+    for (const entry of api.metadata.provenance) {
+      const key = `${entry.sourceId}::${entry.sourceType}`;
+      if (seen.has(key)) continue;
+      seen.set(key, {
+        sourceId: entry.sourceId,
+        sourceType: entry.sourceType,
+        derivedBy: 'inference-engine',
+        derivedAt: generatedAt,
+      });
+    }
+  }
+  return [...seen.values()];
+}
+
+/** The grounding objects' own evidence, de-duplicated by id -- referenced, never re-described. */
+function groundedEvidence(apis: readonly ApiObject[]): Evidence[] {
+  const seen = new Map<string, Evidence>();
+  for (const api of apis)
+    for (const entry of api.evidence) if (!seen.has(entry.id)) seen.set(entry.id, entry);
+  return [...seen.values()];
 }

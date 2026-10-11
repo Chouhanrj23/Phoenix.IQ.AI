@@ -37,7 +37,7 @@ describe('buildReviewDecisionWriteOperations (P7-01) — what reaches Neo4j', ()
     const ops = buildReviewDecisionWriteOperations(buildReviewDecision(decisionInput()));
     expect(ops.nodeOperations).toHaveLength(1);
     expect(ops.nodeOperations[0]?.cypher).toBe(
-      'MERGE (n:ReviewDecision {id: $id}) SET n += $properties RETURN n',
+      'MERGE (n:ReviewDecision {id: $id, systemId: $systemId}) SET n += $properties RETURN n',
     );
   });
 

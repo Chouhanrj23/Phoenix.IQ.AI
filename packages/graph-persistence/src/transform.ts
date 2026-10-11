@@ -47,7 +47,12 @@ export interface NodeWriteOperation {
   readonly id: string;
   readonly label: string;
   readonly cypher: string;
-  readonly params: { readonly id: string; readonly properties: Readonly<Record<string, unknown>> };
+  readonly params: {
+    readonly id: string;
+    /** P8 -- FR-ORC-04: present when the node is keyed per tenant. */
+    readonly systemId?: string;
+    readonly properties: Readonly<Record<string, unknown>>;
+  };
 }
 
 /** A single relationship MERGE, fully parameterized apart from its fixed, closed-vocabulary type. Matches endpoints by `id` alone (no label constraint), since ids are unique across this bundle regardless of label. */
@@ -61,6 +66,7 @@ export interface RelationshipWriteOperation {
     readonly relationshipId: string;
     readonly sourceId: string;
     readonly targetId: string;
+    readonly systemId?: string;
     readonly properties: Readonly<Record<string, unknown>>;
   };
 }
@@ -95,6 +101,19 @@ function toCypherProperties(
  */
 export function buildNodeWriteOperation(node: GraphNodeMapping): NodeWriteOperation {
   const properties = toCypherProperties(node.properties, node.provenance, node.evidence);
+  const systemId = node.properties.systemId;
+  // P8 -- FR-ORC-04: a node is identified by (id, systemId). Keyed on `id`
+  // alone, the same repository analysed for two tenants produced the same
+  // content-derived ids, and the second MERGE overwrote the first tenant's
+  // node.
+  if (typeof systemId === 'string' && systemId.length > 0) {
+    return {
+      id: node.id,
+      label: node.label,
+      cypher: `MERGE (n:${node.label} {id: $id, systemId: $systemId}) SET n += $properties RETURN n`,
+      params: { id: node.id, systemId, properties },
+    };
+  }
   return {
     id: node.id,
     label: node.label,
@@ -121,6 +140,22 @@ export function buildRelationshipWriteOperation(
     relationship.provenance,
     relationship.evidence,
   );
+  if (relationship.systemId !== undefined) {
+    return {
+      id: relationship.id,
+      type: relationship.type,
+      sourceId: relationship.sourceId,
+      targetId: relationship.targetId,
+      cypher: `MATCH (source {id: $sourceId, systemId: $systemId}), (target {id: $targetId, systemId: $systemId}) MERGE (source)-[r:${relationship.type} {id: $relationshipId}]->(target) SET r += $properties RETURN r`,
+      params: {
+        relationshipId: relationship.id,
+        sourceId: relationship.sourceId,
+        targetId: relationship.targetId,
+        systemId: relationship.systemId,
+        properties,
+      },
+    };
+  }
   return {
     id: relationship.id,
     type: relationship.type,

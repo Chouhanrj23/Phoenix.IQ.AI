@@ -21,6 +21,7 @@
  */
 
 import type { RawArtifact } from '@phoenix-ai/ingestion-connectors';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 export interface JavaModuleCoordinates {
   groupId?: string;
@@ -172,7 +173,7 @@ function findBuildFiles(artifacts: readonly RawArtifact[]): BuildFileCandidate[]
   }
   // Deepest (most specific) directory first, so the nearest-ancestor search below finds the closest module, not the root.
   return candidates.sort(
-    (a, b) => b.directory.length - a.directory.length || a.path.localeCompare(b.path),
+    (a, b) => b.directory.length - a.directory.length || compareCodeUnits(a.path, b.path),
   );
 }
 
@@ -218,7 +219,7 @@ export function discoverJavaProject(artifacts: readonly RawArtifact[]): JavaProj
   const unassignedJavaFiles: string[] = [];
   const javaFiles = artifacts
     .filter((a) => a.path.endsWith('.java'))
-    .sort((a, b) => a.path.localeCompare(b.path));
+    .sort((a, b) => compareCodeUnits(a.path, b.path));
 
   for (const artifact of javaFiles) {
     const nearest = nearestBuildFile(dirnameOf(artifact.path), buildFileCandidates);
@@ -233,7 +234,7 @@ export function discoverJavaProject(artifacts: readonly RawArtifact[]): JavaProj
   }
 
   return {
-    modules: [...modules.values()].sort((a, b) => a.id.localeCompare(b.id)),
+    modules: [...modules.values()].sort((a, b) => compareCodeUnits(a.id, b.id)),
     unassignedJavaFiles,
   };
 }

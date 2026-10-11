@@ -216,7 +216,9 @@ describe('P7-06 chain 2: Business Object → Review Status → Correction → Ca
     expect(op.params.id).toBe(canonical.identity.id);
     expect(properties.attr_technology).toBe(canonical.attributes.technology);
     // MATCH, not MERGE/CREATE: a correction can never mint a duplicate node.
-    expect(op.cypher).toContain('MATCH (n {id: $id})');
+    // P8 (FR-ORC-04): matched within the decision's own tenant.
+    expect(op.cypher).toContain('MATCH (n {id: $id, systemId: $systemId})');
+    expect(op.params.systemId).toBe(decision.identity.systemId);
     expect(op.cypher).not.toMatch(/MERGE|CREATE/);
   });
 

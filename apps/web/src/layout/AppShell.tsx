@@ -22,6 +22,7 @@ import {
   Bot,
   ArrowLeftRight,
 } from 'lucide-react';
+import { currentDataSourceMode, dataModeBadge, displayedCompany } from '../lib/data-origin.js';
 
 interface NavItem {
   to: string;
@@ -76,8 +77,11 @@ export function AppShell({
   children: ReactNode;
   companyId?: CompanyId;
 }): JSX.Element {
-  const dataSource = import.meta.env.VITE_DATA_SOURCE ?? 'mock';
-  const company = companyId ? getCompany(companyId) : null;
+  // P8: the badge states exactly what is live, and the engagement shown is
+  // the one whose data the pages actually display -- see lib/data-origin.ts.
+  const mode = currentDataSourceMode();
+  const badge = dataModeBadge(mode);
+  const company = companyId ? getCompany(displayedCompany(companyId, mode)) : null;
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
@@ -100,14 +104,15 @@ export function AppShell({
             </span>
           ) : null}
           <span
+            title={badge.title}
             className={cn(
               'rounded-full border px-2.5 py-1 text-[11px] font-medium',
-              dataSource === 'api'
+              mode === 'api'
                 ? 'border-white/30 bg-white/10 text-white'
                 : 'border-white/40 bg-white/15 text-white',
             )}
           >
-            {dataSource === 'api' ? 'Live API mode' : 'Demo mode — fixture data'}
+            {badge.label}
           </span>
         </div>
       </header>

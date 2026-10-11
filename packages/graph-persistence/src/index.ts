@@ -1,8 +1,15 @@
-export { loadNeo4jConfig, type Neo4jConfig } from './config.js';
+export {
+  loadNeo4jConfig,
+  DEFAULT_NEO4J_CONNECTION_ACQUISITION_TIMEOUT_MS,
+  DEFAULT_NEO4J_CONNECTION_TIMEOUT_MS,
+  type Neo4jConfig,
+} from './config.js';
 export {
   createNeo4jDriver,
   verifyNeo4jConnectivity,
   closeNeo4jDriver,
+  isNeo4jConnectivityError,
+  asNeo4jUnavailable,
   Neo4jUnavailableError,
 } from './neo4j-client.js';
 export {
@@ -40,6 +47,9 @@ export {
   getFullGraph,
   getNodeById,
   getRelationshipsForNode,
+  getRelationshipEndpoints,
+  type GraphScope,
+  type RelationshipEndpointIds,
   type QueriedNode,
   type QueriedRelationship,
   type QueriedGraph,

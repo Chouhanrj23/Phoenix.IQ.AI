@@ -12,6 +12,7 @@ import { COMPANIES, type CompanyId, type CompanyOption } from '../data/index.js'
 import { cn } from '../lib/utils.js';
 
 import type { JSX } from 'react';
+import { companySelection, currentDataSourceMode } from '../lib/data-origin.js';
 
 const ICONS: Record<CompanyId, typeof ShoppingCart> = {
   aurora: ShoppingCart,
@@ -46,6 +47,7 @@ export function CompanySelectPage({
   onSelect,
 }: CompanySelectPageProps): JSX.Element {
   const navigate = useNavigate();
+  const selection = companySelection(currentDataSourceMode());
 
   function handlePick(id: CompanyId): void {
     onSelect(id);
@@ -96,14 +98,22 @@ export function CompanySelectPage({
             const Icon = ICONS[company.id];
             const accent = ACCENT_CLASSES[company.accent];
             const isSelected = company.id === selectedCompany;
+            // P8: in API mode only the system the API serves can be chosen --
+            // any other would relabel the app over that system's data.
+            const availability = selection.find((entry) => entry.id === company.id);
+            const selectable = availability?.selectable ?? true;
             return (
               <button
                 key={company.id}
                 type="button"
+                disabled={!selectable}
+                title={availability?.note}
                 onClick={() => handlePick(company.id)}
                 className={cn(
                   'group relative flex h-full flex-col items-start overflow-hidden rounded-lg border border-slate-200 bg-white pt-8 text-left shadow-sm transition-all duration-200',
-                  'hover:-translate-y-0.5 hover:shadow-lg',
+                  selectable
+                    ? 'hover:-translate-y-0.5 hover:shadow-lg'
+                    : 'cursor-not-allowed opacity-60',
                 )}
               >
                 <span className={cn('absolute inset-x-0 top-0 h-1.5', accent.topBar)} />
@@ -160,9 +170,11 @@ export function CompanySelectPage({
                     accent.button,
                   )}
                 >
-                  {isSelected
-                    ? 'Continue with this engagement'
-                    : `Reverse engineer ${company.shortName}`}
+                  {!selectable
+                    ? (availability?.note ?? 'Not available')
+                    : isSelected
+                      ? 'Continue with this engagement'
+                      : `Reverse engineer ${company.shortName}`}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </span>
               </button>

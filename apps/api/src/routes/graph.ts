@@ -11,9 +11,17 @@ import { getFullGraph } from '../services/graph.service.js';
  * `query.ts` defines.
  */
 export function registerGraphRoutes(app: FastifyInstance): void {
-  app.get('/api/full-graph', async () => {
+  app.get('/api/full-graph', async (request) => {
+    // P8 (FR-ORC-04): `?systemId=` scopes the graph to one tenant.
+    const systemId = (request.query as Record<string, unknown> | undefined)?.systemId;
+    if (
+      systemId !== undefined &&
+      (typeof systemId !== 'string' || !/^[A-Za-z0-9._-]{1,100}$/.test(systemId))
+    ) {
+      throw new ApiError(400, '"systemId" must be 1-100 characters of [A-Za-z0-9._-]');
+    }
     try {
-      return await getFullGraph();
+      return await getFullGraph(systemId === undefined ? undefined : { systemId });
     } catch (error) {
       if (error instanceof Neo4jUnavailableError) {
         throw new ApiError(

@@ -24,6 +24,7 @@ import {
   type ReviewDecisionObject,
   type ReviewLifecycleStatus,
 } from '@phoenix-ai/knowledge-graph';
+import { detectSecrets } from '@phoenix-ai/redaction-hardening';
 import type { ReviewDecisionStore, ReviewStoreDurability } from './store.js';
 
 /** The submitted decision is not a legal move from the element's current status (e.g. trying to set it back to `pending`). */
@@ -69,6 +70,56 @@ export async function recordReviewDecision(
   store: ReviewDecisionStore,
   input: BuildReviewDecisionInput,
 ): Promise<RecordReviewDecisionResult> {
+  return serialisedPerTarget(store, input.targetObjectId, () => recordUnserialised(store, input));
+}
+
+/**
+ * In-flight writes, per store and per reviewed element.
+ *
+ * `recordReviewDecision` reads the stored predecessor, validates the
+ * transition against it, then writes. Two submissions for the SAME element
+ * arriving together could both read the same predecessor, both pass, and both
+ * claim to supersede it -- forking the supersession chain the audit trail is
+ * walked along (P8). Chaining same-element writes in this process closes
+ * that window; writes to different elements still run concurrently.
+ *
+ * Scope note: this serialises writers inside ONE API process, which is how
+ * Phoenix is deployed today. Multiple API replicas writing the same element
+ * would need a database-side guard as well.
+ */
+const inFlight = new WeakMap<ReviewDecisionStore, Map<string, Promise<void>>>();
+
+async function serialisedPerTarget<T>(
+  store: ReviewDecisionStore,
+  targetObjectId: string,
+  work: () => Promise<T>,
+): Promise<T> {
+  let byTarget = inFlight.get(store);
+  if (byTarget === undefined) {
+    byTarget = new Map();
+    inFlight.set(store, byTarget);
+  }
+
+  const previous = byTarget.get(targetObjectId) ?? Promise.resolve();
+  // Runs after the previous write SETTLES, whether it succeeded or not: one
+  // rejected submission must not block every later one for that element.
+  const run = previous.then(work, work);
+  const settled = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  byTarget.set(targetObjectId, settled);
+  try {
+    return await run;
+  } finally {
+    if (byTarget.get(targetObjectId) === settled) byTarget.delete(targetObjectId);
+  }
+}
+
+async function recordUnserialised(
+  store: ReviewDecisionStore,
+  input: BuildReviewDecisionInput,
+): Promise<RecordReviewDecisionResult> {
   const priorDecisions = await store.listForTarget(input.targetObjectId);
   const predecessor = priorDecisions[priorDecisions.length - 1];
   const from: ReviewLifecycleStatus =
@@ -77,6 +128,9 @@ export async function recordReviewDecision(
   if (!isLegalReviewTransition(from, input.decision)) {
     throw new InvalidReviewTransitionError(from, input.decision);
   }
+
+  const sensitive = sensitiveFieldErrors(input);
+  if (sensitive.length > 0) throw new InvalidReviewDecisionError(sensitive);
 
   const decision = buildReviewDecision({
     ...input,
@@ -90,6 +144,45 @@ export async function recordReviewDecision(
 
   await store.save(decision);
   return { decision, durability: store.durability };
+}
+
+/** Free-text fields a reviewer types, which no pipeline stage has scanned. */
+const REVIEWER_TEXT_FIELDS = [
+  'previousValue',
+  'correctedValue',
+  'rationale',
+  'targetLabel',
+] as const;
+
+/**
+ * P8 -- review text passes the same redaction detectors as ingested content.
+ *
+ * Everything a reviewer types is persisted (Neo4j), applied to canonical
+ * knowledge, rendered into OKF, and served by the API -- yet until P8 none
+ * of it went through the redaction gate, so a secret pasted into a
+ * correction or rationale was published everywhere the gate exists to
+ * protect. A detection REJECTS the decision rather than redacting it in
+ * place: silently replacing part of a human correction would record a value
+ * the reviewer never entered, and the FRD's rule for redaction uncertainty
+ * is to halt, not to proceed. Messages name the field and the kind of value,
+ * never the value.
+ *
+ * `reviewerId` is not scanned: it is the reviewer's own declared identity on
+ * the audit record, not content about the system.
+ */
+function sensitiveFieldErrors(input: BuildReviewDecisionInput): string[] {
+  const errors: string[] = [];
+  for (const field of REVIEWER_TEXT_FIELDS) {
+    const value = input[field];
+    if (typeof value !== 'string' || value.length === 0) continue;
+    const kinds = [...new Set(detectSecrets(value, 'review-decision.txt').map((d) => d.kind))];
+    if (kinds.length > 0) {
+      errors.push(
+        `${field} appears to contain ${kinds.join(', ')}; secrets and personal data are not recorded in review decisions — remove it and resubmit`,
+      );
+    }
+  }
+  return errors;
 }
 
 /** The most recent decision recorded against one element, or `undefined` if it has never been reviewed. */

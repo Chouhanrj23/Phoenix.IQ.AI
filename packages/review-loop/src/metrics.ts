@@ -14,7 +14,33 @@
  * quiet period cannot read as perfect quality.
  */
 
-import type { ReviewDecisionObject } from '@phoenix-ai/knowledge-graph';
+import { isIsoTimestamp, type ReviewDecisionObject } from '@phoenix-ai/knowledge-graph';
+
+/** The requested window is not a usable time range -- an unparseable bound, or `from` after `to`. */
+export class InvalidMetricsWindowError extends Error {
+  constructor(reason: string) {
+    super(reason);
+    this.name = 'InvalidMetricsWindowError';
+  }
+}
+
+/**
+ * Parses one window bound to epoch milliseconds.
+ *
+ * Bounds were previously compared to decision timestamps as STRINGS, which is
+ * only correct when both sides share one exact format. `...T10:00:00Z` sorts
+ * AFTER `...T10:00:00.000Z` ('Z' > '.'), so an inclusive `from` excluded a
+ * decision made at that exact instant; an offset such as `+05:30` compared
+ * against `Z` gave arbitrary results; and a garbage bound silently produced
+ * a plausible-looking but meaningless metric (P8).
+ */
+function boundMs(value: string | undefined, name: 'from' | 'to'): number | undefined {
+  if (value === undefined) return undefined;
+  if (!isIsoTimestamp(value)) {
+    throw new InvalidMetricsWindowError(`"${name}" must be an ISO-8601 timestamp, got "${value}"`);
+  }
+  return Date.parse(value);
+}
 
 export interface ReviewMetrics {
   /** Distinct elements that received at least one decision in the window. */
@@ -52,10 +78,18 @@ export function computeReviewMetrics(
   decisions: readonly ReviewDecisionObject[],
   options: { from?: string; to?: string; runScoped?: boolean } = {},
 ): ReviewMetrics {
+  const fromMs = boundMs(options.from, 'from');
+  const toMs = boundMs(options.to, 'to');
+  if (fromMs !== undefined && toMs !== undefined && fromMs > toMs) {
+    throw new InvalidMetricsWindowError(
+      `"from" (${String(options.from)}) is after "to" (${String(options.to)})`,
+    );
+  }
+
   const inWindow = decisions.filter((decision) => {
-    const at = decision.lifecycle?.since ?? decision.identity.createdAt;
-    if (options.from !== undefined && at < options.from) return false;
-    if (options.to !== undefined && at > options.to) return false;
+    const at = Date.parse(decision.lifecycle?.since ?? decision.identity.createdAt);
+    if (fromMs !== undefined && at < fromMs) return false;
+    if (toMs !== undefined && at > toMs) return false;
     return true;
   });
 

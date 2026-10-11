@@ -100,5 +100,6 @@ export * from './domain.js';
 export * from './journey.js';
 export * from './integration.js';
 export * from './workitem.js';
+export * from './deployment.js';
 export * from './reconciliation.js';
 export * from './review.js';

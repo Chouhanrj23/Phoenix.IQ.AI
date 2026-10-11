@@ -278,8 +278,14 @@ export function validateCanonicalKnowledgeRelationship(candidate: unknown): Vali
 
 /**
  * Validates a full bundle: every object and relationship individually, plus
- * bundle-level composition rules (no duplicate object ids, no relationship
- * pointing at an object that isn't in the bundle).
+ * bundle-level composition rules (no duplicate object ids, no duplicate
+ * relationship ids, no relationship pointing at an object that isn't in the
+ * bundle).
+ *
+ * Duplicate relationship ids were not checked before P8: the graph write path
+ * is `MERGE ...-[r {id}]->...` + `SET r += ...`, so two relationships sharing
+ * an id either produced two edges with one id or silently overwrote the first
+ * edge's provenance and evidence with the second's.
  */
 export function validateCanonicalKnowledgeBundle(candidate: unknown): ValidationResult {
   const errors: string[] = [];
@@ -310,10 +316,17 @@ export function validateCanonicalKnowledgeBundle(candidate: unknown): Validation
     }
   });
 
+  const seenRelationshipIds = new Set<string>();
   relationships.forEach((relationship, index) => {
     const result = validateCanonicalKnowledgeRelationship(relationship);
     errors.push(...result.errors.map((e) => `relationships[${index}]: ${e}`));
     if (isPlainObject(relationship)) {
+      if (isNonEmptyString(relationship.id)) {
+        if (seenRelationshipIds.has(relationship.id)) {
+          errors.push(`relationships[${index}]: duplicate relationship id "${relationship.id}"`);
+        }
+        seenRelationshipIds.add(relationship.id);
+      }
       const { sourceObjectId, targetObjectId } = relationship;
       if (isNonEmptyString(sourceObjectId) && !seenIds.has(sourceObjectId)) {
         errors.push(

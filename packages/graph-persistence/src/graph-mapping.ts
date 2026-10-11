@@ -45,7 +45,10 @@ import {
   JOURNEY_RELATIONSHIP_KINDS,
   INTEGRATION_OBJECT_KINDS,
   INTEGRATION_RELATIONSHIP_KINDS,
+  RECONCILIATION_OBJECT_KINDS,
+  DEPLOYMENT_OBJECT_KINDS,
   REVIEW_OBJECT_KINDS,
+  WORKITEM_OBJECT_KINDS,
   type CanonicalKnowledgeBundle,
   type CanonicalKnowledgeObject,
   type CanonicalKnowledgeRelationship,
@@ -53,6 +56,7 @@ import {
   type KnowledgeValue,
 } from '@phoenix-ai/knowledge-graph';
 import type { Provenance } from '@phoenix-ai/shared';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 // ---------------------------------------------------------------------------
 // Node label mapping (Step 2) -- every OKF object kind that exists today.
@@ -81,7 +85,25 @@ export const OBJECT_KIND_TO_LABEL: Readonly<Record<string, string>> = {
   // P7-01: the human review decision (`category: 'observation'`), so a
   // persisted decision is a first-class graph node rather than a side table.
   'review.decision': 'ReviewDecision',
+  // P8: kinds later phases produce that the P4 table never learned, so every
+  // one of them was reported as an unmappable issue and never reached the
+  // graph -- reconciled conflicts (FR-REC-05: "exposed in outputs"),
+  // Jira-derived work items, and inferred business capabilities.
+  'reconciliation.conflict': 'Conflict',
+  'workitem.issue': 'WorkItem',
+  'business.capability': 'Capability',
+  // P8: FRD §4.1 deployment kinds, extracted from IaC (FR-DET-04).
+  'deployment.unit': 'DeploymentUnit',
+  'deployment.environment': 'Environment',
 };
+
+/**
+ * `business.capability` is minted by `@phoenix-ai/inference-engine` (P5-04)
+ * through the canonical model's open `kind` string rather than a closed
+ * per-domain vocabulary, so there is no exported constant to import; named
+ * once here instead of repeated.
+ */
+const INFERENCE_OBJECT_KINDS = ['business.capability'] as const;
 
 /** Every OKF object `kind` this module knows a Neo4j label for -- exported for the exhaustiveness test and for future callers (e.g. a P4-08 UI adapter) that need the full known-kind list. */
 export const KNOWN_OBJECT_KINDS: readonly string[] = [
@@ -90,6 +112,10 @@ export const KNOWN_OBJECT_KINDS: readonly string[] = [
   ...JOURNEY_OBJECT_KINDS,
   ...INTEGRATION_OBJECT_KINDS,
   ...REVIEW_OBJECT_KINDS,
+  ...RECONCILIATION_OBJECT_KINDS,
+  ...WORKITEM_OBJECT_KINDS,
+  ...INFERENCE_OBJECT_KINDS,
+  ...DEPLOYMENT_OBJECT_KINDS,
 ];
 
 // ---------------------------------------------------------------------------
@@ -132,6 +158,17 @@ export const RELATIONSHIP_KIND_TO_TYPE: Readonly<Record<string, string>> = {
   // for the same reason -- a review decision is not part of any closed
   // per-domain relationship vocabulary.
   reviewOf: 'REVIEW_OF',
+  // P8: the P5 traceability/capability kinds (`inference-engine`'s
+  // `traceability.ts`/`capability-inference.ts`). Without them every
+  // business-to-technical grounding edge was dropped at the graph stage --
+  // exactly the link FR-SEM-05 relies on to keep inferred elements traceable
+  // to the deterministic facts they came from.
+  groundedIn: 'GROUNDED_IN',
+  comprises: 'COMPRISES',
+  realizedBy: 'REALIZED_BY',
+  // P8: FRD §4.2 "DeploymentUnit runsIn Environment"; co-change coupling (FR-DET-05).
+  runsIn: 'RUNS_IN',
+  coChangesWith: 'CO_CHANGES_WITH',
 };
 
 /** The closed, schema-defined relationship kinds only (excludes `dependsOn`/`hasAssociation`) -- exported for the exhaustiveness test. */
@@ -261,6 +298,12 @@ export interface GraphRelationshipMapping {
   readonly type: string;
   readonly sourceId: string;
   readonly targetId: string;
+  /**
+   * P8 -- FR-ORC-04: the system (tenant) both endpoints belong to. When set,
+   * the write matches endpoints within that system only, so a relationship
+   * can never connect -- or be created between -- another tenant's nodes.
+   */
+  readonly systemId?: string;
   readonly properties: Readonly<Record<string, GraphPropertyValue>>;
   readonly provenance: readonly Provenance[];
   readonly evidence: readonly Evidence[];
@@ -351,6 +394,7 @@ export function mapOkfObjectToGraphNode(object: CanonicalKnowledgeObject): MapOb
 /** Maps one `CanonicalKnowledgeRelationship` to a `GraphRelationshipMapping`, or reports why it could not be mapped. Never throws. */
 export function mapOkfRelationshipToGraphRelationship(
   relationship: CanonicalKnowledgeRelationship,
+  systemId?: string,
 ): MapRelationshipResult {
   const type = RELATIONSHIP_KIND_TO_TYPE[relationship.kind];
   if (type === undefined) {
@@ -381,6 +425,7 @@ export function mapOkfRelationshipToGraphRelationship(
     id: relationship.id,
     kind: relationship.kind,
     category: relationship.category,
+    ...(systemId === undefined ? {} : { systemId }),
   };
   flattenConfidenceInto(relationship, properties);
   if (relationship.attributes !== undefined)
@@ -393,6 +438,7 @@ export function mapOkfRelationshipToGraphRelationship(
       type,
       sourceId: relationship.sourceObjectId,
       targetId: relationship.targetObjectId,
+      ...(systemId === undefined ? {} : { systemId }),
       properties,
       provenance: relationship.metadata.provenance,
       evidence: relationship.evidence ?? [],
@@ -419,13 +465,62 @@ export function mapOkfBundleToGraph(bundle: CanonicalKnowledgeBundle): GraphMapp
   }
 
   for (const relationship of bundle.relationships) {
-    const result = mapOkfRelationshipToGraphRelationship(relationship);
+    const result = mapOkfRelationshipToGraphRelationship(relationship, bundle.systemId);
     if (result.ok) relationships.push(result.relationship);
     else issues.push(result.issue);
   }
 
-  nodes.sort((a, b) => a.id.localeCompare(b.id));
-  relationships.sort((a, b) => a.id.localeCompare(b.id));
+  const uniqueNodes = withoutDuplicateIds(nodes, issues, (node) => ({
+    elementType: 'object',
+    id: node.id,
+    kind: node.label,
+  }));
+  const uniqueRelationships = withoutDuplicateIds(relationships, issues, (relationship) => ({
+    elementType: 'relationship',
+    id: relationship.id,
+    kind: relationship.type,
+  }));
 
-  return { nodes, relationships, issues };
+  uniqueNodes.sort((a, b) => compareCodeUnits(a.id, b.id));
+  uniqueRelationships.sort((a, b) => compareCodeUnits(a.id, b.id));
+
+  return { nodes: uniqueNodes, relationships: uniqueRelationships, issues };
+}
+
+/**
+ * P8 hardening -- duplicate ids never reach the write path.
+ *
+ * Every write is `MERGE ... {id}` followed by `SET n += $properties`, so two
+ * elements sharing an id would silently collapse: the second overwrites the
+ * first's properties (provenance and evidence included), or -- for two
+ * objects of different kinds -- two nodes share one `id` under different
+ * labels, and every id-only `MATCH` afterwards fans out across both.
+ *
+ * `validateCanonicalKnowledgeBundle` rejects duplicate OBJECT ids, but this
+ * mapper is documented as not re-validating its input, and it is called on
+ * bundles that were never validated. So every claimant to a shared id is
+ * excluded and reported as an issue. None is chosen as the winner: which one
+ * is correct is not knowable here, and choosing would be a fabrication.
+ */
+function withoutDuplicateIds<T extends { readonly id: string }>(
+  elements: readonly T[],
+  issues: GraphMappingIssue[],
+  describe: (element: T) => Omit<GraphMappingIssue, 'reason'>,
+): T[] {
+  const counts = new Map<string, number>();
+  for (const element of elements) counts.set(element.id, (counts.get(element.id) ?? 0) + 1);
+
+  const unique: T[] = [];
+  for (const element of elements) {
+    const count = counts.get(element.id) ?? 0;
+    if (count < 2) {
+      unique.push(element);
+      continue;
+    }
+    issues.push({
+      ...describe(element),
+      reason: `duplicate id: ${count} elements share id "${element.id}" -- none was written, since merging them would silently overwrite one with another`,
+    });
+  }
+  return unique;
 }

@@ -18,6 +18,7 @@ import {
   deriveProvenanceFrom,
   type TechnicalEvidenceItem,
 } from './inference-contract.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 export interface VocabularyTerm {
   /** The original surface form that produced this term, e.g. `"createWidget"`. */
@@ -378,5 +379,5 @@ export function extractVocabulary(
     });
   }
 
-  return terms.sort((a, b) => a.normalizedTerm.localeCompare(b.normalizedTerm));
+  return terms.sort((a, b) => compareCodeUnits(a.normalizedTerm, b.normalizedTerm));
 }

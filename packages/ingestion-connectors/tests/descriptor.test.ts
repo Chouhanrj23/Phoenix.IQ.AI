@@ -8,6 +8,7 @@ import {
   validateSourceDocumentSpaceDescriptor,
   validateSourceRepositoryDescriptor,
   validateSourceTicketTrackerDescriptor,
+  withoutUrlCredentials,
   type SourceDocumentSpaceDescriptor,
   type SourceRepositoryDescriptor,
   type SourceTicketTrackerDescriptor,
@@ -563,6 +564,50 @@ describe('buildArtifactLocator', () => {
   it('returns the bare locator for an empty path', () => {
     expect(buildArtifactLocator(checkoutDescriptor(), '')).toBe(
       'repo://aurora-commerce/services/checkout',
+    );
+  });
+});
+
+describe('locators never carry credentials (P8)', () => {
+  const base = {
+    id: 'repo://acme/app',
+    sourceType: 'source-code',
+    label: 'acme app',
+    repository: { kind: 'git' },
+  };
+  const TOKEN = 'ghp_abcdefghijklmnopqrstuvwxyz0123456789';
+
+  it.each([
+    [`https://${TOKEN}@github.com/acme/app.git`, 'token as http user'],
+    [`https://ci-bot:${TOKEN}@github.com/acme/app.git`, 'user:token'],
+    ['ssh://deploy:hunter2@git.acme.internal/app.git', 'ssh password'],
+  ])('rejects %s (%s), without echoing the secret', (locator) => {
+    const result = validateSourceRepositoryDescriptor({ ...base, locator });
+    expect(result.valid).toBe(false);
+    expect(result.errors.join(' ')).toContain('credential.ref');
+    expect(result.errors.join(' ')).not.toContain(TOKEN);
+    expect(result.errors.join(' ')).not.toContain('hunter2');
+  });
+
+  it.each([
+    'https://github.com/acme/app.git',
+    'ssh://git@github.com/acme/app.git',
+    'file://C:/Users/me/AI%20Project/app',
+    'repo://acme/app',
+  ])('accepts %s', (locator) => {
+    expect(validateSourceRepositoryDescriptor({ ...base, locator }).valid).toBe(true);
+  });
+
+  it('withoutUrlCredentials strips secrets but keeps an ssh account name', () => {
+    expect(withoutUrlCredentials(`https://${TOKEN}@github.com/acme/app.git`)).toBe(
+      'https://github.com/acme/app.git',
+    );
+    expect(withoutUrlCredentials('https://bot:pw@host/x')).toBe('https://host/x');
+    expect(withoutUrlCredentials('ssh://git@github.com/acme/app.git')).toBe(
+      'ssh://git@github.com/acme/app.git',
+    );
+    expect(withoutUrlCredentials('git@github.com:acme/app.git')).toBe(
+      'git@github.com:acme/app.git',
     );
   });
 });

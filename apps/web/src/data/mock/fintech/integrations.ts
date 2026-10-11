@@ -8,9 +8,17 @@ export const integrations: Integration[] = [
     counterpart: 'External core banking ledger of record',
     direction: 'bidirectional',
     protocol: 'REST/HTTPS (synchronous) + nightly reconciliation batch',
-    dataExchanged: 'Outbound: account/posting requests. Inbound: balance confirmations, reconciliation reports.',
+    dataExchanged:
+      'Outbound: account/posting requests. Inbound: balance confirmations, reconciliation reports.',
     metadata: meta(
-      [prov('repo://nimbus-financial/services/ledger-adapter', 'source-code', 'extraction-engine', 3)],
+      [
+        prov(
+          'repo://nimbus-financial/services/ledger-adapter',
+          'source-code',
+          'extraction-engine',
+          3,
+        ),
+      ],
       conf('high', 0.89),
     ),
   },
@@ -20,9 +28,17 @@ export const integrations: Integration[] = [
     counterpart: 'External card issuing/processing network',
     direction: 'outbound',
     protocol: 'REST/HTTPS (synchronous)',
-    dataExchanged: 'Card creation requests, spend authorization decisions → issued card / auth result',
+    dataExchanged:
+      'Card creation requests, spend authorization decisions → issued card / auth result',
     metadata: meta(
-      [prov('repo://nimbus-financial/services/card-issuing', 'source-code', 'extraction-engine', 3)],
+      [
+        prov(
+          'repo://nimbus-financial/services/card-issuing',
+          'source-code',
+          'extraction-engine',
+          3,
+        ),
+      ],
       conf('high', 0.91),
     ),
   },
@@ -35,7 +51,11 @@ export const integrations: Integration[] = [
     dataExchanged: 'Applicant identity + document images → verification result',
     metadata: meta(
       [prov('logs://gateway/2026-06', 'log', 'inference-engine', 6)],
-      conf('medium', 0.6, 'Only observed via gateway logs; no integration spec on file for request/response schema.'),
+      conf(
+        'medium',
+        0.6,
+        'Only observed via gateway logs; no integration spec on file for request/response schema.',
+      ),
     ),
   },
   {
@@ -44,7 +64,8 @@ export const integrations: Integration[] = [
     counterpart: 'External ACH payment rail',
     direction: 'bidirectional',
     protocol: 'NACHA batch file (SFTP) + REST status webhook',
-    dataExchanged: 'Outbound: ACH transfer batches. Inbound: settlement confirmations, returns/NOCs.',
+    dataExchanged:
+      'Outbound: ACH transfer batches. Inbound: settlement confirmations, returns/NOCs.',
     metadata: meta(
       [prov('integration-spec://payrail-ach-v3', 'data-model', 'extraction-engine', 25)],
       conf('high', 0.87),
@@ -58,7 +79,14 @@ export const integrations: Integration[] = [
     protocol: 'REST/HTTPS (synchronous)',
     dataExchanged: 'Account/transaction/dispute events → rendered email, SMS, or push notification',
     metadata: meta(
-      [prov('repo://nimbus-financial/services/notifications', 'source-code', 'extraction-engine', 3)],
+      [
+        prov(
+          'repo://nimbus-financial/services/notifications',
+          'source-code',
+          'extraction-engine',
+          3,
+        ),
+      ],
       conf('high', 0.88),
     ),
   },

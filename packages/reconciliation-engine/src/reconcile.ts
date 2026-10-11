@@ -10,27 +10,33 @@
  *    `@phoenix-ai/knowledge-graph` `ConflictObject` that RETAINS every
  *    distinct position and every source behind it (FR-REC-04: "shall not
  *    silently resolve it"), each position carrying its OWN computed
- *    confidence (P6-06), ranked for review (FR-REC-05).
+ *    confidence (P6-06) and its OWN aggregated evidence (P6-08 --
+ *    `evidence-aggregation.ts`'s `evidenceForClaims`), ranked for review
+ *    (FR-REC-05).
  *
  * No claim comparison logic lives in `@phoenix-ai/knowledge-graph`'s
  * `reconciliation.ts` -- that file is the model only, exactly like every
  * other domain file; this is the algorithm layer on top of it, the same
  * split P6-04 established between `workitem.ts` (model) and
  * `jira-bridge.ts` (algorithm). See
- * `docs/architecture/adr/0029-p6-05-source-reconciliation.md` and
- * `docs/architecture/adr/0030-p6-06-confidence-calculation.md`.
+ * `docs/architecture/adr/0029-p6-05-source-reconciliation.md`,
+ * `docs/architecture/adr/0030-p6-06-confidence-calculation.md`, and
+ * `docs/architecture/adr/0031-p6-08-evidence-aggregation.md`.
  */
 
 import {
   CANONICAL_SCHEMA_VERSION,
   type ConflictObject,
   type ConflictPosition,
+  type Evidence,
   type KnowledgeValue,
 } from '@phoenix-ai/knowledge-graph';
 import type { Confidence } from '@phoenix-ai/shared';
 import { authorityOf, type Claim, type ClaimCategory } from './claim.js';
 import { computeConfidence } from './confidence-scoring.js';
 import { deterministicId } from './determinism.js';
+import { evidenceForClaims } from './evidence-aggregation.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 export interface ReconciliationOptions {
   systemId: string;
@@ -46,6 +52,8 @@ export interface ReconciledClaim {
   value: KnowledgeValue;
   /** Derived structurally from source-type authority + corroboration -- see `confidence-scoring.ts`'s `computeConfidence`. Never a model self-report (FR-REC-02). */
   confidence: Confidence;
+  /** Every piece of supporting evidence across every agreeing claim, deduplicated by `Evidence.id` (P6-08 -- see `evidence-aggregation.ts`). */
+  evidence: Evidence[];
   /** Every claim that agreed, for traceability. */
   claims: readonly Claim[];
 }
@@ -69,7 +77,7 @@ function canonicalize(value: KnowledgeValue): KnowledgeValue {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value !== null && typeof value === 'object') {
     const sorted: Record<string, KnowledgeValue> = {};
-    for (const [key, entry] of Object.entries(value).sort(([a], [b]) => a.localeCompare(b))) {
+    for (const [key, entry] of Object.entries(value).sort(([a], [b]) => compareCodeUnits(a, b))) {
       sorted[key] = canonicalize(entry);
     }
     return sorted;
@@ -81,8 +89,18 @@ function canonicalKey(value: KnowledgeValue): string {
   return JSON.stringify(canonicalize(value));
 }
 
+/**
+ * The (subjectId, attribute, claimCategory) grouping key.
+ *
+ * JSON-encoded rather than space-joined: subject ids and attribute names are
+ * free text and may themselves contain spaces, so a space-joined key let two
+ * DIFFERENT groups collide -- subject "a b" / attribute "c" and subject "a" /
+ * attribute "b c" were merged into one group and reported as a conflict
+ * between unrelated facts (P8 hardening). Internal only: no id is derived
+ * from this string.
+ */
 function groupKey(claim: Claim): string {
-  return `${claim.subjectId} ${claim.attribute} ${claim.claimCategory}`;
+  return JSON.stringify([claim.subjectId, claim.attribute, claim.claimCategory]);
 }
 
 function buildConflictObject(
@@ -95,6 +113,12 @@ function buildConflictObject(
     throw new Error('buildConflictObject requires at least one claim');
   }
   const { subjectId, attribute, claimCategory } = first;
+
+  // P6-08: the object's OWN evidence is the deduplicated union of every
+  // claim in the group; each position's `evidenceIds` (built below) is
+  // always a subset of these ids, since both are derived from the same
+  // `evidenceForClaims` dedup logic over overlapping claim sets.
+  const groupEvidence = evidenceForClaims(groupClaims);
 
   const positions: ConflictPosition[] = [...byValue.values()]
     .map((claimsForValue): ConflictPosition => {
@@ -130,13 +154,14 @@ function buildConflictObject(
           supportingSources: supportingSourceIds.size,
           contradictingSources: contradictingSourceIds.size,
         }),
+        evidenceIds: evidenceForClaims(claimsForValue).map((entry) => entry.id),
       };
     })
     .sort((a, b) => {
       const aMax = Math.max(...a.sources.map((source) => source.authority));
       const bMax = Math.max(...b.sources.map((source) => source.authority));
       if (bMax !== aMax) return bMax - aMax;
-      return canonicalKey(a.value).localeCompare(canonicalKey(b.value));
+      return compareCodeUnits(canonicalKey(a.value), canonicalKey(b.value));
     });
 
   const seenSourceIds = new Set<string>();
@@ -172,9 +197,38 @@ function buildConflictObject(
       // position is correct, which this object deliberately never asserts.
       confidence: { level: 'high' },
     },
-    evidence: groupClaims.flatMap((claim) => claim.evidence),
+    evidence: groupEvidence,
     confidenceDetail: { basis: 'observed' },
   };
+}
+
+/**
+ * Two DIFFERENT subject/attribute groups produced the same conflict id.
+ *
+ * `deterministicId` joins its parts with a space, and that separator is part
+ * of every conflict id already persisted -- changing it would change stable
+ * ids (FR-KG-04), so it is left alone. Instead, the one case where the join
+ * is ambiguous (free-text subject ids or attributes containing spaces that
+ * happen to re-join identically) is detected here and refused loudly: two
+ * distinct conflicts sharing one id would MERGE into a single graph node and
+ * silently lose one dispute.
+ */
+export class ConflictIdCollisionError extends Error {
+  readonly conflictId: string;
+  constructor(
+    conflictId: string,
+    first: ConflictObject['attributes'],
+    second: ConflictObject['attributes'],
+  ) {
+    super(
+      `conflict id "${conflictId}" was produced by two different claim groups ` +
+        `(${JSON.stringify([first.subjectId, first.attribute, first.claimCategory])} and ` +
+        `${JSON.stringify([second.subjectId, second.attribute, second.claimCategory])}); ` +
+        'refusing to merge two distinct disputes into one object',
+    );
+    this.name = 'ConflictIdCollisionError';
+    this.conflictId = conflictId;
+  }
 }
 
 /**
@@ -193,7 +247,7 @@ export function rankConflicts(conflicts: readonly ConflictObject[]): ConflictObj
     const sourceDiff = sourceCount(b) - sourceCount(a);
     if (sourceDiff !== 0) return sourceDiff;
 
-    return a.identity.id.localeCompare(b.identity.id);
+    return compareCodeUnits(a.identity.id, b.identity.id);
   });
 }
 
@@ -216,6 +270,7 @@ export function reconcileClaims(
 
   const agreed: ReconciledClaim[] = [];
   const conflicts: ConflictObject[] = [];
+  const conflictIds = new Map<string, ConflictObject['attributes']>();
 
   for (const groupClaims of groups.values()) {
     const byValue = new Map<string, Claim[]>();
@@ -244,12 +299,19 @@ export function reconcileClaims(
           supportingAuthority: maxAuthority,
           supportingSources: corroboration,
         }),
+        evidence: evidenceForClaims(groupClaims),
         claims: groupClaims,
       });
       continue;
     }
 
-    conflicts.push(buildConflictObject(groupClaims, byValue, options));
+    const conflict = buildConflictObject(groupClaims, byValue, options);
+    const clash = conflictIds.get(conflict.identity.id);
+    if (clash !== undefined) {
+      throw new ConflictIdCollisionError(conflict.identity.id, clash, conflict.attributes);
+    }
+    conflictIds.set(conflict.identity.id, conflict.attributes);
+    conflicts.push(conflict);
   }
 
   return { agreed, conflicts: rankConflicts(conflicts) };

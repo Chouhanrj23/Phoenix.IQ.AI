@@ -116,6 +116,40 @@ describe('CanonicalKnowledgeBundle — composition', () => {
     expect(result.errors.some((e) => e.includes('duplicate object id'))).toBe(true);
   });
 
+  it('rejects duplicate relationship ids within a bundle (P8)', () => {
+    const bundle: CanonicalKnowledgeBundle = {
+      systemId: 'aurora-commerce',
+      generatedAt: '2026-08-01T00:00:00.000Z',
+      objects: [
+        makeObject('obj-checkout', 'architecture.container', 'Checkout Service'),
+        makeObject('obj-payments', 'architecture.container', 'Payments Service'),
+      ],
+      relationships: [
+        makeRelationship('rel-1', 'calls', 'obj-checkout', 'obj-payments'),
+        makeRelationship('rel-1', 'calls', 'obj-payments', 'obj-checkout'),
+      ],
+    };
+    const result = validateCanonicalKnowledgeBundle(bundle);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('relationships[1]: duplicate relationship id "rel-1"');
+  });
+
+  it('accepts distinct relationship ids between the same pair of objects', () => {
+    const bundle: CanonicalKnowledgeBundle = {
+      systemId: 'aurora-commerce',
+      generatedAt: '2026-08-01T00:00:00.000Z',
+      objects: [
+        makeObject('obj-checkout', 'architecture.container', 'Checkout Service'),
+        makeObject('obj-payments', 'architecture.container', 'Payments Service'),
+      ],
+      relationships: [
+        makeRelationship('rel-1', 'calls', 'obj-checkout', 'obj-payments'),
+        makeRelationship('rel-2', 'calls', 'obj-payments', 'obj-checkout'),
+      ],
+    };
+    expect(validateCanonicalKnowledgeBundle(bundle)).toEqual({ valid: true, errors: [] });
+  });
+
   it('rejects a bundle missing systemId/generatedAt', () => {
     const bundle = { objects: [], relationships: [] };
     const result = validateCanonicalKnowledgeBundle(bundle);

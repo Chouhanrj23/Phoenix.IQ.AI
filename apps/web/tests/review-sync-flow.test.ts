@@ -248,6 +248,19 @@ describe('P7-04 — what the UI tells the reviewer matches what actually happene
     expect(outcome.message).not.toContain('was updated in the knowledge graph.');
   });
 
+  it('says plainly that a stale correction was NOT written over the graph value (P8)', () => {
+    const outcome = describeReviewOutcome({
+      durability: 'graph',
+      propagation: { outcome: 'conflict', reason: 'x' },
+    });
+    // The decision itself was stored, so this is not an error...
+    expect(outcome.kind).toBe('ok');
+    expect(outcome.message).toContain('Saved to the knowledge graph.');
+    // ...but the reviewer is told the graph value was left alone.
+    expect(outcome.message).toContain('was not written over it');
+    expect(outcome.message).not.toContain('was updated in the knowledge graph.');
+  });
+
   it('surfaces a genuine backend limitation as an error rather than a success', async () => {
     const outcome = describeReviewOutcome(
       await mockProvider.submitReviewDecision({

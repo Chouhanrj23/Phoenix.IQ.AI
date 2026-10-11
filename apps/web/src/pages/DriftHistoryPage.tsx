@@ -7,6 +7,7 @@ import { PageHeader } from '../components/page-header.js';
 import { LoadingState, ErrorState } from '../components/loading-state.js';
 import { Card, CardContent, CardDescription, CardTitle } from '../components/ui/card.js';
 import { Badge } from '../components/ui/badge.js';
+import { SeedNotice } from '../components/seed-notice.js';
 
 const ICON_BY_CHANGE: Record<DriftAlert['changeType'], typeof Plus> = {
   added: Plus,
@@ -52,6 +53,7 @@ export function DriftHistoryPage(): JSX.Element {
         title="Drift History"
         description="What changed between each differential run — the platform's continuous-currency guarantee made concrete, not just a point-in-time snapshot."
       />
+      <SeedNotice paths={['/api/drift-history']} />
       <div className="space-y-3">
         {(data ?? []).map((run) => {
           const isOpen = expanded.has(run.id);

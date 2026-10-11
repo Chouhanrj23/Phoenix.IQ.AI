@@ -18,7 +18,7 @@
 import {
   closeNeo4jDriver,
   createNeo4jDriver,
-  getFullGraph,
+  getRelationshipEndpoints,
   loadNeo4jConfig,
   verifyNeo4jConnectivity,
 } from '@phoenix-ai/graph-persistence';
@@ -41,9 +41,10 @@ import {
 import { artifactsForObjectKind } from '@phoenix-ai/okf-renderers';
 import { reviewItems } from '../data/seed.js';
 import type { BuildReviewDecisionInput, ReviewDecisionObject } from '@phoenix-ai/knowledge-graph';
-import { logger } from '@phoenix-ai/shared';
+import { getEnv, logger } from '@phoenix-ai/shared';
 
-const SYSTEM_ID = 'aurora-commerce';
+// P8 (FR-ORC-04): the tenant this API serves; reviews are stored and read within it.
+const SYSTEM_ID = getEnv('PHOENIX_SYSTEM_ID', 'aurora-commerce');
 
 let storePromise: Promise<ReviewDecisionStore> | undefined;
 /** Set only when the graph is reachable — propagation needs a driver, which the memory store has none of. */
@@ -57,7 +58,7 @@ async function resolveStore(): Promise<ReviewDecisionStore> {
     try {
       await verifyNeo4jConnectivity(driver, config.database);
       graphContext = { driver, database: config.database };
-      return createGraphReviewDecisionStore(driver, config.database);
+      return createGraphReviewDecisionStore(driver, config.database, { systemId: SYSTEM_ID });
     } catch (error) {
       await closeNeo4jDriver(driver);
       throw error;
@@ -72,6 +73,18 @@ async function resolveStore(): Promise<ReviewDecisionStore> {
   }
 }
 
+/**
+ * P8 -- releases the review store's Neo4j connection pool, for graceful
+ * shutdown. Safe to call when no store was resolved, or twice. After it, the
+ * next request re-resolves a store from scratch.
+ */
+export async function closeReviewDecisionStore(): Promise<void> {
+  const context = graphContext;
+  graphContext = undefined;
+  storePromise = undefined;
+  if (context !== undefined) await closeNeo4jDriver(context.driver);
+}
+
 export function getReviewDecisionStore(): Promise<ReviewDecisionStore> {
   storePromise ??= resolveStore();
   return storePromise;
@@ -80,11 +93,15 @@ export function getReviewDecisionStore(): Promise<ReviewDecisionStore> {
 /**
  * Test seam: forget the resolved store so the next call re-resolves it.
  * Also clears the graph context, so an injected store never inherits a
- * driver from a previous resolution.
+ * driver from a previous resolution -- unless `graph` supplies one, which
+ * lets a test drive the propagation path without a live database.
  */
-export function resetReviewDecisionStore(override?: ReviewDecisionStore): void {
+export function resetReviewDecisionStore(
+  override?: ReviewDecisionStore,
+  graph?: { driver: Driver; database: string },
+): void {
   storePromise = override === undefined ? undefined : Promise.resolve(override);
-  graphContext = undefined;
+  graphContext = graph;
 }
 
 export interface SubmitReviewDecisionRequest {
@@ -193,7 +210,12 @@ function evidenceForTarget(targetObjectId: string): [] {
 /** How far a decision travelled: persisted, and then whether it reached the graph representation. */
 export interface SubmitReviewDecisionResult extends RecordReviewDecisionResult {
   readonly propagation: {
-    readonly outcome: 'propagated' | 'target-missing' | 'graph-unavailable' | 'failed';
+    /**
+     * `conflict` (P8): the graph node no longer holds the value the reviewer
+     * corrected, so it was deliberately left unchanged -- see
+     * `propagateCorrectionToGraph`.
+     */
+    readonly outcome: 'propagated' | 'target-missing' | 'conflict' | 'graph-unavailable' | 'failed';
     readonly reason: string;
   };
 }
@@ -244,7 +266,12 @@ export async function submitReviewDecision(
       ...recorded,
       propagation: {
         outcome: 'failed',
-        reason: `the decision was recorded, but applying it to the graph failed: ${error instanceof Error ? error.message : String(error)}`,
+        // P8: the cause is logged above, server-side, with the decision id.
+        // It is not returned: driver/Cypher error text describes Phoenix's
+        // internals (queries, node ids, connection details), not anything the
+        // reviewer can act on.
+        reason:
+          'the decision was recorded, but applying it to the knowledge graph failed; the failure has been logged for an operator',
       },
     };
   }
@@ -294,8 +321,9 @@ export async function getGraphRelationships(): Promise<readonly RelationshipEndp
   await getReviewDecisionStore(); // resolves graphContext as a side effect
   if (graphContext === undefined) return [];
   try {
-    const graph = await getFullGraph(graphContext.driver, graphContext.database);
-    return graph.relationships;
+    // Endpoints only (P8): degree centrality needs structure, not the whole
+    // graph with every node's properties.
+    return await getRelationshipEndpoints(graphContext.driver, graphContext.database);
   } catch (error) {
     logger.warn('element leverage unavailable — could not read graph relationships', {
       err: error instanceof Error ? error.message : String(error),

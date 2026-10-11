@@ -44,6 +44,7 @@ import {
   type SourceSpan,
 } from './cst-utils.js';
 import { flattenJavaTypes, type JavaFileFacts } from './java-structure.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 export type JavaTypeDependencyRelation =
   'extends' | 'implements' | 'fieldType' | 'paramType' | 'returnType' | 'throws';
@@ -631,7 +632,7 @@ export interface JavaCallGraph {
 }
 
 function compareSpans(a: SourceSpan, b: SourceSpan): number {
-  return a.path.localeCompare(b.path) || a.startLine - b.startLine;
+  return compareCodeUnits(a.path, b.path) || a.startLine - b.startLine;
 }
 
 /**
@@ -652,8 +653,8 @@ export function extractJavaCallGraph(
     .flatMap((file) => typeDependenciesOf(file, buildFileContext(file), qualifiedNames))
     .sort(
       (a, b) =>
-        a.fromQualifiedName.localeCompare(b.fromQualifiedName) ||
-        a.relation.localeCompare(b.relation) ||
+        compareCodeUnits(a.fromQualifiedName, b.fromQualifiedName) ||
+        compareCodeUnits(a.relation, b.relation) ||
         compareSpans(a.span, b.span),
     );
 
@@ -666,8 +667,8 @@ export function extractJavaCallGraph(
     })
     .sort(
       (a, b) =>
-        a.callerQualifiedName.localeCompare(b.callerQualifiedName) ||
-        a.callerMethod.localeCompare(b.callerMethod) ||
+        compareCodeUnits(a.callerQualifiedName, b.callerQualifiedName) ||
+        compareCodeUnits(a.callerMethod, b.callerMethod) ||
         compareSpans(a.span, b.span),
     );
 

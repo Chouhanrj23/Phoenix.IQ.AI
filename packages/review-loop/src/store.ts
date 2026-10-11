@@ -18,6 +18,7 @@
  */
 
 import type { ReviewDecisionObject } from '@phoenix-ai/knowledge-graph';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 /**
  * `graph`  -- persisted to Neo4j; survives an API restart.
@@ -40,15 +41,87 @@ export interface ReviewDecisionStore {
   listAll(): Promise<readonly ReviewDecisionObject[]>;
 }
 
-/** Oldest-first by `lifecycle.since`, falling back to `identity.createdAt`, with `identity.id` as a deterministic tie-break. */
+function decidedAt(decision: ReviewDecisionObject): string {
+  return decision.lifecycle?.since ?? decision.identity.createdAt;
+}
+
+/** Compares two ISO-8601 instants as instants (so `...00Z` equals `...00.000Z`), falling back to string order only when either is unparseable. */
+function compareInstants(a: string, b: string): number {
+  const aMs = Date.parse(a);
+  const bMs = Date.parse(b);
+  if (Number.isNaN(aMs) || Number.isNaN(bMs)) return compareCodeUnits(a, b);
+  return aMs - bMs;
+}
+
+/**
+ * Oldest-first by `lifecycle.since` (falling back to `identity.createdAt`).
+ *
+ * Decisions recorded in the SAME millisecond are ordered by their
+ * `supersedesDecisionId` chain -- a decision always comes after the one it
+ * supersedes -- and only then by `identity.id`. `reviewDecisionId` exists
+ * precisely so two different same-millisecond decisions (a confirm
+ * immediately followed by a correction) both survive; before P8 their order
+ * was then decided by comparing those hash-bearing ids, so the correction
+ * could sort BEFORE the confirmation it superseded, and every "latest
+ * decision" reading (status, current value, the next decision's predecessor)
+ * picked the wrong one.
+ */
 export function sortDecisions(
   decisions: readonly ReviewDecisionObject[],
 ): readonly ReviewDecisionObject[] {
-  return [...decisions].sort((a, b) => {
-    const aAt = a.lifecycle?.since ?? a.identity.createdAt;
-    const bAt = b.lifecycle?.since ?? b.identity.createdAt;
-    return aAt.localeCompare(bAt) || a.identity.id.localeCompare(b.identity.id);
-  });
+  const byInstant = [...decisions].sort(
+    (a, b) =>
+      compareInstants(decidedAt(a), decidedAt(b)) || compareCodeUnits(a.identity.id, b.identity.id),
+  );
+
+  const ordered: ReviewDecisionObject[] = [];
+  let start = 0;
+  while (start < byInstant.length) {
+    let end = start + 1;
+    while (
+      end < byInstant.length &&
+      compareInstants(decidedAt(byInstant[start]!), decidedAt(byInstant[end]!)) === 0
+    ) {
+      end++;
+    }
+    ordered.push(...orderBySupersession(byInstant.slice(start, end)));
+    start = end;
+  }
+  return ordered;
+}
+
+/**
+ * Orders decisions that share one instant so each follows the decision it
+ * supersedes. Input is already id-sorted, which keeps every remaining choice
+ * deterministic. Anything not reachable from a chain root (only possible
+ * with a malformed cycle) is appended in id order -- never dropped.
+ */
+function orderBySupersession(group: readonly ReviewDecisionObject[]): ReviewDecisionObject[] {
+  if (group.length < 2) return [...group];
+
+  const ids = new Set(group.map((d) => d.identity.id));
+  const successors = new Map<string, ReviewDecisionObject[]>();
+  const roots: ReviewDecisionObject[] = [];
+  for (const decision of group) {
+    const predecessor = decision.attributes.supersedesDecisionId;
+    if (typeof predecessor === 'string' && ids.has(predecessor)) {
+      successors.set(predecessor, [...(successors.get(predecessor) ?? []), decision]);
+    } else {
+      roots.push(decision);
+    }
+  }
+
+  const ordered: ReviewDecisionObject[] = [];
+  const placed = new Set<string>();
+  const visit = (decision: ReviewDecisionObject): void => {
+    if (placed.has(decision.identity.id)) return;
+    placed.add(decision.identity.id);
+    ordered.push(decision);
+    for (const next of successors.get(decision.identity.id) ?? []) visit(next);
+  };
+  for (const root of roots) visit(root);
+  for (const decision of group) visit(decision);
+  return ordered;
 }
 
 /**

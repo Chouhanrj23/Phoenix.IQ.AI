@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   ARCHITECTURE_OBJECT_KINDS,
+  DEPLOYMENT_OBJECT_KINDS,
   DOMAIN_OBJECT_KINDS,
   INTEGRATION_OBJECT_KINDS,
   JOURNEY_OBJECT_KINDS,
+  WORKITEM_OBJECT_KINDS,
   buildReviewDecision,
   parseAndValidateOkfYaml,
   serializeOkfYaml,
@@ -17,6 +19,11 @@ const CANONICAL_OBJECT_KINDS: readonly string[] = [
   ...DOMAIN_OBJECT_KINDS,
   ...JOURNEY_OBJECT_KINDS,
   ...INTEGRATION_OBJECT_KINDS,
+  // P8: IaC extraction (FR-DET-04) and Jira work items (P6-04) now feed the
+  // deployment and backlog artifacts; P5's inferred capabilities feed domains.
+  ...DEPLOYMENT_OBJECT_KINDS,
+  ...WORKITEM_OBJECT_KINDS,
+  'business.capability',
 ];
 import { CORRECTION_ATTRIBUTES, buildCorrectionNodeOperation } from '@phoenix-ai/review-loop';
 import {
@@ -318,7 +325,8 @@ describe('P7-05 artifact registry', () => {
 
   it('marks artifacts with no canonical backing as unmodelled rather than omitting them', () => {
     const unmodelled = OKF_ARTIFACTS.filter((a) => !a.modelled).map((a) => a.id);
-    expect(unmodelled).toEqual(['screens', 'deployment', 'non-functional-requirements', 'backlog']);
+    // P8: deployment and backlog became modelled (IaC extraction, Jira work items).
+    expect(unmodelled).toEqual(['screens', 'non-functional-requirements']);
     for (const id of unmodelled) {
       expect(OKF_ARTIFACTS.find((a) => a.id === id)?.objectKinds).toEqual([]);
     }

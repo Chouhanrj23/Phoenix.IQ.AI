@@ -22,6 +22,7 @@
 import type { CanonicalKnowledgeBundle } from '@phoenix-ai/knowledge-graph';
 import { mapOkfBundleToGraph, type GraphMappingIssue } from './graph-mapping.js';
 import type { QueriedGraph, QueriedNode, QueriedRelationship } from './query.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 export type ConsistencyDifferenceKind =
   | 'missing-node'
@@ -109,6 +110,56 @@ function compareNode(
       detail: "graph provenanceJson does not match the OKF object's metadata.provenance",
     });
   }
+
+  // P8 -- evidence and attribute VALUES. Until P8 a node was "consistent" as
+  // long as its label, kind, confidence and provenance matched, so a
+  // corrected attribute that never reached the graph -- or one the graph
+  // still held after the canonical object dropped it (`SET +=` never removes
+  // a key) -- went unnoticed, and the "updated graph" could not be verified.
+  const actualEvidence = parseJsonArray(actual.properties.evidenceJson) ?? [];
+  if (!deepEqual(actualEvidence, expected.evidence)) {
+    differences.push({
+      kind: 'node-property-mismatch',
+      id: expected.id,
+      detail: "graph evidenceJson does not match the OKF object's evidence",
+    });
+  }
+
+  const attributeKeys = new Set(
+    [...Object.keys(expected.properties), ...Object.keys(actual.properties)].filter((key) =>
+      key.startsWith('attr_'),
+    ),
+  );
+  for (const key of [...attributeKeys].sort()) {
+    const expectedValue = expected.properties[key];
+    const actualValue = fromGraphValue(actual.properties[key]);
+    if (expectedValue === undefined) {
+      differences.push({
+        kind: 'node-property-mismatch',
+        id: expected.id,
+        detail: `property "${key}" is in the graph but no longer in the canonical object (stale)`,
+      });
+    } else if (!deepEqual(actualValue, expectedValue)) {
+      differences.push({
+        kind: 'node-property-mismatch',
+        id: expected.id,
+        detail: `property "${key}": expected ${JSON.stringify(expectedValue)}, graph has ${JSON.stringify(actualValue)}`,
+      });
+    }
+  }
+}
+
+/** Neo4j returns integers as the driver's `Integer` type; compare them as the numbers they were written as. */
+function fromGraphValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(fromGraphValue);
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { toNumber?: unknown }).toNumber === 'function'
+  ) {
+    return (value as { toNumber(): number }).toNumber();
+  }
+  return value;
 }
 
 function compareRelationship(
@@ -223,7 +274,7 @@ export function checkGraphConsistency(
     }
   }
 
-  differences.sort((a, b) => a.id.localeCompare(b.id) || a.kind.localeCompare(b.kind));
+  differences.sort((a, b) => compareCodeUnits(a.id, b.id) || compareCodeUnits(a.kind, b.kind));
 
   return { consistent: differences.length === 0, differences, unmappable: expected.issues };
 }

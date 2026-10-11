@@ -15,7 +15,7 @@
  *     visible rather than assumed.
  *   - `regenerateOkfDocument` -- the explicit operation itself.
  *
- * NOT implemented here, and deliberately so: the eleven renderers themselves
+ * (Phase 7 note, superseded in P8:) NOT implemented here originally: the eleven renderers themselves
  * (turning a bundle into each human-readable artifact). Nothing in Phase 7
  * needs them, and writing eleven renderers to satisfy a correction-propagation
  * requirement would be scope this ticket does not have. The registry records
@@ -40,3 +40,15 @@ export {
   type OkfRegenerationResult,
   type OkfRegenerationState,
 } from './regenerate.js';
+
+// P8 -- the eleven renderers (FR-OKF-01..12) and the portable export (FR-OKF-13 / FR-IF-03).
+export { ARTIFACT_INPUTS, renderAllArtifacts, renderArtifact } from './renderers.js';
+export {
+  BundleView,
+  type ArtifactStatus,
+  type ElementTrace,
+  type EvidenceTrace,
+  type RenderedArtifact,
+  type RenderedFile,
+} from './render-support.js';
+export { exportOkfPackage, type ExportManifest, type ExportPackage } from './export.js';

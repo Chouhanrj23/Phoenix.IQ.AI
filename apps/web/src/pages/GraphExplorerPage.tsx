@@ -14,6 +14,7 @@ import { Button } from '../components/ui/button.js';
 import { NodeDetailPanel } from '../components/node-detail-panel.js';
 import { selectRepresentativeNodes } from '../lib/representative-view.js';
 import { cn } from '../lib/utils.js';
+import { orderGraphKinds } from '../lib/graph-kinds.js';
 
 // The mock provider only ever produces the first ten kinds below. The
 // remaining ones (P4-08) are the real Neo4j node labels
@@ -45,6 +46,12 @@ const KIND_ORDER = [
   'Epic',
   'Feature',
   'Story',
+  // P8: kinds the pipeline now persists. Any kind still missing from this
+  // list is shown anyway (see `orderGraphKinds`), just after these.
+  'Capability',
+  'WorkItem',
+  'Conflict',
+  'ReviewDecision',
 ];
 const COLUMN_WIDTH = 210;
 const ROW_HEIGHT = 56;
@@ -68,8 +75,10 @@ export function GraphExplorerPage(): JSX.Element {
 
   const allKinds = useMemo(() => {
     if (!data) return [];
-    const present = new Set(data.nodes.map((n) => n.kind));
-    return KIND_ORDER.filter((k) => present.has(k));
+    return orderGraphKinds(
+      data.nodes.map((n) => n.kind),
+      KIND_ORDER,
+    );
   }, [data]);
 
   const activeKinds = useMemo(() => visibleKinds ?? new Set(allKinds), [visibleKinds, allKinds]);

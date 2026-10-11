@@ -91,3 +91,6 @@ export * from './extract-java.js';
 export * from './okf-mapping.js';
 export * from './jira-bridge.js';
 export * from './jira-okf-mapping.js';
+export * from './iac.js';
+export * from './history.js';
+export * from './parse-cache.js';

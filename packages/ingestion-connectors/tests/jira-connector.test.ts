@@ -270,7 +270,21 @@ describe('createJiraConnector — list() pagination', () => {
 
     const searchCall = calls.find((url) => url.includes('/rest/api/3/search'));
     const jql = new URL(searchCall ?? '').searchParams.get('jql');
-    expect(jql).toBe('project in ("AUR") AND issuetype in ("Story", "Bug") AND (status != Done)');
+    expect(jql).toBe(
+      'project in ("AUR") AND issuetype in ("Story", "Bug") AND (status != Done) ORDER BY key ASC',
+    );
+  });
+
+  it('always pages in a stable, total order (P8 reproducibility)', async () => {
+    const { fetchImpl, calls } = createFakeJiraFetch();
+    const session = await createJiraConnector({ fetchImpl }).open(descriptor());
+    for await (const ref of session.list()) void ref;
+    await session.close();
+    const searches = calls.filter((url) => url.includes('/rest/api/3/search'));
+    expect(searches.length).toBeGreaterThan(0);
+    for (const url of searches) {
+      expect(new URL(url).searchParams.get('jql')).toMatch(/ ORDER BY key ASC$/);
+    }
   });
 });
 

@@ -26,6 +26,7 @@ import {
   type JavaMethodFact,
   type SourceSpan,
 } from './java-structure.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 export type JavaHttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'ANY';
 
@@ -186,5 +187,5 @@ export function extractJavaHttp(filesFacts: readonly JavaFileFacts[]): JavaContr
     }),
   );
 
-  return controllers.sort((a, b) => a.qualifiedName.localeCompare(b.qualifiedName));
+  return controllers.sort((a, b) => compareCodeUnits(a.qualifiedName, b.qualifiedName));
 }

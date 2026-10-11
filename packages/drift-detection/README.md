@@ -9,4 +9,4 @@ Diffs successive runs against a system and reports architectural drift over time
 
 ## Status
 
-Scaffold only — implementation pending. See the FRD for detailed functional requirements, inputs/outputs, and error handling for this module before implementing.
+Implemented (P8): content-addressed graph versions (`version.ts`), immutable in-memory and filesystem version stores (`store.ts`), and the drift changelog with change classification and observed/inferred separation (`diff.ts`). See `docs/phase-8/README.md`.

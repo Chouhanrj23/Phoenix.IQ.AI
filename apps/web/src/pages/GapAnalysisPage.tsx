@@ -7,6 +7,7 @@ import { PageHeader } from '../components/page-header.js';
 import { LoadingState, ErrorState } from '../components/loading-state.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card.js';
 import { Badge } from '../components/ui/badge.js';
+import { SeedNotice } from '../components/seed-notice.js';
 
 const SEVERITY_ORDER: Record<GapSeverity, number> = { blocking: 0, high: 1, medium: 2, low: 3 };
 
@@ -38,6 +39,7 @@ export function GapAnalysisPage(): JSX.Element {
         title="Gap Analysis"
         description="What the platform couldn't verify from any ingested source — framed as a request for missing inputs, not a finding against the team (per the platform's trust-over-surveillance principle)."
       />
+      <SeedNotice paths={['/api/gap-items']} />
       <div className="space-y-3">
         {sorted.map((gap) => (
           <Card key={gap.id}>

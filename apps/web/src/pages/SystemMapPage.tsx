@@ -25,6 +25,7 @@ import {
 } from '../components/ui/card.js';
 import { Badge } from '../components/ui/badge.js';
 import { cn } from '../lib/utils.js';
+import { FixtureNotice } from '../components/fixture-notice.js';
 
 /**
  * PC-05 — Pictorial System Map: the 10-layer Persona -> ... -> Integration
@@ -174,6 +175,7 @@ export function SystemMapPage(): JSX.Element {
         title="System Map"
         description="The business and technical layers that make up this system, and how they genuinely connect — one box per layer, not per record. Click a layer to see what's really in it."
       />
+      <FixtureNotice areas={['personas', 'journeys', 'businessCapabilities', 'executionFlows']} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">

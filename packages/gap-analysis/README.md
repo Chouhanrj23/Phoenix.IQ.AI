@@ -9,4 +9,4 @@ Identifies missing inputs and coverage gaps, and frames them as collaborative re
 
 ## Status
 
-Scaffold only — implementation pending. See the FRD for detailed functional requirements, inputs/outputs, and error handling for this module before implementing.
+Implemented (P8): coverage per OKF artifact (covered / partial / uncovered) and collaborative gap items naming the missing input or exact files, from uncovered artifacts and recorded run facts only. See `docs/phase-8/README.md`.

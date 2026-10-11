@@ -30,4 +30,16 @@ describe('loadConfig', () => {
       corsOrigin: 'https://phoenix.example.com',
     });
   });
+
+  it('rejects a PORT that is not an integer in 1..65535, naming the setting (P8)', () => {
+    for (const bad of ['abc', '', '3001.5', '0', '70000', '-1', '30 01']) {
+      process.env.PORT = bad;
+      expect(() => loadConfig(), `PORT=${JSON.stringify(bad)}`).toThrow(/PORT must be an integer/);
+    }
+  });
+
+  it('accepts surrounding whitespace on a valid PORT', () => {
+    process.env.PORT = ' 4000 ';
+    expect(loadConfig().port).toBe(4000);
+  });
 });

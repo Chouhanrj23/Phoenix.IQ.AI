@@ -27,6 +27,7 @@
  * onward); this file's output is `RawArtifact`, exactly as P3-01 defined.
  */
 
+import { createHash } from 'node:crypto';
 import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -45,6 +46,7 @@ import {
   buildArtifactLocator,
   descriptorToSource,
   validateSourceRepositoryDescriptor,
+  withoutUrlCredentials,
   type SourceDescriptor,
   type SourceRepositoryDescriptor,
 } from './descriptor.js';
@@ -59,6 +61,7 @@ import type {
   ConnectorCapabilities,
   ConnectorSession,
   SourceRepositoryConnector,
+  CommitRecord,
 } from './connector.js';
 
 export const GIT_CONNECTOR_ID = 'git-repository';
@@ -120,6 +123,8 @@ export interface GitConnectorOptions {
    * filter on.
    */
   includeFileHistory?: boolean;
+  /** P8: most commits `commitHistory()` reads (newest first). Default `DEFAULT_MAX_HISTORY_COMMITS`. */
+  maxHistoryCommits?: number;
   /**
    * Include the HEAD commit's author name and email in `sourceMetadata`.
    * Defaults to FALSE: author identity is personal data, and this package
@@ -206,6 +211,40 @@ function parseTreeEntries(stdout: string): TreeEntry[] {
  * showing nothing for merges), and the first commit seen for a path wins
  * because `git log` walks newest-first.
  */
+/** Default cap on commits read for history -- a long-lived repository's full log is unbounded. */
+export const DEFAULT_MAX_HISTORY_COMMITS = 5_000;
+
+/** `%H`, `%cI`, author e-mail and name, unit-separated; then the changed paths. */
+function parseCommitHistory(stdout: string, includeAuthor: boolean): CommitRecord[] {
+  const commits: CommitRecord[] = [];
+  let current:
+    | { revision: string; committedAt: string; email: string; name: string; files: string[] }
+    | undefined;
+  const flush = (): void => {
+    if (current === undefined) return;
+    commits.push({
+      revision: current.revision,
+      committedAt: current.committedAt,
+      authorKey: `author-${createHash('sha256').update(current.email.toLowerCase(), 'utf8').digest('hex').slice(0, 12)}`,
+      ...(includeAuthor ? { author: `${current.name} <${current.email}>` } : {}),
+      files: [...current.files].sort(),
+    });
+  };
+  for (const line of stdout.split('\n')) {
+    if (line.length === 0) continue;
+    if (line.includes(UNIT_SEPARATOR)) {
+      flush();
+      const [revision = '', committedAt = '', email = '', name = ''] = line.split(UNIT_SEPARATOR);
+      current = { revision, committedAt, email, name, files: [] };
+      continue;
+    }
+    current?.files.push(line);
+  }
+  flush();
+  // git log is newest first; history is reported oldest first.
+  return commits.reverse();
+}
+
 function parseFileHistory(stdout: string): Map<string, { committedAt: string; revision: string }> {
   const history = new Map<string, { committedAt: string; revision: string }>();
   let current: { committedAt: string; revision: string } | undefined;
@@ -288,9 +327,34 @@ function gitTargetFor(descriptor: SourceRepositoryDescriptor): string {
         `location — set repository.workingTreePath to the checkout git should read`,
     );
   }
-  if (scheme === 'file' && kind === 'local-directory') return locator.slice(schemeEnd + 3);
+  if (scheme === 'file' && kind === 'local-directory') {
+    return decodeFileLocatorPath(locator.slice(schemeEnd + 3));
+  }
   // https://, ssh://, git://, and file:// for a clone are all real git URLs.
+  // A percent-encoded `file://` URL is passed through untouched: git decodes
+  // it itself when cloning, exactly as `decodeFileLocatorPath` does below.
   return locator;
+}
+
+/**
+ * P8 -- the literal filesystem path inside a `file://` locator.
+ *
+ * `SOURCE_LOCATOR_PATTERN` forbids whitespace in a locator, so a repository
+ * under a path containing a space (`C:/Users/me/AI Project/repo`,
+ * `OneDrive/My Documents/...`) can only be named by percent-encoding it,
+ * which is the standard `file://` URL form (`AI%20Project`). Before P8 the
+ * encoded path reached `git -C` verbatim and no such directory existed, so
+ * any repository in such a location could not be analysed at all. Decoding
+ * here matches what git already does for the same URL when cloning.
+ */
+function decodeFileLocatorPath(encodedPath: string): string {
+  try {
+    return decodeURIComponent(encodedPath);
+  } catch {
+    throw new Error(
+      `${GIT_CONNECTOR_ID}: locator path ${JSON.stringify(encodedPath)} is not valid percent-encoding`,
+    );
+  }
 }
 
 /** Creates the git repository connector. Requires the `git` binary on PATH. */
@@ -299,6 +363,7 @@ export function createGitRepositoryConnector(
 ): SourceRepositoryConnector {
   const cloneDepth = options.cloneDepth ?? 1;
   const includeFileHistory = options.includeFileHistory ?? true;
+  const maxHistoryCommits = options.maxHistoryCommits ?? DEFAULT_MAX_HISTORY_COMMITS;
   const includeAuthorMetadata = options.includeAuthorMetadata ?? false;
   const maxArtifactBytes = options.maxArtifactBytes ?? DEFAULT_MAX_ARTIFACT_BYTES;
   const commandOptions = (cwd: string): GitCommandOptions => ({
@@ -420,8 +485,11 @@ export function createGitRepositoryConnector(
           .filter((tag) => tag.length > 0)
           .sort();
 
+        // P8: a checkout's configured origin commonly embeds a token
+        // (`https://<token>@github.com/...`); it is source metadata, so it is
+        // reported without the credential.
         const remoteUrl = await runGit(['remote', 'get-url', 'origin'], git)
-          .then(({ stdout }) => stdout.trim())
+          .then(({ stdout }) => withoutUrlCredentials(stdout.trim()))
           .catch(() => undefined);
         const defaultBranch = await runGit(
           ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD'],
@@ -514,6 +582,25 @@ export function createGitRepositoryConnector(
                 for (const ref of refs) yield ref;
               },
             };
+          },
+
+          async commitHistory(): Promise<readonly CommitRecord[]> {
+            assertOpen();
+            const stdout = (
+              await runGit(
+                [
+                  'log',
+                  `--max-count=${String(maxHistoryCommits)}`,
+                  '--format=%H%x1f%cI%x1f%ae%x1f%an',
+                  '--name-only',
+                  '--no-renames',
+                  headRevision,
+                  ...pathspec,
+                ],
+                git,
+              )
+            ).stdout;
+            return parseCommitHistory(stdout, includeAuthorMetadata);
           },
 
           async read(ref: ArtifactRef): Promise<ArtifactReadResult> {

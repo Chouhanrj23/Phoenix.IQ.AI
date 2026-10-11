@@ -2,7 +2,7 @@
   "name": "@phoenix-ai/api",
   "version": "0.1.0",
   "private": true,
-  "description": "Backend API — serves the OKF knowledge bundle, drift reports, and the human review/correction workflow.",
+  "description": "Backend API \u2014 serves the OKF knowledge bundle, drift reports, and the human review/correction workflow.",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
@@ -15,11 +15,17 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@phoenix-ai/shared": "workspace:*",
-    "@phoenix-ai/knowledge-graph": "workspace:*",
+    "@phoenix-ai/drift-detection": "workspace:*",
+    "@phoenix-ai/evaluation-harness": "workspace:*",
+    "@phoenix-ai/extraction-engine": "workspace:*",
+    "@phoenix-ai/gap-analysis": "workspace:*",
     "@phoenix-ai/graph-persistence": "workspace:*",
+    "@phoenix-ai/ingestion-connectors": "workspace:*",
+    "@phoenix-ai/knowledge-graph": "workspace:*",
     "@phoenix-ai/okf-renderers": "workspace:*",
+    "@phoenix-ai/orchestration": "workspace:*",
     "@phoenix-ai/review-loop": "workspace:*",
+    "@phoenix-ai/shared": "workspace:*",
     "fastify": "^5.12.5",
     "neo4j-driver": "^6.2.0"
   },

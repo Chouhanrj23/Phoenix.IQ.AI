@@ -34,6 +34,8 @@ export const PROPAGATION_NOTE: Record<
   propagated: 'The reviewed element was updated in the knowledge graph.',
   'target-missing':
     'The reviewed element has no node in the knowledge graph yet, so nothing there was updated.',
+  conflict:
+    'The knowledge graph value changed after you reviewed it, so your correction was not written over it — the disagreement is kept for review.',
   'graph-unavailable': 'The knowledge graph was unreachable, so it was not updated.',
   failed: 'Applying it to the knowledge graph failed.',
 };

@@ -44,15 +44,33 @@ importers:
 
   apps/api:
     dependencies:
+      '@phoenix-ai/drift-detection':
+        specifier: workspace:*
+        version: link:../../packages/drift-detection
+      '@phoenix-ai/evaluation-harness':
+        specifier: workspace:*
+        version: link:../../packages/evaluation-harness
+      '@phoenix-ai/extraction-engine':
+        specifier: workspace:*
+        version: link:../../packages/extraction-engine
+      '@phoenix-ai/gap-analysis':
+        specifier: workspace:*
+        version: link:../../packages/gap-analysis
       '@phoenix-ai/graph-persistence':
         specifier: workspace:*
         version: link:../../packages/graph-persistence
+      '@phoenix-ai/ingestion-connectors':
+        specifier: workspace:*
+        version: link:../../packages/ingestion-connectors
       '@phoenix-ai/knowledge-graph':
         specifier: workspace:*
         version: link:../../packages/knowledge-graph
       '@phoenix-ai/okf-renderers':
         specifier: workspace:*
         version: link:../../packages/okf-renderers
+      '@phoenix-ai/orchestration':
+        specifier: workspace:*
+        version: link:../../packages/orchestration
       '@phoenix-ai/review-loop':
         specifier: workspace:*
         version: link:../../packages/review-loop
@@ -142,20 +160,38 @@ importers:
 
   packages/drift-detection:
     dependencies:
+      '@phoenix-ai/knowledge-graph':
+        specifier: workspace:*
+        version: link:../knowledge-graph
       '@phoenix-ai/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:
+      '@types/node':
+        specifier: ^26.6.4
+        version: 26.6.4
       vitest:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/evaluation-harness:
     dependencies:
+      '@phoenix-ai/knowledge-graph':
+        specifier: workspace:*
+        version: link:../knowledge-graph
       '@phoenix-ai/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:
+      '@phoenix-ai/ingestion-connectors':
+        specifier: workspace:*
+        version: link:../ingestion-connectors
+      '@phoenix-ai/orchestration':
+        specifier: workspace:*
+        version: link:../orchestration
+      '@types/node':
+        specifier: ^26.6.4
+        version: 26.6.4
       vitest:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -190,6 +226,12 @@ importers:
 
   packages/gap-analysis:
     dependencies:
+      '@phoenix-ai/knowledge-graph':
+        specifier: workspace:*
+        version: link:../knowledge-graph
+      '@phoenix-ai/okf-renderers':
+        specifier: workspace:*
+        version: link:../okf-renderers
       '@phoenix-ai/shared':
         specifier: workspace:*
         version: link:../shared
@@ -289,16 +331,64 @@ importers:
         specifier: workspace:*
         version: link:../shared
     devDependencies:
+      '@phoenix-ai/graph-persistence':
+        specifier: workspace:*
+        version: link:../graph-persistence
+      '@types/node':
+        specifier: ^26.6.4
+        version: 26.6.4
       vitest:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/orchestration:
     dependencies:
+      '@phoenix-ai/drift-detection':
+        specifier: workspace:*
+        version: link:../drift-detection
+      '@phoenix-ai/extraction-engine':
+        specifier: workspace:*
+        version: link:../extraction-engine
+      '@phoenix-ai/gap-analysis':
+        specifier: workspace:*
+        version: link:../gap-analysis
+      '@phoenix-ai/graph-persistence':
+        specifier: workspace:*
+        version: link:../graph-persistence
+      '@phoenix-ai/inference-engine':
+        specifier: workspace:*
+        version: link:../inference-engine
+      '@phoenix-ai/ingestion-connectors':
+        specifier: workspace:*
+        version: link:../ingestion-connectors
+      '@phoenix-ai/knowledge-graph':
+        specifier: workspace:*
+        version: link:../knowledge-graph
+      '@phoenix-ai/okf-renderers':
+        specifier: workspace:*
+        version: link:../okf-renderers
+      '@phoenix-ai/reconciliation-engine':
+        specifier: workspace:*
+        version: link:../reconciliation-engine
+      '@phoenix-ai/redaction-hardening':
+        specifier: workspace:*
+        version: link:../redaction-hardening
+      '@phoenix-ai/review-loop':
+        specifier: workspace:*
+        version: link:../review-loop
       '@phoenix-ai/shared':
         specifier: workspace:*
         version: link:../shared
+      neo4j-driver:
+        specifier: ^6.2.0
+        version: 6.2.0
     devDependencies:
+      '@testcontainers/neo4j':
+        specifier: ^12.2.0
+        version: 12.2.0
+      '@types/node':
+        specifier: ^26.6.4
+        version: 26.6.4
       vitest:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -312,19 +402,34 @@ importers:
         specifier: workspace:*
         version: link:../shared
     devDependencies:
+      '@phoenix-ai/extraction-engine':
+        specifier: workspace:*
+        version: link:../extraction-engine
+      '@phoenix-ai/ingestion-connectors':
+        specifier: workspace:*
+        version: link:../ingestion-connectors
       '@types/node':
         specifier: ^26.6.4
         version: 26.6.4
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       vitest:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/redaction-hardening:
     dependencies:
+      '@phoenix-ai/ingestion-connectors':
+        specifier: workspace:*
+        version: link:../ingestion-connectors
       '@phoenix-ai/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:
+      '@types/node':
+        specifier: ^26.6.4
+        version: 26.6.4
       vitest:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -340,6 +445,9 @@ importers:
       '@phoenix-ai/reconciliation-engine':
         specifier: workspace:*
         version: link:../reconciliation-engine
+      '@phoenix-ai/redaction-hardening':
+        specifier: workspace:*
+        version: link:../redaction-hardening
       '@phoenix-ai/shared':
         specifier: workspace:*
         version: link:../shared

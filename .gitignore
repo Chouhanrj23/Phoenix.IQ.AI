@@ -41,3 +41,16 @@ artifacts/
 *.graphdb
 !apps/web/src/data/
 !apps/api/src/data/
+
+# P8: the API's run workspace (PHOENIX_WORKSPACE_DIR default)
+.phoenix-workspace/
+
+# Release hygiene: editor/tool backups and local tooling state never belong in git
+*.fullbak
+*.bak
+*.orig
+*.rej
+.tsupgrader/
+
+# Personal, non-project notes kept locally (not Phoenix documentation)
+mydocs.md

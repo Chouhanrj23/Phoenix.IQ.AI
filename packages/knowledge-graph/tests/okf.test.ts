@@ -438,3 +438,42 @@ describe('parseAndValidateOkfYaml', () => {
     expect(result.errors).toContain('okfVersion is required');
   });
 });
+
+describe('OKF YAML depends on content only, never on in-memory object sharing (P8)', () => {
+  /** The same bundle, but every object, array and value freshly allocated -- nothing shared. */
+  function unshared(bundle: CanonicalKnowledgeBundle): CanonicalKnowledgeBundle {
+    return JSON.parse(JSON.stringify(bundle)) as CanonicalKnowledgeBundle;
+  }
+
+  /** The same bundle, with identical provenance entries made to share ONE object (as the pipeline does). */
+  function shared(bundle: CanonicalKnowledgeBundle): CanonicalKnowledgeBundle {
+    const copy = unshared(bundle);
+    const byKey = new Map<string, unknown>();
+    for (const object of copy.objects) {
+      object.metadata.provenance = object.metadata.provenance.map((entry) => {
+        const key = JSON.stringify(entry);
+        if (!byKey.has(key)) byKey.set(key, entry);
+        return byKey.get(key) as typeof entry;
+      });
+    }
+    return copy;
+  }
+
+  it('serialises two content-equal bundles to identical bytes, however their objects are shared', () => {
+    const bundle = buildReconciledBundle();
+    const a = serializeOkfYaml(toOkfDocument(shared(bundle)));
+    const b = serializeOkfYaml(toOkfDocument(unshared(bundle)));
+    expect(a).toBe(b);
+  });
+
+  it('never emits YAML anchors or aliases', () => {
+    const yaml = serializeOkfYaml(toOkfDocument(shared(buildReconciledBundle())));
+    expect(yaml).not.toMatch(/(^|\s)[&*]a\d+(\s|$)/m);
+  });
+
+  it('is a fixed point: serialise(parse(serialise(x))) === serialise(x)', () => {
+    const once = serializeOkfYaml(toOkfDocument(shared(buildReconciledBundle())));
+    const twice = serializeOkfYaml(parseOkfYaml(once) as ReturnType<typeof toOkfDocument>);
+    expect(twice).toBe(once);
+  });
+});

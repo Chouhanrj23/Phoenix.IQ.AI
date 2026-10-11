@@ -544,6 +544,181 @@ supportingSources`), so a 1-vs-1 tie or a clear majority keeps `medium` rather t
   contested cases), plus additions to `reconcile.test.ts`/`index.test.ts` (57 total in the package, up
   from 36) and `knowledge-graph/tests/reconciliation.test.ts` (+4, 297 total in the package, up from
   293). See `docs/architecture/adr/0030-p6-06-confidence-calculation.md`.
+- **Phase 6 — P6-08 (evidence aggregation — aggregate supporting evidence for each claim):** the same
+  shape of gap P6-06 closed for confidence, but for evidence: `ReconciledClaim` never aggregated
+  evidence at all (a caller had to `flatMap` `.claims` themselves, re-deriving deduplication), and
+  `ConflictObject.evidence` was a raw, UNDEDUPLICATED flat bag mixing every retained position's
+  evidence together with no way to tell which entry backed which side of a dispute.
+  `packages/reconciliation-engine/src/evidence-aggregation.ts`'s `aggregateEvidence`/
+  `evidenceForClaims` is a new, dedicated module: deduplicates a flat list of `Evidence` by `id`
+  (trusting the id as the identity boundary — the "stable identifier for this specific piece of
+  evidence" `evidence.ts` itself documents, the same trust pattern `deterministicId` uses everywhere
+  else), keeping first occurrence, preserving order. `ReconciledClaim` gains an `evidence: Evidence[]`
+  field aggregated across every agreeing claim. `@phoenix-ai/knowledge-graph`'s `reconciliation.ts`
+  gains `ConflictPosition.evidenceIds?: string[]` — REFERENCING (never duplicating) entries in the
+  object's own now-deduplicated top-level `evidence` array, so a position is traceable to exactly the
+  evidence supporting it without cross-referencing sources by hand; referencing by id rather than
+  embedding a full `Evidence[]` copy also needs none of the `KnowledgeValue`-index-signature
+  workaround `ConflictPositionConfidence` required in P6-06, since a bare `string[]` is already
+  `KnowledgeValue`-compatible. Purely additive — every pre-P6-08 `ConflictObject` fixture remains
+  valid unchanged. 19 new tests: `evidence-aggregation.test.ts` (9, dedicated unit coverage), plus
+  additions to `reconcile.test.ts`/`index.test.ts` (72 total in the package, up from 57) and
+  `knowledge-graph/tests/reconciliation.test.ts` (+4, 301 total in the package, up from 297). See
+  `docs/architecture/adr/0031-p6-08-evidence-aggregation.md`.
+- **Phase 6 — P6-09 (POC — Phoenix repo and Jira analysis using real data sources):** extends P3-11's
+  precedent ("run the real pipeline against a real, un-curated repository") to Phase 6.
+  `packages/reconciliation-engine/samples/analyze-phoenix-and-jira.ts` (a dev/demo script, not part of
+  any runtime API) runs the real git connector (P3-02) against Phoenix.ai-1 itself AND the real Jira
+  connector (P6-02) against a representative dataset — no live Jira instance is reachable from this
+  environment, so a clearly-labelled representative dataset was used instead of fabricating a live
+  connection, the same disclosed stance every prior Jira ADR in this project takes.
+  `samples/fixtures/phoenix-backlog-jira.ts` models this project's OWN real Phase 6 backlog (one Jira
+  issue per real P6-0X ticket), served through `createJiraConnector`'s real `fetchImpl` injection
+  point so the POC exercises real request-building/pagination/ADF-rendering code, not a bypass. The
+  git side asks a deliberately strict question — is each ticket's ADR COMMITTED, not merely present on
+  disk (the real connector's `ls-tree`-at-HEAD view cannot see an uncommitted file by construction,
+  ADR 0014 decision 5) — and both sources' claims about "is this ticket done?" are reconciled per
+  ticket via the real `reconcileClaims`. Running it found: revision resolved, 430 tracked files; 8
+  Jira issues bridged into 8 `WorkItemObject`s with 12 relationships; 0 agreed claims; 7 conflicts —
+  one per real ticket, since every P6-0X deliverable in this session was still uncommitted at the time
+  of the run (Jira says done, git says not yet landed) — an honest, accurate finding, not a demo
+  shortcoming, and exactly the class of gap FR-REC-04 exists to catch. Everything assembled into one
+  real bundle (bridged objects + the 7 `ConflictObject`s + a two-source registry) that validated
+  cleanly and round-tripped through the real OKF YAML parser. New `reconciliation-engine`
+  devDependencies: `tsx`, `@phoenix-ai/ingestion-connectors`, `@phoenix-ai/extraction-engine`. See
+  `docs/architecture/adr/0032-p6-09-phoenix-jira-poc.md`.
+
+- **Phase 8 — end-to-end pipeline:** `packages/orchestration` (`runPipeline`, `runReviewCycle`)
+  composes the existing stages into one defined sequence, from source through ingestion, redaction,
+  extraction, inference, reconciliation, the validated knowledge graph, graph persistence and OKF,
+  then human review, correction, the updated graph and regenerated OKF. Every stage reports items
+  in, out and dropped (with reasons); a mandatory stage that cannot produce valid output throws
+  `PipelineStageError`. Caller-supplied clock, so runs are byte-reproducible (FR-ORC-01/03).
+  `packages/redaction-hardening` replaces its scaffold with a real gate (FR-SEC-01..04):
+  pattern-based secret/PII detection, in-place content-free tokens that keep line numbers, an
+  AES-256-GCM non-retaining vault, quarantine of unscannable content, and a stamp extraction
+  enforces. Integration tests run the whole chain over a real git repository, over the committed
+  real spring-petclinic extraction output, and over this repository's own committed tree; a
+  live-Neo4j suite runs where a container runtime exists. Stage contracts and remaining gaps are in
+  `docs/phase-8/README.md`.
+- **Phase 8 — completing the acceptance items:**
+  - **Graph versioning:** content-addressed, immutable versions in `packages/drift-detection`
+    (FR-KG-05), with in-memory and atomic filesystem stores.
+  - **Drift:** changelogs that classify each change and report observed and inferred changes
+    separately (BR-07, FR-DFT-02..04).
+  - **Re-processing only changed artifacts:** a Java parse cache (FR-DFT-01).
+  - **Gap planner:** `packages/gap-analysis` (FR-GAP-01..03).
+  - **Renderers and export:** the eleven OKF renderers, with per-element provenance, and a
+    portable export with a SHA-256 manifest (BR-02/10, FR-OKF-01..13).
+  - **Evaluation:** `packages/evaluation-harness`, with a hand-authored golden system,
+    precision/recall and clustering metrics, round-trip verification against cited sources, and a
+    CI gate (FR-EVA-01..03).
+  - **Deterministic extraction:** IaC (Dockerfile, compose, Kubernetes) to deployment units; git
+    commit history to change coupling and knowledge risk (FR-ING-06, FR-DET-04..06).
+  - **Tenant isolation:** graph nodes keyed on `(id, systemId)`, scoped queries, and
+    tenant-checked review storage (BR-12, FR-ORC-04).
+  - **API:** source registration, asynchronous runs, and run outputs (OKF, artifacts, export,
+    changelog, gaps, knowledge risk, evaluation). Drift and gap endpoints serve real run data and
+    label seed data with `x-phoenix-data-origin` (FR-IF-01/03/05).
+  - **Pipeline wiring:** the orchestrator now runs these stages (`graph-versioning`, `drift`,
+    `gap-analysis`).
+
+### Fixed
+
+- **Phase 8 — release readiness:**
+  - Removed 18 committed `*.fullbak` backup files and the committed `.tsupgrader/` tool output
+    (which held machine-specific paths), and stopped tracking `mydocs.md` (personal notes, not
+    project documentation; kept locally). All are now gitignored.
+  - `graph-persistence` runs its test files one at a time (`vitest.config.ts`): its five
+    container-backed files each start a real Neo4j, and starting them in parallel under
+    `pnpm test` made some miss their startup wait.
+  - `apps/api` gives each test a 20s budget (`vitest.config.ts`): nineteen route tests import the
+    route module inside the test body, and under full-suite load one exceeded vitest's 5s default.
+    No assertion changed.
+  - Rewrote the root, API and web READMEs and `.env.example` to describe what is implemented,
+    including setup, environment variables and current limitations.
+- **Phase 8 — defects found by the completion work:**
+  - The version store refused an unchanged repository analysed again, because it compared
+    timestamps.
+  - Capability inference collapsed a multi-module repository into one capability when the source
+    id named only the repository. This was found by the golden system's clustering metric.
+  - Both are covered by regression tests.
+
+- **Phase 8 — final architecture hardening (verified defects only; no redesign, no new phase scope):**
+  - **P6-08 regression (evidence loss):** `evidence-aggregation.ts` existed but was neither exported
+    nor called, so `ReconciledClaim` carried no aggregated evidence and `ConflictObject.evidence`
+    was an undeduplicated `flatMap` with no per-position `evidenceIds`. Re-wired into
+    `reconcileClaims` and re-exported; the lost tests restored (FR-REC-04, FR-KG-02).
+  - **Reconciliation grouping collision:** claims were grouped by a space-joined key, so subject
+    `"a b"`/attribute `"c"` and subject `"a"`/attribute `"b c"` merged into one false conflict. Now a
+    JSON-encoded key. Conflict ids are unchanged (stable-id rule, FR-KG-04); the one case where two
+    distinct disputes would still share an id now throws `ConflictIdCollisionError` instead of
+    silently merging into one graph node.
+  - **Rejected review decisions vanished in Neo4j mode:** `reviewDecisionFromNodeProperties`
+    accepted only `confirmed`/`corrected`, so every persisted `rejected` decision was dropped on read
+    (audit trail, metrics, predecessor chain). Corrupt `evidenceJson`/`provenanceJson`, previously
+    read back silently as `[]`, and unreadable `:ReviewDecision` nodes now raise
+    `ReviewDecisionCorruptError` (FR-REV-02/03).
+  - **Same-millisecond decision order:** `sortDecisions` broke time ties by hash-bearing id, so a
+    correction could sort before the confirmation it superseded. Ties now follow the
+    `supersedesDecisionId` chain; instants compare by epoch, not string. Same-element submissions
+    are serialised in-process so concurrent writes cannot fork the chain.
+  - **Stale corrections overwrote the graph:** `propagateCorrectionToGraph` wrote the corrected value
+    unconditionally, unlike the bundle path. It now returns `outcome: 'conflict'` and writes nothing
+    when the node no longer holds the value the reviewer corrected (FR-REC-04/06). Added to the
+    API and web contracts with reviewer-facing wording.
+  - **Connectivity loss mid-operation:** a connection dropped after `verifyNeo4jConnectivity` became
+    `GraphIngestionError` or a raw driver error (HTTP 500). Now `Neo4jUnavailableError` (HTTP 503,
+    "nothing was saved") across ingest, query, and the review store (`isNeo4jConnectivityError`).
+  - **Duplicate ids:** `validateCanonicalKnowledgeBundle` now rejects duplicate relationship ids;
+    `mapOkfBundleToGraph` excludes and reports every element sharing an id instead of letting
+    `MERGE … SET +=` overwrite one with another.
+  - **API boundaries:** `/api/review-metrics` validates `from`/`to` (400), compares instants rather
+    than strings (an inclusive `…T10:00:00Z` bound excluded a decision at that instant), and maps an
+    outage to 503 like every other review route. `PORT` is validated at startup.
+  - **Git connector:** a local repository under a path containing a space could not be analysed — the
+    percent-encoded `file://` locator reached `git -C` verbatim. Now decoded (git already decodes it
+    for clones). Both POC samples now encode their locators; the P6-09 POC's dropped script and
+    devDependencies are restored and it runs end to end again.
+  - **Tests/CI:** the registry test `okf-renderers/src/artifacts.ts` cited but which did not exist
+    (`tests/artifacts.test.ts`); real-clone tests given an explicit timeout (flaky at vitest's 5 s
+    default); Prettier violations in the Aurora/Fintech mock data fixed (formatting only).
+  - **Found by running the stages together:** the graph mapping had no label/type for
+    `reconciliation.conflict`, `workitem.issue`, `business.capability`, `groundedIn`, `comprises`
+    or `realizedBy`, so conflicts, work items, capabilities and every inference grounding edge
+    never reached Neo4j. The Graph Explorer hid any node kind missing from its fixed list (already
+    `ReviewDecision`). Capability `comprises` edges pointed at unmaterialised concept ids. Inferred
+    journeys/flows/actions cited `sourceId: systemId`, a source that does not exist, and carried no
+    evidence. A stale correction's reviewer was not registered as a source. Graph consistency
+    checks ignored attribute values and evidence. All fixed, each with a test that fails on the
+    old code.
+  - **Security and data-handling hardening:** the redaction detectors backtracked catastrophically
+    (a 40 KB dotted string hung the gate); all patterns are now bounded and linear-time, spans come
+    from regex group indices (a trailing comment equal to the secret used to be redacted instead
+    of the secret), and credential detectors take precedence over the e-mail shape. Descriptor
+    validation now rejects locators that embed a credential, and a checkout's `origin` is reported
+    without one. Second-source claims and reviewer-entered text now pass the same detectors as
+    ingested content (claims redacted; review decisions containing secrets/PII rejected with 422).
+    The review API no longer returns internal graph-error text, and every non-`ApiError` 5xx is
+    masked. Each fix has a regression test that fails on the previous code.
+  - **Reproducibility across hosts:** machine-facing ordering used `localeCompare`, i.e. the host's
+    collation, so a Danish or Swedish machine produced different OKF bytes from identical input. All
+    30 sites now use `compareCodeUnits` (`@phoenix-ai/shared`). `serializeOkfYaml` no longer emits
+    YAML anchors (bytes depended on in-memory object sharing). Graph reads are ordered by id. Jira
+    searches use `ORDER BY key ASC`. Proven by emulating other-locale hosts in
+    `orchestration/tests/determinism.test.ts`.
+  - **Performance and reliability:** redaction line numbering made the gate quadratic in findings
+    (20,000 in 680 KB took 10.9 s, now 173 ms). The Neo4j driver now has bounded connection and
+    acquisition timeouts (an unreachable host held requests ~21 s). The review queue computes
+    leverage from relationship endpoints instead of loading the whole graph per request. The API
+    releases its Neo4j pools on close and shuts down gracefully on SIGINT/SIGTERM.
+  - **UI/API honesty:** in API mode the "Live API mode" badge hid that five areas (flows, personas,
+    journeys, capabilities, epics) were served from browser fixtures; the badge and the affected
+    pages now say so. API mode no longer lets a second demo company relabel the API's data. The
+    Agent Pipeline page is labelled as a scripted walkthrough, with each stage's real implementation
+    status. `/api/full-graph` answers 503 (not 500) when no graph is configured, and read errors show
+    the API's own message. A contract test checks every path the web provider calls against the real
+    API routes (`buildApp`, extracted from `index.ts`).
 
 ### Changed
 
