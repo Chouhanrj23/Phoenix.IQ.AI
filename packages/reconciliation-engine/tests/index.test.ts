@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   CLAIM_CATEGORIES,
+  ConflictIdCollisionError,
+  aggregateEvidence,
   authorityOf,
   boundCompositeConfidence,
   claimFromObject,
   computeConfidence,
   deterministicId,
+  evidenceForClaims,
   rankConflicts,
   reconcileClaims,
 } from '../src/index.js';
@@ -36,6 +39,15 @@ describe('@phoenix-ai/reconciliation-engine entry point', () => {
 
   it('exports composite confidence bounding', () => {
     expect(typeof boundCompositeConfidence).toBe('function');
+  });
+
+  it('exports the dedicated evidence aggregation added in P6-08', () => {
+    expect(typeof aggregateEvidence).toBe('function');
+    expect(typeof evidenceForClaims).toBe('function');
+  });
+
+  it('exports the conflict-id collision error (P8)', () => {
+    expect(typeof ConflictIdCollisionError).toBe('function');
   });
 
   it('exports the deterministic id helper', () => {

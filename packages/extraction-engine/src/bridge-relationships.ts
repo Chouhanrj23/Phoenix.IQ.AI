@@ -64,6 +64,7 @@ import type { CanonicalKnowledgeRelationship } from '@phoenix-ai/knowledge-graph
 import type { JavaTypeDependencyFact } from './java-calls.js';
 import type { JavaJpaEntityFact } from './java-persistence.js';
 import { deterministicId, evidenceFor, simpleNameOf, type BridgeOptions } from './bridge-shared.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 function relationshipProvenance(
   options: BridgeOptions,
@@ -132,7 +133,7 @@ export function bridgeTypeDependencies(
     });
   }
 
-  return relationships.sort((a, b) => a.id.localeCompare(b.id));
+  return relationships.sort((a, b) => compareCodeUnits(a.id, b.id));
 }
 
 /**
@@ -202,5 +203,5 @@ export function bridgeJpaAssociations(
     }
   }
 
-  return relationships.sort((a, b) => a.id.localeCompare(b.id));
+  return relationships.sort((a, b) => compareCodeUnits(a.id, b.id));
 }

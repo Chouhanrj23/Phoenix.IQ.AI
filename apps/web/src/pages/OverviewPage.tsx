@@ -34,6 +34,8 @@ import { CONFIDENCE_COLORS } from '../components/confidence-badge.js';
 import { BusinessOverviewSection } from '../components/business-overview.js';
 import { ConnectedSourcesSummary } from '../components/connected-sources.js';
 import { computeConnectedSources } from '../lib/connected-sources.js';
+import { FixtureNotice } from '../components/fixture-notice.js';
+import { SeedNotice } from '../components/seed-notice.js';
 
 const GAP_SEVERITY_COLORS: Record<GapSeverity, string> = {
   blocking: '#e11d48',
@@ -213,6 +215,8 @@ export function OverviewPage(): JSX.Element {
   return (
     <div>
       <PageHeader title={s.name} description={s.description} />
+      <FixtureNotice areas={['personas', 'journeys', 'businessCapabilities', 'executionFlows']} />
+      <SeedNotice paths={['/api/drift-alerts', '/api/drift-history', '/api/gap-items']} />
 
       <BusinessOverviewSection
         personas={personas.data ?? []}

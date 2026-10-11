@@ -27,8 +27,10 @@ export {
   buildReviewDecisionWriteOperations,
   buildReviewOfRelationship,
   createGraphReviewDecisionStore,
+  graphAttributeDisplayValue,
   propagateCorrectionToGraph,
   reviewDecisionFromNodeProperties,
+  ReviewDecisionCorruptError,
   ReviewDecisionMappingError,
   type CorrectionPropagationOutcome,
   type CorrectionPropagationResult,
@@ -45,7 +47,7 @@ export {
   type ReviewQueueRanking,
 } from './queue.js';
 
-export { computeReviewMetrics, type ReviewMetrics } from './metrics.js';
+export { computeReviewMetrics, InvalidMetricsWindowError, type ReviewMetrics } from './metrics.js';
 
 export {
   buildReviewAuditTrail,

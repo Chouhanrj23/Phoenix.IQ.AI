@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildReviewDecision,
   validateConflictObject,
+  validateSourceReferences,
   type BuildReviewDecisionInput,
   type CanonicalKnowledgeBundle,
   type CanonicalKnowledgeObject,
@@ -301,12 +302,45 @@ describe('applyCorrectionsToBundle (P7-02) — unrelated knowledge stays unchang
       result.bundle.objects.find((o) => o.identity.id === 'ctr-payments')?.attributes.technology,
     ).toBe('Node.js/Express');
   });
+
+  it("registers a stale correction's reviewer as a source, so the conflict it produced stays resolvable (P8)", () => {
+    const withRegistry: CanonicalKnowledgeBundle = {
+      ...bundle(),
+      sources: [
+        {
+          id: 'repo://aurora-commerce/services/payments-adapter',
+          type: 'source-code',
+          label: 'payments adapter',
+        },
+        { id: 'docs/architecture-2024.pdf', type: 'technical-doc', label: 'architecture 2024' },
+      ],
+    };
+    // The ONLY decision in the batch is stale: no applied correction
+    // registers this reviewer on its behalf.
+    const stale = decision({
+      previousValue: 'Something nobody extracted',
+      reviewerId: 'reviewer-z',
+    });
+    const result = applyCorrectionsToBundle(withRegistry, [stale], { at: AT });
+
+    const [conflict] = result.conflicts;
+    expect(conflict?.metadata.provenance.map((p) => p.sourceId)).toContain('review://reviewer-z');
+    expect(result.bundle.sources?.map((s) => s.id)).toContain('review://reviewer-z');
+    expect(
+      validateSourceReferences({
+        ...result.bundle,
+        objects: [...result.bundle.objects, ...result.conflicts],
+      }),
+    ).toEqual({ valid: true, errors: [] });
+  });
 });
 
 describe('buildCorrectionNodeOperation (P7-02) — the canonical update reaches the graph', () => {
   it('updates the EXISTING node by id with MATCH, so it can never create a duplicate', () => {
     const op = buildCorrectionNodeOperation(decision(), { at: AT });
-    expect(op.cypher).toBe('MATCH (n {id: $id}) SET n += $properties RETURN n');
+    expect(op.cypher).toBe(
+      'MATCH (n {id: $id, systemId: $systemId}) SET n += $properties RETURN n',
+    );
     expect(op.cypher).not.toContain('MERGE');
     expect(op.cypher).not.toContain('CREATE');
     expect(op.params.id).toBe('ctr-payments');

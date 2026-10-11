@@ -151,7 +151,13 @@ function sortMapEntries(a: Pair, b: Pair): number {
  * resolved in favor of both here.
  */
 export function serializeOkfYaml(document: OkfDocument): string {
-  return stringifyToYaml(document, { sortMapEntries, lineWidth: 0 });
+  // `aliasDuplicateObjects: false` (P8): by default the YAML library emits an
+  // anchor/alias pair (`&a1` ... `*a1`) wherever the SAME in-memory object is
+  // referenced twice, so the bytes depended on how a bundle happened to be
+  // assembled (shared vs copied provenance/evidence objects), not on what it
+  // says -- content-equal bundles serialised differently. Every value is now
+  // written out in full; parsing still accepts aliases in older documents.
+  return stringifyToYaml(document, { sortMapEntries, lineWidth: 0, aliasDuplicateObjects: false });
 }
 
 /** Parses YAML text into a plain JS structure. Throws on invalid YAML syntax -- see `parseAndValidateOkfYaml` for a non-throwing alternative. */

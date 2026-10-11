@@ -15,9 +15,23 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@phoenix-ai/shared": "workspace:*"
+    "@phoenix-ai/shared": "workspace:*",
+    "@phoenix-ai/ingestion-connectors": "workspace:*",
+    "@phoenix-ai/redaction-hardening": "workspace:*",
+    "@phoenix-ai/extraction-engine": "workspace:*",
+    "@phoenix-ai/inference-engine": "workspace:*",
+    "@phoenix-ai/reconciliation-engine": "workspace:*",
+    "@phoenix-ai/knowledge-graph": "workspace:*",
+    "@phoenix-ai/graph-persistence": "workspace:*",
+    "@phoenix-ai/review-loop": "workspace:*",
+    "@phoenix-ai/okf-renderers": "workspace:*",
+    "neo4j-driver": "^6.2.0",
+    "@phoenix-ai/drift-detection": "workspace:*",
+    "@phoenix-ai/gap-analysis": "workspace:*"
   },
   "devDependencies": {
+    "@testcontainers/neo4j": "^12.2.0",
+    "@types/node": "^26.6.4",
     "vitest": "^5.0.3"
   }
 }

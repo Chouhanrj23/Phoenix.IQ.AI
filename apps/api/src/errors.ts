@@ -23,10 +23,16 @@ export function registerErrorHandling(app: FastifyInstance): void {
   app.setErrorHandler(
     (error: Error & { statusCode?: number }, request: FastifyRequest, reply: FastifyReply) => {
       const statusCode = error instanceof ApiError ? error.statusCode : (error.statusCode ?? 500);
+      // P8: only messages Phoenix wrote for the client are returned. Any
+      // other server-side failure -- not just status 500 -- gets the generic
+      // body, so a library's 5xx error text (driver, Cypher, file paths)
+      // never reaches a client. 4xx messages describe the client's own
+      // request and are kept.
+      const exposeMessage = error instanceof ApiError || statusCode < 500;
       const body: ErrorResponseBody = {
         statusCode,
-        error: statusCode === 500 ? 'Internal Server Error' : error.name,
-        message: statusCode === 500 ? 'An unexpected error occurred.' : error.message,
+        error: exposeMessage ? error.name : 'Internal Server Error',
+        message: exposeMessage ? error.message : 'An unexpected error occurred.',
       };
       if (statusCode >= 500) {
         logger.error('unhandled request error', {

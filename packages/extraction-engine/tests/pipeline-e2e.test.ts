@@ -175,145 +175,154 @@ afterAll(() => {
   if (repoRoot !== undefined) rmSync(repoRoot, { recursive: true, force: true });
 });
 
+/** Real `git` plus real Java parsing: under a full parallel `turbo run test` this exceeds vitest's 5 s default (P8: observed flaky). */
+const REAL_PIPELINE_TIMEOUT_MS = 60_000;
+
 describe('full pipeline — real git ingestion through OKF validation', () => {
-  it('ingests a real repository, extracts real Java facts, maps them to the canonical model, and produces a valid OKF document', async () => {
-    const SOURCE_ID = 'repo://catalog-service';
-    const descriptor: SourceRepositoryDescriptor = {
-      id: SOURCE_ID,
-      sourceType: 'source-code',
-      label: 'catalog-service (pipeline-e2e fixture)',
-      locator: fileLocator(repoRoot),
-      repository: { kind: 'local-directory' },
-      filter: {
-        includePaths: ['**/*.java', '**/pom.xml', '**/application*.yml'],
-      },
-    };
+  it(
+    'ingests a real repository, extracts real Java facts, maps them to the canonical model, and produces a valid OKF document',
+    { timeout: REAL_PIPELINE_TIMEOUT_MS },
+    async () => {
+      const SOURCE_ID = 'repo://catalog-service';
+      const descriptor: SourceRepositoryDescriptor = {
+        id: SOURCE_ID,
+        sourceType: 'source-code',
+        label: 'catalog-service (pipeline-e2e fixture)',
+        locator: fileLocator(repoRoot),
+        repository: { kind: 'local-directory' },
+        filter: {
+          includePaths: ['**/*.java', '**/pom.xml', '**/application*.yml'],
+        },
+      };
 
-    const connector = createGitRepositoryConnector();
+      const connector = createGitRepositoryConnector();
 
-    // --- Stage 1: real git ingestion (P3-02) ---
-    const { collection, revision, source } = await withConnectorSession(
-      connector,
-      descriptor,
-      async (session) => ({
-        collection: await collectArtifacts(session),
-        revision: session.revision,
-        source: session.source,
-      }),
-    );
+      // --- Stage 1: real git ingestion (P3-02) ---
+      const { collection, revision, source } = await withConnectorSession(
+        connector,
+        descriptor,
+        async (session) => ({
+          collection: await collectArtifacts(session),
+          revision: session.revision,
+          source: session.source,
+        }),
+      );
 
-    expect(collection.failures).toEqual([]);
-    expect(collection.artifacts.length).toBeGreaterThan(0);
-    expect(revision).toBe(headRevision);
-    const javaArtifactPaths = collection.artifacts
-      .map((a) => a.path)
-      .filter((p) => p.endsWith('.java'));
-    expect(javaArtifactPaths).toHaveLength(3);
-    expect(javaArtifactPaths).toContain('src/main/java/com/phoenix/sample/catalog/Product.java');
+      expect(collection.failures).toEqual([]);
+      expect(collection.artifacts.length).toBeGreaterThan(0);
+      expect(revision).toBe(headRevision);
+      const javaArtifactPaths = collection.artifacts
+        .map((a) => a.path)
+        .filter((p) => p.endsWith('.java'));
+      expect(javaArtifactPaths).toHaveLength(3);
+      expect(javaArtifactPaths).toContain('src/main/java/com/phoenix/sample/catalog/Product.java');
 
-    // --- Stage 2/3: real Java discovery + parsing + structural/call/HTTP/persistence extraction (P3-03 through P3-08) ---
-    const generatedAt = '2026-08-20T10:00:00.000Z';
-    const result = extractJavaProject(collection.artifacts, {
-      systemId: 'catalog-service',
-      sourceId: SOURCE_ID,
-      generatedAt,
-      ...(revision === undefined ? {} : { sourceVersion: revision }),
-    });
+      // --- Stage 2/3: real Java discovery + parsing + structural/call/HTTP/persistence extraction (P3-03 through P3-08) ---
+      const generatedAt = '2026-08-20T10:00:00.000Z';
+      const result = extractJavaProject(collection.artifacts, {
+        systemId: 'catalog-service',
+        sourceId: SOURCE_ID,
+        generatedAt,
+        ...(revision === undefined ? {} : { sourceVersion: revision }),
+      });
 
-    // Java source discovery: the module was found via the real pom.xml.
-    expect(result.layout.modules).toHaveLength(1);
-    expect(result.layout.modules[0]?.coordinates?.artifactId).toBe('catalog-service');
+      // Java source discovery: the module was found via the real pom.xml.
+      expect(result.layout.modules).toHaveLength(1);
+      expect(result.layout.modules[0]?.coordinates?.artifactId).toBe('catalog-service');
 
-    // Java parsing: every file parsed, none failed.
-    expect(result.parseFailures).toEqual([]);
-    expect(result.files).toHaveLength(3);
+      // Java parsing: every file parsed, none failed.
+      expect(result.parseFailures).toEqual([]);
+      expect(result.files).toHaveLength(3);
 
-    // Structural extraction: real types, with real methods.
-    const controllerFile = result.files.find((f) => f.path.endsWith('ProductController.java'));
-    expect(controllerFile?.types[0]?.simpleName).toBe('ProductController');
-    expect(controllerFile?.types[0]?.methods.map((m) => m.name)).toEqual(
-      expect.arrayContaining(['getBySku', 'lookup']),
-    );
+      // Structural extraction: real types, with real methods.
+      const controllerFile = result.files.find((f) => f.path.endsWith('ProductController.java'));
+      expect(controllerFile?.types[0]?.simpleName).toBe('ProductController');
+      expect(controllerFile?.types[0]?.methods.map((m) => m.name)).toEqual(
+        expect.arrayContaining(['getBySku', 'lookup']),
+      );
 
-    // Method/dependency extraction: a real call graph edge from the handler to its private helper.
-    expect(
-      result.calls.some((call) => call.callerMethod === 'getBySku' && call.calleeName === 'lookup'),
-    ).toBe(true);
+      // Method/dependency extraction: a real call graph edge from the handler to its private helper.
+      expect(
+        result.calls.some(
+          (call) => call.callerMethod === 'getBySku' && call.calleeName === 'lookup',
+        ),
+      ).toBe(true);
 
-    // REST/API extraction: one controller, one real route with a real path variable.
-    expect(result.controllers).toHaveLength(1);
-    expect(result.controllers[0]?.qualifiedName).toBe(
-      'com.phoenix.sample.catalog.ProductController',
-    );
-    expect(result.controllers[0]?.routes).toHaveLength(1);
-    expect(result.controllers[0]?.routes[0]).toMatchObject({
-      httpMethod: 'GET',
-      path: '/products/{sku}',
-      handlerMethod: 'getBySku',
-    });
+      // REST/API extraction: one controller, one real route with a real path variable.
+      expect(result.controllers).toHaveLength(1);
+      expect(result.controllers[0]?.qualifiedName).toBe(
+        'com.phoenix.sample.catalog.ProductController',
+      );
+      expect(result.controllers[0]?.routes).toHaveLength(1);
+      expect(result.controllers[0]?.routes[0]).toMatchObject({
+        httpMethod: 'GET',
+        path: '/products/{sku}',
+        handlerMethod: 'getBySku',
+      });
 
-    // Database interaction extraction: one JPA entity, one repository, correctly linked.
-    expect(result.entities).toHaveLength(1);
-    expect(result.entities[0]).toMatchObject({
-      qualifiedName: 'com.phoenix.sample.catalog.Product',
-      tableName: 'products',
-      idFields: ['id'],
-    });
-    expect(result.repositories).toHaveLength(1);
-    expect(result.repositories[0]?.entityTypeArgument).toBe('Product');
+      // Database interaction extraction: one JPA entity, one repository, correctly linked.
+      expect(result.entities).toHaveLength(1);
+      expect(result.entities[0]).toMatchObject({
+        qualifiedName: 'com.phoenix.sample.catalog.Product',
+        tableName: 'products',
+        idFields: ['id'],
+      });
+      expect(result.repositories).toHaveLength(1);
+      expect(result.repositories[0]?.entityTypeArgument).toBe('Product');
 
-    // Provenance: every fact carries which source, which revision, derived by what, and when.
-    expect(result.entities[0]?.provenance).toEqual({
-      sourceId: SOURCE_ID,
-      sourceVersion: revision,
-      derivedBy: 'extraction-engine',
-      derivedAt: generatedAt,
-    });
+      // Provenance: every fact carries which source, which revision, derived by what, and when.
+      expect(result.entities[0]?.provenance).toEqual({
+        sourceId: SOURCE_ID,
+        sourceVersion: revision,
+        derivedBy: 'extraction-engine',
+        derivedAt: generatedAt,
+      });
 
-    // --- Stage 4: canonical mapping (P3-06/P3-07 bridges) ---
-    expect(result.objects).toHaveLength(2);
-    const apiObject = result.objects.find((o) => o.kind === 'integration.api');
-    const entityObject = result.objects.find((o) => o.kind === 'domain.entity');
-    expect(validateApiObject(apiObject)).toEqual({ valid: true, errors: [] });
-    expect(validateEntityObject(entityObject)).toEqual({ valid: true, errors: [] });
-    // Provenance/evidence on the bridged object trace back to the SAME real revision git resolved, not a fixture value.
-    expect(entityObject?.metadata.provenance[0]).toMatchObject({
-      sourceId: SOURCE_ID,
-      derivedBy: 'extraction-engine',
-    });
-    expect(entityObject?.evidence[0]?.sourceVersion).toBe(revision);
-    expect(entityObject?.confidenceDetail).toEqual({ basis: 'observed' });
+      // --- Stage 4: canonical mapping (P3-06/P3-07 bridges) ---
+      expect(result.objects).toHaveLength(2);
+      const apiObject = result.objects.find((o) => o.kind === 'integration.api');
+      const entityObject = result.objects.find((o) => o.kind === 'domain.entity');
+      expect(validateApiObject(apiObject)).toEqual({ valid: true, errors: [] });
+      expect(validateEntityObject(entityObject)).toEqual({ valid: true, errors: [] });
+      // Provenance/evidence on the bridged object trace back to the SAME real revision git resolved, not a fixture value.
+      expect(entityObject?.metadata.provenance[0]).toMatchObject({
+        sourceId: SOURCE_ID,
+        derivedBy: 'extraction-engine',
+      });
+      expect(entityObject?.evidence[0]?.sourceVersion).toBe(revision);
+      expect(entityObject?.confidenceDetail).toEqual({ basis: 'observed' });
 
-    // Relationship bridging (Phase 4 prerequisite fix, `bridge-relationships.ts`): both
-    // `getBySku` and its private helper `lookup` really do return `Product` -- two
-    // distinct, separately-evidenced return-type dependencies from the bridged Api to
-    // the bridged Entity, not fabricated, not the call graph (which stays unbridged),
-    // and not the repository (which has no OKF kind and so is correctly excluded
-    // rather than guessed at).
-    expect(result.relationships).toHaveLength(2);
-    for (const dependsOn of result.relationships) {
-      expect(dependsOn.sourceObjectId).toBe(apiObject?.identity.id);
-      expect(dependsOn.targetObjectId).toBe(entityObject?.identity.id);
-      expect(dependsOn.kind).toBe('dependsOn');
-      expect(dependsOn.category).toBe('association');
-      expect(dependsOn.attributes).toEqual({ relation: 'returnType' });
-      expect(dependsOn.confidenceDetail).toEqual({ basis: 'observed' });
-    }
-    expect(new Set(result.relationships.map((r) => r.id)).size).toBe(2); // distinct evidence, distinct ids
+      // Relationship bridging (Phase 4 prerequisite fix, `bridge-relationships.ts`): both
+      // `getBySku` and its private helper `lookup` really do return `Product` -- two
+      // distinct, separately-evidenced return-type dependencies from the bridged Api to
+      // the bridged Entity, not fabricated, not the call graph (which stays unbridged),
+      // and not the repository (which has no OKF kind and so is correctly excluded
+      // rather than guessed at).
+      expect(result.relationships).toHaveLength(2);
+      for (const dependsOn of result.relationships) {
+        expect(dependsOn.sourceObjectId).toBe(apiObject?.identity.id);
+        expect(dependsOn.targetObjectId).toBe(entityObject?.identity.id);
+        expect(dependsOn.kind).toBe('dependsOn');
+        expect(dependsOn.category).toBe('association');
+        expect(dependsOn.attributes).toEqual({ relation: 'returnType' });
+        expect(dependsOn.confidenceDetail).toEqual({ basis: 'observed' });
+      }
+      expect(new Set(result.relationships.map((r) => r.id)).size).toBe(2); // distinct evidence, distinct ids
 
-    // --- Stage 5: OKF mapping, serialization, and schema validation (P3-09, P2-10) ---
-    const mappingOptions = { systemId: 'catalog-service', generatedAt, sources: [source] };
-    const bundle = buildJavaCanonicalBundle(result, mappingOptions);
-    expect(validateCanonicalKnowledgeBundle(bundle)).toEqual({ valid: true, errors: [] });
-    expect(validateSourceReferences(bundle)).toEqual({ valid: true, errors: [] });
+      // --- Stage 5: OKF mapping, serialization, and schema validation (P3-09, P2-10) ---
+      const mappingOptions = { systemId: 'catalog-service', generatedAt, sources: [source] };
+      const bundle = buildJavaCanonicalBundle(result, mappingOptions);
+      expect(validateCanonicalKnowledgeBundle(bundle)).toEqual({ valid: true, errors: [] });
+      expect(validateSourceReferences(bundle)).toEqual({ valid: true, errors: [] });
 
-    const document = mapJavaExtractionToOkfDocument(result, mappingOptions);
-    const yamlText = serializeOkfYaml(document);
-    expect(yamlText).toContain('kind: integration.api');
-    expect(yamlText).toContain('kind: domain.entity');
-    expect(yamlText).toContain('kind: dependsOn');
+      const document = mapJavaExtractionToOkfDocument(result, mappingOptions);
+      const yamlText = serializeOkfYaml(document);
+      expect(yamlText).toContain('kind: integration.api');
+      expect(yamlText).toContain('kind: domain.entity');
+      expect(yamlText).toContain('kind: dependsOn');
 
-    const roundTrip = parseAndValidateOkfYaml(yamlText);
-    expect(roundTrip).toEqual({ valid: true, errors: [] });
-  });
+      const roundTrip = parseAndValidateOkfYaml(yamlText);
+      expect(roundTrip).toEqual({ valid: true, errors: [] });
+    },
+  );
 });

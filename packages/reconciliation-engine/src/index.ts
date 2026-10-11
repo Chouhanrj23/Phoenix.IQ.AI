@@ -19,13 +19,18 @@
  *     beyond P6-05's original agreement-only version) how much contradicting
  *     evidence exists, so a `ConflictObject` position that is outvoted reads
  *     as less confident than one that is merely disputed.
+ *   - `evidence-aggregation.ts` -- `aggregateEvidence`/`evidenceForClaims`
+ *     (P6-08): deduplicates a claim's or claim group's supporting
+ *     `Evidence` by `id`, so a `ReconciledClaim` and each `ConflictObject`
+ *     position carry a clean, non-redundant evidence set instead of a raw
+ *     `flatMap` a caller would otherwise have to deduplicate themselves.
  *   - `reconcile.ts` -- `reconcileClaims`, the algorithm: groups claims by
  *     subject/attribute/category and either derives a structural confidence
  *     when sources agree, or builds a real `@phoenix-ai/knowledge-graph`
  *     `ConflictObject` that retains every distinct position and its
  *     sources when they don't (FR-REC-04) -- each position carrying its own
- *     `computeConfidence` result -- ranked for review via `rankConflicts`
- *     (FR-REC-05).
+ *     `computeConfidence` result and its own aggregated `evidenceIds` --
+ *     ranked for review via `rankConflicts` (FR-REC-05).
  *   - `composite-confidence.ts` -- `boundCompositeConfidence` (FR-REC-03):
  *     a composite element's confidence bounded by its least-certain
  *     constituent, a separate concern from claim reconciliation.
@@ -48,8 +53,9 @@
  * job, per the FRD's own module split and FR-IF-04's "review interface");
  * and any persistence, run history, or drift comparison across runs (that
  * is `packages/drift-detection`'s job). See
- * `docs/architecture/adr/0029-p6-05-source-reconciliation.md` and
- * `docs/architecture/adr/0030-p6-06-confidence-calculation.md`.
+ * `docs/architecture/adr/0029-p6-05-source-reconciliation.md`,
+ * `docs/architecture/adr/0030-p6-06-confidence-calculation.md`, and
+ * `docs/architecture/adr/0031-p6-08-evidence-aggregation.md`.
  */
 
 export * from './claim.js';
@@ -57,3 +63,4 @@ export * from './confidence-scoring.js';
 export * from './reconcile.js';
 export * from './composite-confidence.js';
 export * from './determinism.js';
+export * from './evidence-aggregation.js';

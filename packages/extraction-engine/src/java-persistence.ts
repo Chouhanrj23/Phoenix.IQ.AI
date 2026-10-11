@@ -30,6 +30,7 @@ import {
   type JavaTypeFact,
   type SourceSpan,
 } from './java-structure.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 export type JavaAssociationKind = 'OneToMany' | 'ManyToOne' | 'OneToOne' | 'ManyToMany';
 
@@ -181,12 +182,12 @@ export function extractJavaPersistence(filesFacts: readonly JavaFileFacts[]): Ja
   const entities = allTypes
     .map(extractEntity)
     .filter((e): e is JavaJpaEntityFact => e !== undefined)
-    .sort((a, b) => a.qualifiedName.localeCompare(b.qualifiedName));
+    .sort((a, b) => compareCodeUnits(a.qualifiedName, b.qualifiedName));
 
   const repositories = allTypes
     .map(extractRepository)
     .filter((r): r is JavaRepositoryFact => r !== undefined)
-    .sort((a, b) => a.qualifiedName.localeCompare(b.qualifiedName));
+    .sort((a, b) => compareCodeUnits(a.qualifiedName, b.qualifiedName));
 
   return { entities, repositories };
 }

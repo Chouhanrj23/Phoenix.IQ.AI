@@ -47,8 +47,9 @@ import { buildJavaCanonicalBundle, mapJavaExtractionToOkfDocument } from '../src
 const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url)).replace(/[/\\]$/, '');
 const SOURCE_ID = 'repo://phoenix-ai-1';
 
+/** Percent-encoded, as a `file://` URL must be: a locator may not contain whitespace, and this repository may live under a path that does (P8). */
 function fileLocator(path: string): string {
-  return `file://${path.replace(/\\/g, '/')}`;
+  return `file://${encodeURI(path.replace(/\\/g, '/'))}`;
 }
 
 /** Build/dependency/output noise every real analysis run excludes -- not code to analyze. */

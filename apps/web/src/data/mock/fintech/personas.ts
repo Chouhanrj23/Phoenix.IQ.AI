@@ -13,15 +13,25 @@ export const personas: Persona[] = [
     ],
     metadata: meta(
       [prov('docs/personas.md', 'business-doc', 'inference-engine', 14)],
-      conf('medium', 0.63, 'Persona synthesised from a personas doc plus patterns in support tickets; not verified with real users.'),
+      conf(
+        'medium',
+        0.63,
+        'Persona synthesised from a personas doc plus patterns in support tickets; not verified with real users.',
+      ),
     ),
   },
   {
     id: 'persona-new-applicant',
     name: 'New Applicant',
     role: 'Customer',
-    goals: ['Trust that the app is legitimate before sharing ID documents', 'Get an account activated quickly'],
-    painPoints: ['Identity verification sometimes fails with no clear reason given', 'Unclear how long account activation will take'],
+    goals: [
+      'Trust that the app is legitimate before sharing ID documents',
+      'Get an account activated quickly',
+    ],
+    painPoints: [
+      'Identity verification sometimes fails with no clear reason given',
+      'Unclear how long account activation will take',
+    ],
     metadata: meta(
       [prov('docs/personas.md', 'business-doc', 'inference-engine', 14)],
       conf('medium', 0.58),
@@ -31,14 +41,21 @@ export const personas: Persona[] = [
     id: 'persona-compliance-analyst',
     name: 'Compliance / Support Analyst',
     role: 'Internal — Compliance & Support',
-    goals: ['Resolve disputes in a single interaction', 'Explain a compliance hold confidently to the customer'],
+    goals: [
+      'Resolve disputes in a single interaction',
+      'Explain a compliance hold confidently to the customer',
+    ],
     painPoints: [
       'No visibility into why an applicant was flagged by fraud/AML screening',
       'Bureau feed migration status is unclear, making credit decisions hard to explain',
     ],
     metadata: meta(
       [prov('repo://nimbus-financial/apps/ops-console', 'source-code', 'inference-engine', 5)],
-      conf('medium', 0.6, 'Inferred from ops console capabilities and support-ticket language; no formal persona doc for internal users.'),
+      conf(
+        'medium',
+        0.6,
+        'Inferred from ops console capabilities and support-ticket language; no formal persona doc for internal users.',
+      ),
     ),
   },
 ];
@@ -77,7 +94,11 @@ export const journeys: Journey[] = [
     flowIds: ['flow-account-opening'],
     metadata: meta(
       [prov('docs/personas.md', 'business-doc', 'inference-engine', 14)],
-      conf('low', 0.4, 'Journey framing is inferred from persona pain points, not directly observed in analytics.'),
+      conf(
+        'low',
+        0.4,
+        'Journey framing is inferred from persona pain points, not directly observed in analytics.',
+      ),
     ),
   },
 ];

@@ -5,7 +5,7 @@ import {
   type Source,
 } from '@phoenix-ai/knowledge-graph';
 import type { Claim } from '../src/claim.js';
-import { reconcileClaims, rankConflicts } from '../src/reconcile.js';
+import { ConflictIdCollisionError, reconcileClaims, rankConflicts } from '../src/reconcile.js';
 
 const GENERATED_AT = '2026-09-08T02:00:00.000Z';
 
@@ -93,6 +93,46 @@ describe('reconcileClaims — agreement', () => {
     expect(result.agreed).toHaveLength(2);
     expect(result.conflicts).toEqual([]);
   });
+
+  it('aggregates evidence from every agreeing claim, deduplicated (P6-08)', () => {
+    const corroborating: Claim = {
+      ...JIRA_CLAIM,
+      sourceId: 'ticket://other-tracker/AUR-1',
+      evidence: evidence('ticket://other-tracker/AUR-1', 'mirrored: AUR-1 marked Done'),
+    };
+    const result = reconcileClaims([JIRA_CLAIM, corroborating], options());
+    expect(result.agreed[0]?.evidence.map((entry) => entry.id)).toEqual([
+      'ev-ticket://acme-jira/AUR',
+      'ev-ticket://other-tracker/AUR-1',
+    ]);
+  });
+
+  it('does not duplicate evidence when two agreeing claims cite the exact same evidence entry', () => {
+    const second: Claim = { ...JIRA_CLAIM, sourceId: 'ticket://acme-jira/AUR-mirror' };
+    const result = reconcileClaims([JIRA_CLAIM, second], options());
+    // `second` reuses JIRA_CLAIM's own evidence object (same id) — one
+    // agreeing entry, not two, since it is the SAME cited material.
+    expect(result.agreed[0]?.evidence).toHaveLength(1);
+  });
+
+  it('never merges two different subject/attribute groups whose space-joined key would collide (P8)', () => {
+    // Space-joined, both groups read "a b c intent". They are different facts
+    // about different subjects and must never be compared with each other.
+    const first: Claim = { ...JIRA_CLAIM, subjectId: 'a b', attribute: 'c', value: 'X' };
+    const second: Claim = {
+      ...DOC_CLAIM,
+      subjectId: 'a',
+      attribute: 'b c',
+      claimCategory: 'intent',
+      value: 'Y',
+    };
+    const result = reconcileClaims([first, second], options());
+    expect(result.conflicts).toEqual([]);
+    expect(result.agreed.map((claim) => [claim.subjectId, claim.attribute])).toEqual([
+      ['a b', 'c'],
+      ['a', 'b c'],
+    ]);
+  });
 });
 
 describe('reconcileClaims — conflict (FR-REC-04: retain both positions, never silently resolve)', () => {
@@ -141,6 +181,73 @@ describe('reconcileClaims — conflict (FR-REC-04: retain both positions, never 
     expect(done?.confidence?.level).toBe('medium');
     expect(inProgress?.confidence?.level).toBe('low');
     expect(done?.confidence?.score).toBeGreaterThan(inProgress?.confidence?.score ?? 1);
+  });
+
+  it('gives each position its OWN aggregated evidence, referenced by id (P6-08)', () => {
+    const [conflict] = reconcileClaims([JIRA_CLAIM, DOC_CLAIM], options()).conflicts;
+    expect(conflict).toBeDefined();
+    if (conflict === undefined) return;
+
+    const done = conflict.attributes.positions.find((p) => p.value === 'Done');
+    const inProgress = conflict.attributes.positions.find((p) => p.value === 'In Progress');
+
+    expect(done?.evidenceIds).toEqual(['ev-ticket://acme-jira/AUR']);
+    expect(inProgress?.evidenceIds).toEqual(['ev-docs://confluence/eng-status']);
+
+    // Every id a position references is present in the object's own
+    // deduplicated evidence array — the "single source of truth" decision.
+    const objectEvidenceIds = new Set(conflict.evidence.map((entry) => entry.id));
+    for (const id of done?.evidenceIds ?? []) expect(objectEvidenceIds.has(id)).toBe(true);
+    for (const id of inProgress?.evidenceIds ?? []) expect(objectEvidenceIds.has(id)).toBe(true);
+  });
+
+  it("does not cross-attribute evidence — one position never references another position's evidence id", () => {
+    const [conflict] = reconcileClaims([JIRA_CLAIM, DOC_CLAIM], options()).conflicts;
+    const done = conflict?.attributes.positions.find((p) => p.value === 'Done');
+    const inProgress = conflict?.attributes.positions.find((p) => p.value === 'In Progress');
+    expect(done?.evidenceIds).not.toEqual(inProgress?.evidenceIds);
+    expect(done?.evidenceIds?.some((id) => inProgress?.evidenceIds?.includes(id))).toBe(false);
+  });
+
+  it('the object-level evidence array is deduplicated, not a raw flatMap', () => {
+    const sharedEvidenceClaim: Claim = {
+      ...JIRA_CLAIM,
+      sourceId: 'ticket://other-tracker/AUR-1',
+      value: 'Done',
+      // Deliberately cites the SAME evidence entry JIRA_CLAIM already does.
+      evidence: JIRA_CLAIM.evidence,
+    };
+    const [conflict] = reconcileClaims(
+      [JIRA_CLAIM, sharedEvidenceClaim, DOC_CLAIM],
+      options(),
+    ).conflicts;
+    const ids = conflict?.evidence.map((entry) => entry.id) ?? [];
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('keeps every distinct piece of evidence from every position — nothing is dropped (P8)', () => {
+    const [conflict] = reconcileClaims([JIRA_CLAIM, DOC_CLAIM], options()).conflicts;
+    expect(conflict?.evidence.map((entry) => entry.id)).toEqual([
+      'ev-ticket://acme-jira/AUR',
+      'ev-docs://confluence/eng-status',
+    ]);
+  });
+
+  it('refuses, loudly, two distinct disputes that would share one conflict id (P8)', () => {
+    // deterministicId space-joins its parts, so subject "a b"/attribute "c"
+    // and subject "a"/attribute "b c" hash identically. Both are genuine
+    // disputes; merging them into one id would lose one in the graph.
+    const disputeOne = [
+      { ...JIRA_CLAIM, subjectId: 'a b', attribute: 'c', value: 'X' },
+      { ...DOC_CLAIM, subjectId: 'a b', attribute: 'c', value: 'Y' },
+    ];
+    const disputeTwo = [
+      { ...JIRA_CLAIM, subjectId: 'a', attribute: 'b c', value: 'P' },
+      { ...DOC_CLAIM, subjectId: 'a', attribute: 'b c', value: 'Q' },
+    ];
+    expect(() => reconcileClaims([...disputeOne, ...disputeTwo], options())).toThrow(
+      ConflictIdCollisionError,
+    );
   });
 
   it('never picks a winner — the conflict itself carries no settled value', () => {

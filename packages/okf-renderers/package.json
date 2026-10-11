@@ -20,6 +20,8 @@
     "@phoenix-ai/review-loop": "workspace:*"
   },
   "devDependencies": {
-    "vitest": "^5.0.3"
+    "@phoenix-ai/graph-persistence": "workspace:*",
+    "vitest": "^5.0.3",
+    "@types/node": "^26.6.4"
   }
 }

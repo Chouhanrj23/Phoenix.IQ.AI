@@ -68,10 +68,12 @@ export const OKF_ARTIFACTS: readonly OkfArtifactDefinition[] = [
     'domain.aggregate',
     'domain.entity-state',
   ]),
+  // P8: inferred business capabilities (P5) are rendered in the domains view.
   definition('domains', 'Domains & bounded contexts', [
     'domain.domain',
     'domain.aggregate',
     'domain.entity',
+    'business.capability',
   ]),
   definition('personas-journeys', 'Personas & journeys', ['journey.persona', 'journey.journey']),
   // No `screen` kind exists in the canonical vocabulary.
@@ -82,11 +84,11 @@ export const OKF_ARTIFACTS: readonly OkfArtifactDefinition[] = [
     'architecture.container',
     'architecture.component',
   ]),
-  // Deployment topology is served from Phase 1 contracts, not from a
-  // canonical object kind — nothing in the vocabulary produces it.
-  definition('deployment', 'Deployment topology', []),
+  // P8: produced by IaC extraction (FR-DET-04).
+  definition('deployment', 'Deployment topology', ['deployment.unit', 'deployment.environment']),
   definition('non-functional-requirements', 'Non-functional requirements', []),
-  definition('backlog', 'Epics, features & stories', []),
+  // P8: Jira-derived work items (P6-04) are the backlog's source.
+  definition('backlog', 'Epics, features & stories', ['workitem.issue']),
   definition('integrations-dataflows', 'Integrations & data flows', [
     'integration.integration',
     'integration.dataflow',

@@ -50,6 +50,51 @@ export function isSourceLocator(value: unknown): value is string {
   return isNonEmptyString(value) && SOURCE_LOCATOR_PATTERN.test(value);
 }
 
+const URL_USERINFO = /^([a-z][a-z0-9+.-]*):\/\/([^/?#@\s]*)@/i;
+
+/**
+ * P8 -- why a locator would carry a credential, or `undefined` if it does
+ * not. A `user:password@` part always does; for `http`/`https` a bare user
+ * part does too, because that is where personal access tokens are put
+ * (`https://<token>@github.com/...`). `ssh://git@host/...` names an
+ * account, not a secret, and is allowed.
+ *
+ * The locator becomes `Source.locator` and the prefix of every artifact and
+ * evidence locator -- it reaches the OKF output, the graph, and git's own
+ * error messages -- so a credential embedded here would be published
+ * everywhere. The descriptor contract already said "reference a credential,
+ * never carry one"; until P8 only key NAMES were checked.
+ */
+export function locatorCredentialProblem(locator: string): string | undefined {
+  const match = URL_USERINFO.exec(locator);
+  if (match === null) return undefined;
+  const scheme = (match[1] ?? '').toLowerCase();
+  const userinfo = match[2] ?? '';
+  if (userinfo.includes(':')) {
+    return 'locator must not embed a password (user:password@) — reference the credential via credential.ref instead';
+  }
+  if ((scheme === 'http' || scheme === 'https') && userinfo.length > 0) {
+    return 'locator must not embed a user or token in an http(s) URL — reference the credential via credential.ref instead';
+  }
+  return undefined;
+}
+
+/**
+ * The same URL with any embedded credential removed (`https://host/...`), for
+ * metadata a connector reads from the source itself -- e.g. a checkout's
+ * configured `origin`, which commonly carries a token. Not a URL? Returned
+ * unchanged.
+ */
+export function withoutUrlCredentials(url: string): string {
+  const match = URL_USERINFO.exec(url);
+  if (match === null) return url;
+  const scheme = match[1] ?? '';
+  const userinfo = match[2] ?? '';
+  const keepUser =
+    !userinfo.includes(':') && scheme.toLowerCase() !== 'http' && scheme.toLowerCase() !== 'https';
+  return `${scheme}://${keepUser ? `${userinfo}@` : ''}${url.slice(match[0].length)}`;
+}
+
 export const CREDENTIAL_SCHEMES = ['none', 'environment', 'secret-store'] as const;
 export type CredentialScheme = (typeof CREDENTIAL_SCHEMES)[number];
 
@@ -284,6 +329,10 @@ export function validateSourceDescriptor(candidate: unknown): ValidationResult {
   if (!isNonEmptyString(candidate.label)) errors.push('label is required');
   if (!isSourceLocator(candidate.locator)) {
     errors.push('locator must match <scheme>://<rest>, e.g. "repo://aurora-commerce"');
+  } else {
+    // Never echo the locator itself in this message: it is the secret.
+    const problem = locatorCredentialProblem(candidate.locator);
+    if (problem !== undefined) errors.push(problem);
   }
 
   if (candidate.credential !== undefined) {

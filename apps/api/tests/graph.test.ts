@@ -21,30 +21,41 @@ vi.mock('../src/services/graph.service.js', () => ({
     }),
 }));
 
+/**
+ * The first test cold-imports the route, and with it `neo4j-driver`; under a
+ * full parallel `turbo run test` that alone can exceed vitest's 5 s default
+ * (P8: observed flaky). The budget covers the import, not the assertion.
+ */
+const COLD_IMPORT_TIMEOUT_MS = 30_000;
+
 describe('GET /api/full-graph', () => {
-  it('returns the graph service response shape unchanged', async () => {
-    const { registerGraphRoutes } = await import('../src/routes/graph.js');
-    const app = Fastify();
-    registerErrorHandling(app);
-    registerGraphRoutes(app);
+  it(
+    'returns the graph service response shape unchanged',
+    { timeout: COLD_IMPORT_TIMEOUT_MS },
+    async () => {
+      const { registerGraphRoutes } = await import('../src/routes/graph.js');
+      const app = Fastify();
+      registerErrorHandling(app);
+      registerGraphRoutes(app);
 
-    const res = await app.inject({ method: 'GET', url: '/api/full-graph' });
+      const res = await app.inject({ method: 'GET', url: '/api/full-graph' });
 
-    expect(res.statusCode).toBe(200);
-    const body = res.json();
-    expect(body.nodes).toHaveLength(2);
-    expect(body.edges).toHaveLength(1);
-    expect(body.nodes[0]).toEqual({
-      id: 'api-1',
-      label: 'CheckoutController',
-      kind: 'Api',
-      confidenceLevel: 'high',
-    });
-    expect(body.edges[0]).toEqual({
-      id: 'rel-1',
-      source: 'api-1',
-      target: 'ent-1',
-      label: 'dependsOn',
-    });
-  });
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(body.nodes).toHaveLength(2);
+      expect(body.edges).toHaveLength(1);
+      expect(body.nodes[0]).toEqual({
+        id: 'api-1',
+        label: 'CheckoutController',
+        kind: 'Api',
+        confidenceLevel: 'high',
+      });
+      expect(body.edges[0]).toEqual({
+        id: 'rel-1',
+        source: 'api-1',
+        target: 'ent-1',
+        label: 'dependsOn',
+      });
+    },
+  );
 });

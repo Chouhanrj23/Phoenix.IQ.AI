@@ -180,6 +180,48 @@ describe('inferBusinessCapabilities -- module-key fallback for flat/monolith rep
   });
 });
 
+// P8 regression, found by the evaluation harness's golden system: a
+// `repo://<org>/<repo>` source id gives every concept the SAME primary key
+// (the repository's own name), which collapsed a multi-module repository
+// into a single capability.
+describe('inferBusinessCapabilities -- a non-discriminating source id defers to the evidence (P8)', () => {
+  function withSourceId<T extends ApiObject | EntityObject>(object: T, sourceId: string): T {
+    return {
+      ...object,
+      metadata: {
+        ...object.metadata,
+        provenance: object.metadata.provenance.map((p) => ({ ...p, sourceId })),
+      },
+      evidence: object.evidence.map((e) => ({ ...e, sourceId })),
+    };
+  }
+  function capabilitiesFor(objects: (ApiObject | EntityObject)[]) {
+    const terms = extractVocabulary(extractTechnicalEvidence(objects), GENERATED_AT);
+    return inferBusinessCapabilities(
+      inferBusinessConcepts(terms, objects, GENERATED_AT),
+      GENERATED_AT,
+    );
+  }
+
+  it('modules separated by evidence paths stay separate when the source id names only the repository', () => {
+    const objects = [
+      FLAT_WIDGET_CONTROLLER,
+      FLAT_WIDGET_HISTORY_CONTROLLER,
+      FLAT_GADGET_ENTITY,
+    ].map((o) => withSourceId(o, 'repo://acme/monorepo'));
+    const capabilities = capabilitiesFor(objects);
+    expect(capabilities.map((c) => c.moduleKey)).toEqual(['flatapp/widgets']);
+    expect(capabilities.some((c) => c.moduleKey === 'monorepo')).toBe(false);
+  });
+
+  it('a single-module repository keeps its source-id capability exactly as before', () => {
+    const objects = [FLAT_WIDGET_CONTROLLER, FLAT_WIDGET_HISTORY_CONTROLLER].map((o) =>
+      withSourceId(o, 'repo://acme/monorepo'),
+    );
+    expect(capabilitiesFor(objects).map((c) => c.moduleKey)).toEqual(['monorepo']);
+  });
+});
+
 describe('materializeBusinessCapabilities / buildCapabilityRelationships', () => {
   it('creates a real business.capability object, distinct from any existing OKF kind', () => {
     const { capabilities } = buildCapabilities();

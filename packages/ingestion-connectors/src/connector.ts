@@ -67,6 +67,25 @@ export interface ConnectorCapabilities {
  * temporary checkout live, all of which are per-source and none of which
  * belong on the stateless `SourceConnector`.
  */
+/**
+ * One commit, as FR-ING-06 requires: "commit history, authorship, and
+ * per-commit file change sets".
+ *
+ * Authorship is personal data, so by default it is recorded only as
+ * `authorKey` -- a stable pseudonym (a hash of the author's e-mail) that is
+ * enough to count distinct owners without exposing who they are. `author`
+ * (name and e-mail) is present only when the connector was explicitly told
+ * to include author identity (`includeAuthorMetadata`, ADR 0014 decision 6).
+ */
+export interface CommitRecord {
+  readonly revision: string;
+  readonly committedAt: string;
+  readonly authorKey: string;
+  readonly author?: string;
+  /** Source-relative paths this commit changed (renames are reported as delete + add). */
+  readonly files: readonly string[];
+}
+
 export interface ConnectorSession {
   readonly descriptor: SourceDescriptor;
   /**
@@ -92,6 +111,14 @@ export interface ConnectorSession {
    * simply omits it.
    */
   readonly sourceMetadata?: Record<string, KnowledgeValue>;
+  /**
+   * P8 -- FR-ING-06: the source's change history, oldest first, when it has
+   * one (a git repository does; a ticket project's issue list does not, and
+   * omits this). Each commit records when, by whom, and which files it
+   * changed -- the input to co-change coupling (FR-DET-05) and ownership /
+   * knowledge-risk (FR-DET-06).
+   */
+  commitHistory?(): Promise<readonly CommitRecord[]>;
   /**
    * Streams the artifacts selected by the session's descriptor filter,
    * further narrowed by `filter` when given (both apply; neither replaces

@@ -2,7 +2,13 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
+// Every test here spawns real `git` processes. Alone each takes well under a
+// second, but under a full parallel `turbo run test` several have crossed
+// vitest's 5 s default (P8: observed flaky). The budget covers process
+// start-up under load; nothing here is expected to be slow.
+vi.setConfig({ testTimeout: 30_000 });
 import {
   validateCanonicalKnowledgeBundle,
   validateOkfDocument,
@@ -30,6 +36,8 @@ import type { SourceRepositoryDescriptor } from '../src/descriptor.js';
 // targets Java — the same tree those tickets will parse.
 
 const FIRST_COMMIT_DATE = '2026-06-01T09:15:00+00:00';
+/** A real `git clone` -- even of a local repository -- regularly exceeds vitest's 5 s default on a loaded machine (P8: was a flaky failure). */
+const CLONE_TIMEOUT_MS = 60_000;
 const SECOND_COMMIT_DATE = '2026-08-10T09:15:00+00:00';
 
 const POM_CONTENT = '<project><artifactId>checkout</artifactId></project>\n';
@@ -503,6 +511,22 @@ describe('failures', () => {
   });
 });
 
+describe('a checkout whose origin embeds a token (P8)', () => {
+  it('reports the origin without the credential', async () => {
+    const token = 'ghp_abcdefghijklmnopqrstuvwxyz0123456789';
+    git(['remote', 'add', 'origin', `https://${token}@github.com/acme/checkout.git`], repoRoot);
+    try {
+      const session = await createGitRepositoryConnector().open(descriptor());
+      const metadata = session.sourceMetadata as GitRepositoryMetadata | undefined;
+      await session.close();
+      expect(metadata?.remoteUrl).toBe('https://github.com/acme/checkout.git');
+      expect(JSON.stringify(session.sourceMetadata)).not.toContain(token);
+    } finally {
+      git(['remote', 'remove', 'origin'], repoRoot);
+    }
+  });
+});
+
 describe('identity vs. location', () => {
   it('keeps machine-local paths out of artifact locators when workingTreePath is used', async () => {
     const session = await createGitRepositoryConnector().open(
@@ -549,36 +573,122 @@ describe('lifecycle', () => {
     await expect(session.read({ path: 'pom.xml' })).rejects.toThrow(/session is closed/);
   });
 
-  it('clones a repository and removes the temporary checkout on close', async () => {
-    // `kind: 'git'` against a local path exercises the real clone path with no
-    // network dependency.
+  it(
+    'clones a repository and removes the temporary checkout on close',
+    async () => {
+      // `kind: 'git'` against a local path exercises the real clone path with no
+      // network dependency.
+      const collection = await withConnectorSession(
+        createGitRepositoryConnector(),
+        descriptor({ repository: { kind: 'git', branch: 'main' } }),
+        (session) => collectArtifacts(session, { includePaths: ['pom.xml'] }),
+      );
+      expect(collection.artifacts.map((artifact) => artifact.path)).toEqual(['pom.xml']);
+      expect(collection.failures).toEqual([]);
+    },
+    CLONE_TIMEOUT_MS,
+  );
+
+  it(
+    'reports a shallow clone as shallow, so history-based analysis cannot assume otherwise',
+    async () => {
+      // Depends on the connector passing the `file://` locator through to git
+      // rather than reducing it to a bare path: git ignores `--depth` for a
+      // local-path clone (`warning: --depth is ignored in local clones`), so a
+      // rewritten URL would silently produce a FULL clone here.
+      const session = await createGitRepositoryConnector({ cloneDepth: 1 }).open(
+        descriptor({ repository: { kind: 'git', branch: 'main' } }),
+      );
+      expect(session.sourceMetadata?.shallow).toBe(true);
+      await session.close();
+    },
+    CLONE_TIMEOUT_MS,
+  );
+
+  it(
+    'a full clone is not reported as shallow',
+    async () => {
+      const session = await createGitRepositoryConnector({ cloneDepth: 0 }).open(
+        descriptor({ repository: { kind: 'git', branch: 'main' } }),
+      );
+      expect(session.sourceMetadata?.shallow).toBe(false);
+      await session.close();
+    },
+    CLONE_TIMEOUT_MS,
+  );
+});
+
+describe('a repository whose path contains a space (P8)', () => {
+  let spacedRoot: string;
+  let spacedParent: string;
+
+  beforeAll(() => {
+    spacedParent = mkdtempSync(join(tmpdir(), 'phoenix-p8-'));
+    spacedRoot = join(spacedParent, 'AI Project', 'my repo');
+    mkdirSync(join(spacedRoot, 'src'), { recursive: true });
+    writeFileSync(join(spacedRoot, 'src', 'App.java'), 'class App {}\n');
+    git(['init', '-q', '-b', 'main'], spacedRoot);
+    git(['add', '.'], spacedRoot);
+    git(['commit', '-q', '-m', 'init'], spacedRoot, FIRST_COMMIT_DATE);
+  });
+
+  afterAll(() => {
+    rmSync(spacedParent, { recursive: true, force: true });
+  });
+
+  /** The standard `file://` form: percent-encoded, because a locator may not contain whitespace. */
+  function encodedLocator(path: string): string {
+    return `file://${encodeURI(path.replace(/\\/g, '/'))}`;
+  }
+
+  it('a raw space is still rejected by the locator contract — encoding is the only valid form', async () => {
+    await expect(
+      createGitRepositoryConnector().open(
+        descriptor({ locator: `file://${spacedRoot.replace(/\\/g, '/')}` }),
+      ),
+    ).rejects.toThrow(/locator must match/);
+  });
+
+  it('analyses a local directory named by a percent-encoded file:// locator', async () => {
     const collection = await withConnectorSession(
       createGitRepositoryConnector(),
-      descriptor({ repository: { kind: 'git', branch: 'main' } }),
-      (session) => collectArtifacts(session, { includePaths: ['pom.xml'] }),
+      descriptor({ locator: encodedLocator(spacedRoot) }),
+      (session) => collectArtifacts(session),
     );
-    expect(collection.artifacts.map((artifact) => artifact.path)).toEqual(['pom.xml']);
+    expect(collection.artifacts.map((artifact) => artifact.path)).toEqual(['src/App.java']);
     expect(collection.failures).toEqual([]);
   });
 
-  it('reports a shallow clone as shallow, so history-based analysis cannot assume otherwise', async () => {
-    // Depends on the connector passing the `file://` locator through to git
-    // rather than reducing it to a bare path: git ignores `--depth` for a
-    // local-path clone (`warning: --depth is ignored in local clones`), so a
-    // rewritten URL would silently produce a FULL clone here.
-    const session = await createGitRepositoryConnector({ cloneDepth: 1 }).open(
-      descriptor({ repository: { kind: 'git', branch: 'main' } }),
+  it('keeps the encoded locator as the source identity, so provenance stays a valid locator', async () => {
+    const locator = encodedLocator(spacedRoot);
+    const source = await withConnectorSession(
+      createGitRepositoryConnector(),
+      descriptor({ locator }),
+      async (session) => session.source,
     );
-    expect(session.sourceMetadata?.shallow).toBe(true);
-    await session.close();
+    expect(source.locator).toBe(locator);
   });
 
-  it('a full clone is not reported as shallow', async () => {
-    const session = await createGitRepositoryConnector({ cloneDepth: 0 }).open(
-      descriptor({ repository: { kind: 'git', branch: 'main' } }),
-    );
-    expect(session.sourceMetadata?.shallow).toBe(false);
-    await session.close();
+  it(
+    'clones from the same encoded locator (git decodes it itself)',
+    async () => {
+      const collection = await withConnectorSession(
+        createGitRepositoryConnector(),
+        descriptor({
+          locator: encodedLocator(spacedRoot),
+          repository: { kind: 'git', branch: 'main' },
+        }),
+        (session) => collectArtifacts(session),
+      );
+      expect(collection.artifacts.map((artifact) => artifact.path)).toEqual(['src/App.java']);
+    },
+    CLONE_TIMEOUT_MS,
+  );
+
+  it('rejects malformed percent-encoding with a clear error instead of a confusing git failure', async () => {
+    await expect(
+      createGitRepositoryConnector().open(descriptor({ locator: 'file://C:/broken%ZZpath' })),
+    ).rejects.toThrow(/not valid percent-encoding/);
   });
 });
 
@@ -650,5 +760,51 @@ describe('end to end — a real repository into a valid OKF document', () => {
     for (const evidence of container.evidence) {
       expect(evidence.sourceVersion).toBe(secondRevision);
     }
+  });
+});
+
+describe('commit history (P8, FR-ING-06)', () => {
+  it('reports every commit oldest first, with its date and changed files', async () => {
+    const history = await withConnectorSession(
+      createGitRepositoryConnector(),
+      descriptor(),
+      async (session) => (await session.commitHistory?.()) ?? [],
+    );
+    expect(history.map((commit) => commit.revision)).toEqual([firstRevision, secondRevision]);
+    expectSameInstant(history[0]?.committedAt, FIRST_COMMIT_DATE);
+    expect(history[0]?.files.length).toBeGreaterThan(0);
+    for (const commit of history) expect(commit.files).toEqual([...commit.files].sort());
+  });
+
+  it('records authorship as a stable pseudonym by default — no name or e-mail', async () => {
+    const history = await withConnectorSession(
+      createGitRepositoryConnector(),
+      descriptor(),
+      async (session) => (await session.commitHistory?.()) ?? [],
+    );
+    for (const commit of history) {
+      expect(commit.authorKey).toMatch(/^author-[0-9a-f]{12}$/);
+      expect(commit.author).toBeUndefined();
+      expect(JSON.stringify(commit)).not.toContain('test@example.invalid');
+    }
+    expect(new Set(history.map((c) => c.authorKey)).size).toBe(1);
+  });
+
+  it('includes author identity only when explicitly enabled', async () => {
+    const history = await withConnectorSession(
+      createGitRepositoryConnector({ includeAuthorMetadata: true }),
+      descriptor(),
+      async (session) => (await session.commitHistory?.()) ?? [],
+    );
+    expect(history[0]?.author).toBe('Phoenix Test <test@example.invalid>');
+  });
+
+  it('honours the history cap', async () => {
+    const history = await withConnectorSession(
+      createGitRepositoryConnector({ maxHistoryCommits: 1 }),
+      descriptor(),
+      async (session) => (await session.commitHistory?.()) ?? [],
+    );
+    expect(history.map((c) => c.revision)).toEqual([secondRevision]);
   });
 });

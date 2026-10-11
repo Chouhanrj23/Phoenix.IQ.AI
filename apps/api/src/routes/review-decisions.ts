@@ -1,6 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { Neo4jUnavailableError } from '@phoenix-ai/graph-persistence';
-import { InvalidReviewDecisionError, InvalidReviewTransitionError } from '@phoenix-ai/review-loop';
+import {
+  InvalidMetricsWindowError,
+  InvalidReviewDecisionError,
+  InvalidReviewTransitionError,
+} from '@phoenix-ai/review-loop';
 import { ApiError } from '../errors.js';
 import {
   getOkfSyncState,
@@ -92,10 +96,27 @@ export function registerReviewDecisionRoutes(app: FastifyInstance): void {
     '/api/review-metrics',
     async (request) => {
       const { from, to } = request.query;
-      return getReviewMetrics({
-        ...(from === undefined ? {} : { from }),
-        ...(to === undefined ? {} : { to }),
-      });
+      try {
+        return await getReviewMetrics({
+          ...(from === undefined ? {} : { from }),
+          ...(to === undefined ? {} : { to }),
+        });
+      } catch (error) {
+        // P8: an unusable window is the caller's error (400), and an
+        // unreachable store is an outage (503) -- the same mapping every
+        // other storage-backed review route already used; this one alone
+        // let both fall through to a generic 500.
+        if (error instanceof InvalidMetricsWindowError) {
+          throw new ApiError(400, error.message);
+        }
+        if (error instanceof Neo4jUnavailableError) {
+          throw new ApiError(
+            503,
+            'Review metrics are temporarily unavailable. Please try again shortly.',
+          );
+        }
+        throw error;
+      }
     },
   );
 

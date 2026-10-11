@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
+import { Neo4jUnavailableError } from '@phoenix-ai/graph-persistence';
 import { createInMemoryReviewDecisionStore } from '@phoenix-ai/review-loop';
 import { registerErrorHandling } from '../src/errors.js';
 import { registerReviewRoutes } from '../src/routes/review-items.js';
@@ -174,5 +175,73 @@ describe('GET /api/review-metrics (FR-REV-04)', () => {
     ).json();
     expect(m.decisions).toBe(0);
     expect(m.window.from).toBe('2030-01-01T00:00:00.000Z');
+  });
+
+  it('rejects an unparseable window bound with 400 instead of computing a meaningless metric (P8)', async () => {
+    const res = await buildApp().inject({
+      method: 'GET',
+      url: '/api/review-metrics?from=last-tuesday',
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().message).toContain('"from" must be an ISO-8601 timestamp');
+  });
+
+  it('rejects a window whose from is after its to with 400 (P8)', async () => {
+    const res = await buildApp().inject({
+      method: 'GET',
+      url: '/api/review-metrics?from=2030-01-02T00:00:00Z&to=2030-01-01T00:00:00Z',
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('reports a store outage as 503, like every other storage-backed review route (P8)', async () => {
+    resetReviewDecisionStore({
+      durability: 'graph',
+      save: () => Promise.reject(new Neo4jUnavailableError('down')),
+      listForTarget: () => Promise.reject(new Neo4jUnavailableError('down')),
+      listAll: () => Promise.reject(new Neo4jUnavailableError('down')),
+    });
+    const res = await buildApp().inject({ method: 'GET', url: '/api/review-metrics' });
+    expect(res.statusCode).toBe(503);
+  });
+});
+
+describe('GET /api/review-queue — leverage from graph structure only (P8 performance)', () => {
+  it('computes leverage from relationship endpoints without loading any node data', async () => {
+    const cyphers: string[] = [];
+    const rows = [
+      { sourceId: TARGET, targetId: 'agg-orders' },
+      { sourceId: 'ctr-checkout', targetId: TARGET },
+    ];
+    const session = {
+      run: () => Promise.resolve({ records: [{ get: () => true }] }),
+      executeRead: (work: (tx: unknown) => unknown) =>
+        Promise.resolve(
+          work({
+            run: (cypher: string) => {
+              cyphers.push(cypher);
+              return Promise.resolve({
+                records: rows.map((row) => ({
+                  get: (key: 'sourceId' | 'targetId') => row[key],
+                })),
+              });
+            },
+          }),
+        ),
+      close: () => Promise.resolve(),
+    };
+    resetReviewDecisionStore(createInMemoryReviewDecisionStore(), {
+      driver: { session: () => session } as never,
+      database: 'neo4j',
+    });
+
+    const ranking = (await buildApp().inject({ method: 'GET', url: '/api/review-queue' })).json();
+    expect(ranking.leverageAvailable).toBe(true);
+    const target = ranking.items.find(
+      (entry: { item: { elementId?: string; id: string } }) =>
+        (entry.item.elementId ?? entry.item.id) === TARGET,
+    );
+    expect(target?.leverage).toBe(2);
+    expect(cyphers.some((cypher) => cypher.includes('MATCH (n) RETURN n'))).toBe(false);
   });
 });

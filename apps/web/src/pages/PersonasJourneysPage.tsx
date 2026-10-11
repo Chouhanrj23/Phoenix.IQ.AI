@@ -18,6 +18,7 @@ import {
 } from '../components/ui/card.js';
 import { Badge } from '../components/ui/badge.js';
 import { cn } from '../lib/utils.js';
+import { FixtureNotice } from '../components/fixture-notice.js';
 
 /**
  * PC-02/PC-03 — Persona -> Journey navigation and expandable Journey
@@ -132,6 +133,7 @@ export function PersonasJourneysPage(): JSX.Element {
         title="Personas & Journeys"
         description="Recovered from personas docs, support tickets, and the code paths their goals map to."
       />
+      <FixtureNotice areas={['personas', 'journeys', 'executionFlows']} />
 
       <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Personas</h2>
       {allPersonas.length === 0 ? (

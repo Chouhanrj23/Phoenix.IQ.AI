@@ -44,6 +44,7 @@ import {
 } from '@phoenix-ai/knowledge-graph';
 import { deterministicId, deriveInferenceConfidence } from './inference-contract.js';
 import type { BusinessConceptCandidate } from './concept-inference.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 /** Below this many DISTINCT concepts, co-location is not enough evidence of a business-level capability (it's just one concept in one module) -- avoids "one capability per class". */
 const MIN_CONCEPTS_PER_CAPABILITY = 2;
@@ -54,6 +55,14 @@ export interface BusinessCapabilityCandidate {
   readonly description: string;
   readonly moduleKey: string;
   readonly conceptIds: readonly string[];
+  /**
+   * P8 -- the canonical object each member concept IS in the bundle: its
+   * `existingObjectId` when the concept was resolved to an already-extracted
+   * object (and so deliberately never materialised), otherwise its own id.
+   * Parallel to `conceptIds`. `comprises` edges target these -- targeting
+   * `conceptIds` directly left a dangling edge for every resolved concept.
+   */
+  readonly memberObjectIds: readonly string[];
   readonly supportingTechnicalObjectIds: readonly string[];
   readonly evidence: readonly Evidence[];
   readonly provenance: readonly Provenance[];
@@ -123,20 +132,51 @@ function moduleKeyFromLocator(locator: string): string | undefined {
  * for the same concept, and never fabricates a constant when both are
  * exhausted.
  */
-function resolveModuleKeys(concept: BusinessConceptCandidate): Set<string> {
-  const primary = new Set(
+function primaryModuleKeys(concept: BusinessConceptCandidate): Set<string> {
+  return new Set(
     concept.provenance
       .map((p) => moduleKeyOf(p.sourceId))
       .filter((key): key is string => key !== undefined),
   );
-  if (primary.size > 0) return primary;
+}
 
-  const secondary = new Set(
+function secondaryModuleKeys(concept: BusinessConceptCandidate): Set<string> {
+  return new Set(
     concept.evidence
       .map((e) => (e.locator === undefined ? undefined : moduleKeyFromLocator(e.locator)))
       .filter((key): key is string => key !== undefined),
   );
-  return secondary;
+}
+
+function resolveModuleKeys(
+  concept: BusinessConceptCandidate,
+  primaryDiscriminates: boolean,
+): Set<string> {
+  const primary = primaryModuleKeys(concept);
+  if (primary.size > 0 && primaryDiscriminates) return primary;
+  return secondaryModuleKeys(concept);
+}
+
+/**
+ * P8 -- found by the evaluation harness's golden system (FR-EVA-02): a
+ * `repo://<org>/<repo>` source id resolves the SAME primary key (the
+ * repository's own name) for every concept, so a multi-module repository
+ * collapsed into one capability although its evidence paths show distinct
+ * modules. The primary signal is therefore used only when it actually
+ * separates something -- or when the evidence cannot separate anything
+ * either. When every concept shares one primary key but their evidence
+ * locators resolve two or more modules, the locators decide. Every case the
+ * primary signal was designed for (several service source ids; a single
+ * module, where both signals agree there is one group) is unchanged.
+ */
+function primarySignalDiscriminates(concepts: readonly BusinessConceptCandidate[]): boolean {
+  const primary = new Set<string>();
+  const secondary = new Set<string>();
+  for (const concept of concepts) {
+    for (const key of primaryModuleKeys(concept)) primary.add(key);
+    for (const key of secondaryModuleKeys(concept)) secondary.add(key);
+  }
+  return !(primary.size === 1 && secondary.size >= 2);
 }
 
 function titleCaseSegment(segment: string): string {
@@ -167,9 +207,10 @@ export function inferBusinessCapabilities(
   }
 
   const clusters = new Map<string, Cluster>();
+  const primaryDiscriminates = primarySignalDiscriminates(concepts);
 
   for (const concept of concepts) {
-    const moduleKeys = resolveModuleKeys(concept);
+    const moduleKeys = resolveModuleKeys(concept, primaryDiscriminates);
     for (const moduleKey of moduleKeys) {
       let cluster = clusters.get(moduleKey);
       if (cluster === undefined) {
@@ -215,6 +256,7 @@ export function inferBusinessCapabilities(
       description: `A business capability inferred from ${distinctConcepts.length} business concept(s) (${distinctConcepts.map((c) => c.name).join(', ')}) co-located under source module "${cluster.moduleKey}".`,
       moduleKey: cluster.moduleKey,
       conceptIds: distinctConcepts.map((c) => c.id),
+      memberObjectIds: distinctConcepts.map((c) => c.existingObjectId ?? c.id),
       supportingTechnicalObjectIds: [...cluster.technicalObjectIds].sort(),
       evidence: [...cluster.evidence.values()],
       provenance: [...cluster.provenance.values()],
@@ -224,7 +266,7 @@ export function inferBusinessCapabilities(
     });
   }
 
-  return capabilities.sort((a, b) => a.name.localeCompare(b.name));
+  return capabilities.sort((a, b) => compareCodeUnits(a.name, b.name));
 }
 
 /** Materializes one new `business.capability` object per candidate (always new -- no existing OKF kind represents a capability). */
@@ -263,20 +305,22 @@ export function buildCapabilityRelationships(
   const relationships: CanonicalKnowledgeRelationship[] = [];
 
   for (const candidate of candidates) {
-    for (const conceptId of candidate.conceptIds) {
+    candidate.conceptIds.forEach((conceptId, index) => {
       relationships.push({
+        // The id stays keyed on the concept (stable across runs, FR-KG-04);
+        // only the endpoint is resolved to the object that actually exists.
         id: deterministicId('relationship', 'comprises', candidate.id, conceptId),
         category: 'composition',
         kind: 'comprises',
         sourceObjectId: candidate.id,
-        targetObjectId: conceptId,
+        targetObjectId: candidate.memberObjectIds[index] ?? conceptId,
         metadata: {
           provenance: [...candidate.provenance],
           confidence: candidate.confidence,
         },
         confidenceDetail: candidate.confidenceDetail,
       });
-    }
+    });
     for (const technicalObjectId of candidate.supportingTechnicalObjectIds) {
       relationships.push({
         id: deterministicId('relationship', 'realizedBy', candidate.id, technicalObjectId),

@@ -15,7 +15,9 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@phoenix-ai/shared": "workspace:*"
+    "@phoenix-ai/shared": "workspace:*",
+    "@phoenix-ai/knowledge-graph": "workspace:*",
+    "@phoenix-ai/okf-renderers": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^5.0.3"

@@ -238,3 +238,51 @@ describe('GET /api/review-decisions (P7-01) — retrieval after a reload', () =>
     expect(all.json().length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe('review API security (P8)', () => {
+  beforeEach(() => {
+    resetReviewDecisionStore(createInMemoryReviewDecisionStore());
+  });
+
+  it('refuses to record a correction containing a secret — 422, the secret not echoed, nothing stored', async () => {
+    const app = buildApp();
+    const secret = 'ghp_abcdefghijklmnopqrstuvwxyz0123456789';
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/review-decisions',
+      payload: { ...CORRECT, correctedValue: `Java; deploy token ${secret}` },
+    });
+    expect(res.statusCode).toBe(422);
+    expect(res.body).not.toContain(secret);
+    expect(res.json().message).toContain('correctedValue appears to contain github-token');
+
+    const stored = await app.inject({ method: 'GET', url: '/api/review-decisions' });
+    expect(stored.json()).toEqual([]);
+  });
+
+  it('does not return internal graph-failure details in a 201 response', async () => {
+    // Connectivity probe passes, then the lookup fails with driver-style
+    // internals: Cypher text and a connection URI.
+    const internal = 'Neo4jError: MATCH (n {id: $id}) RETURN n -- bolt://neo4j-prod:7687';
+    const session = {
+      run: () => Promise.resolve({ records: [{ get: () => true }] }),
+      executeRead: () => Promise.reject(new Error(internal)),
+      executeWrite: () => Promise.reject(new Error(internal)),
+      close: () => Promise.resolve(),
+    };
+    resetReviewDecisionStore(createInMemoryReviewDecisionStore(), {
+      driver: { session: () => session } as never,
+      database: 'neo4j',
+    });
+
+    const res = await buildApp().inject({
+      method: 'POST',
+      url: '/api/review-decisions',
+      payload: CORRECT,
+    });
+    expect(res.statusCode).toBe(201);
+    expect(res.json().propagation.outcome).toBe('failed');
+    expect(res.body).not.toContain('MATCH');
+    expect(res.body).not.toContain('bolt://');
+  });
+});

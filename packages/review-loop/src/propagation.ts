@@ -410,7 +410,16 @@ export function applyCorrectionsToBundle(
 
     const application = applyCorrectionToObject(current, decision, options);
     applications.push(application);
-    if (application.conflict !== undefined) conflicts.push(application.conflict);
+    // P8: a conflict carries the reviewer's provenance too (its human
+    // position), so the reviewer's source must be registered either way.
+    // Registering it only for APPLIED corrections left a stale correction's
+    // conflict citing an unregistered source whenever that reviewer had no
+    // applied correction in the same batch -- the updated bundle then failed
+    // `validateSourceReferences` and could not be published.
+    if (application.conflict !== undefined) {
+      conflicts.push(application.conflict);
+      humanSources.push(humanProvenance(decision));
+    }
     if (application.object !== undefined) {
       byId.set(targetId, application.object);
       humanSources.push(humanProvenance(decision));
@@ -513,10 +522,14 @@ export function buildCorrectionNodeOperation(
     }
   }
 
+  // P8 -- FR-ORC-04: a correction only ever touches the node of the
+  // decision's OWN system. Matched on id alone, a decision recorded for one
+  // tenant updated every tenant's node that shared the content-derived id.
+  const systemId = decision.identity.systemId;
   return {
     id: targetId,
     label: '(existing)',
-    cypher: 'MATCH (n {id: $id}) SET n += $properties RETURN n',
-    params: { id: targetId, properties },
+    cypher: 'MATCH (n {id: $id, systemId: $systemId}) SET n += $properties RETURN n',
+    params: { id: targetId, systemId, properties },
   };
 }

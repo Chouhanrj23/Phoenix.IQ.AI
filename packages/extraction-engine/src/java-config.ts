@@ -29,6 +29,7 @@ import {
 } from './java-structure.js';
 import type { JavaCallFact } from './java-calls.js';
 import type { FactProvenance } from './fact-provenance.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 export interface JavaConfigFact {
   path: string;
@@ -120,7 +121,7 @@ export function extractYamlConfig(path: string, content: string): JavaConfigFact
   const document = parseDocument(content, { lineCounter });
   const facts: JavaConfigFact[] = [];
   walkYamlNode(document.contents as YamlNode | null, '', path, lineCounter, facts);
-  return facts.sort((a, b) => a.line - b.line || a.key.localeCompare(b.key));
+  return facts.sort((a, b) => a.line - b.line || compareCodeUnits(a.key, b.key));
 }
 
 // ---------------------------------------------------------------------------
@@ -217,5 +218,5 @@ export function extractConfigReferences(
 
   references.push(...referencesFromCalls(calls));
 
-  return references.sort((a, b) => a.path.localeCompare(b.path) || a.startLine - b.startLine);
+  return references.sort((a, b) => compareCodeUnits(a.path, b.path) || a.startLine - b.startLine);
 }

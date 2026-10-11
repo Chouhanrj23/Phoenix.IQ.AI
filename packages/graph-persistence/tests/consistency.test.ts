@@ -53,6 +53,7 @@ function matchingGraph(): QueriedGraph {
           kind: 'architecture.container',
           category: 'entity',
           label: 'Checkout Service',
+          attr_responsibility: 'Orchestrates checkout.',
           confidenceLevel: 'high',
           provenanceJson: JSON.stringify(CONTAINER.metadata.provenance),
           evidenceJson: '[]',
@@ -185,6 +186,7 @@ describe('checkGraphConsistency', () => {
               kind: 'architecture.container',
               category: 'entity',
               label: 'Checkout Service',
+              attr_responsibility: 'Orchestrates checkout.',
               confidenceLevel: 'high',
               provenanceJson: JSON.stringify(CONTAINER.metadata.provenance),
               evidenceJson: '[]',
@@ -198,6 +200,7 @@ describe('checkGraphConsistency', () => {
               kind: 'architecture.container',
               category: 'entity',
               label: 'Checkout Service',
+              attr_responsibility: 'Orchestrates checkout.',
               confidenceLevel: 'high',
               provenanceJson: JSON.stringify(SECOND.metadata.provenance),
               evidenceJson: '[]',
@@ -305,5 +308,61 @@ describe('checkGraphConsistency', () => {
     expect(report.unmappable).toHaveLength(1);
     expect(report.differences).toEqual([]);
     expect(report.consistent).toBe(true);
+  });
+});
+
+describe('checkGraphConsistency — attribute values and evidence (P8)', () => {
+  function graphWith(properties: Record<string, unknown>): QueriedGraph {
+    const graph = matchingGraph();
+    const [node] = graph.nodes;
+    if (node === undefined) throw new Error('fixture has no node');
+    return { ...graph, nodes: [{ ...node, properties: { ...node.properties, ...properties } }] };
+  }
+
+  it('detects a corrected value that never reached the graph', () => {
+    const corrected: CanonicalKnowledgeBundle = {
+      ...BUNDLE,
+      objects: [
+        { ...CONTAINER, attributes: { responsibility: 'Orchestrates checkout and refunds.' } },
+      ],
+    };
+    const report = checkGraphConsistency(corrected, matchingGraph());
+    expect(report.consistent).toBe(false);
+    expect(report.differences[0]?.detail).toContain('attr_responsibility');
+  });
+
+  it('detects an attribute the graph still holds after the canonical object dropped it', () => {
+    const report = checkGraphConsistency(BUNDLE, graphWith({ attr_legacyOwner: 'team-x' }));
+    expect(report.differences.map((d) => d.detail)).toEqual([
+      'property "attr_legacyOwner" is in the graph but no longer in the canonical object (stale)',
+    ]);
+  });
+
+  it('detects evidence lost on the way to the graph', () => {
+    const withEvidence: CanonicalKnowledgeBundle = {
+      ...BUNDLE,
+      objects: [
+        {
+          ...CONTAINER,
+          evidence: [{ id: 'ev-1', sourceId: 'repo://aurora-commerce', locator: 'Main.java#L1' }],
+        },
+      ],
+    };
+    const report = checkGraphConsistency(withEvidence, matchingGraph());
+    expect(report.differences.map((d) => d.detail)).toContain(
+      "graph evidenceJson does not match the OKF object's evidence",
+    );
+  });
+
+  it('compares Neo4j Integer values as the numbers they were written as', () => {
+    const counted: CanonicalKnowledgeBundle = {
+      ...BUNDLE,
+      objects: [
+        { ...CONTAINER, attributes: { responsibility: 'Orchestrates checkout.', replicas: 3 } },
+      ],
+    };
+    const neo4jInteger = { toNumber: () => 3 };
+    const report = checkGraphConsistency(counted, graphWith({ attr_replicas: neo4jInteger }));
+    expect(report).toMatchObject({ consistent: true, differences: [] });
   });
 });

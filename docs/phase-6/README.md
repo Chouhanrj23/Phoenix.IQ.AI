@@ -19,6 +19,8 @@ against other sources when they disagree (P6-05).
 | P6-04  | OKF mapping — represent Jira-derived facts in the common model          | **Complete.** `WorkItemObject`/`WorkItemRelationship` (`packages/knowledge-graph/src/workitem.ts`) and `bridgeJiraArtifacts`/`buildJiraCanonicalBundle`/`mapJiraToOkfDocument`/`serializeJiraToOkfYaml` (`packages/extraction-engine/src/jira-bridge.ts`, `jira-okf-mapping.ts`). See ADR 0028. |
 | P6-05  | Source-to-source reconciliation — compare claims, retain contradictions | **Complete.** `ConflictObject` (`packages/knowledge-graph/src/reconciliation.ts`) and `reconcileClaims`/`rankConflicts`/`boundCompositeConfidence` (`packages/reconciliation-engine/src/`). See ADR 0029.                                                                                       |
 | P6-06  | Confidence calculation — from source agreement/corroboration            | **Complete.** `computeConfidence` (`packages/reconciliation-engine/src/confidence-scoring.ts`), extracted and generalized from P6-05's original agreement-only helper to also score each `ConflictObject` position. See ADR 0030.                                                               |
+| P6-08  | Evidence aggregation — aggregate supporting evidence for each claim     | **Complete.** `aggregateEvidence`/`evidenceForClaims` (`packages/reconciliation-engine/src/evidence-aggregation.ts`), wired into `ReconciledClaim.evidence` and each `ConflictObject` position's new `evidenceIds`. See ADR 0031.                                                               |
+| P6-09  | POC — Phoenix repo and Jira analysis using real data sources            | **Complete.** `packages/reconciliation-engine/samples/analyze-phoenix-and-jira.ts` — the real git connector against this repository plus the real Jira connector against a representative dataset, reconciled end to end. See ADR 0032.                                                         |
 
 ## P6-01 — what changed and why
 
@@ -158,3 +160,55 @@ Not built here: authority-weighted (vs. plain source-count) outnumbered/majority
 configurable thresholds, or anything else already named in ADR 0029's own Limitations — this ticket
 completes FR-REC-02's calculation, it does not revisit FR-REC-01's weighting table or FR-REC-06's
 human-override path. See ADR 0030 "Limitations" for the full list.
+
+## P6-08 — what changed and why
+
+Full rationale: [ADR 0031](../architecture/adr/0031-p6-08-evidence-aggregation.md). The same shape of
+gap P6-06 closed for confidence, but for evidence: `ReconciledClaim` never aggregated evidence at all
+(callers had to `flatMap` `.claims` themselves), and `ConflictObject.evidence` was a raw,
+UNDEDUPLICATED flat bag mixing evidence from every position together with no way to tell which
+evidence backed which side of a dispute.
+
+1. **`evidence-aggregation.ts`'s `aggregateEvidence`/`evidenceForClaims`** — a new, small, dedicated
+   module: deduplicates by `Evidence.id` (trusting the id as the identity boundary, the same pattern
+   `deterministicId` already uses everywhere), keeping first occurrence, preserving order.
+2. **`ReconciledClaim` gains an `evidence: Evidence[]` field**, aggregated across every agreeing
+   claim — no more manual `flatMap` required.
+3. **Each `ConflictPosition` gains `evidenceIds?: string[]`**, referencing (never duplicating) entries
+   in the object's own now-deduplicated top-level `evidence` array — a position is now traceable to
+   exactly the evidence that supports it, without cross-referencing sources by hand. Referencing by id
+   rather than embedding a full `Evidence[]` copy also sidesteps the `KnowledgeValue`-index-signature
+   workaround `ConflictPositionConfidence` needed in P6-06 — a bare `string[]` needs none.
+
+Not built here: evidence ranking/truncation within a claim or position (aggregation only — see ADR
+0031 "Limitations"), and anything else already named in ADR 0029/ADR 0030's own Limitations.
+
+## P6-09 — what changed and why
+
+Full rationale: [ADR 0032](../architecture/adr/0032-p6-09-phoenix-jira-poc.md). The P3-11 precedent
+("run the real pipeline against a real, un-curated repository"), extended to Phase 6: the real git
+connector against Phoenix.ai-1 itself, plus the real Jira connector against a representative dataset
+(no live Jira instance is reachable from this environment — asked directly, the answer was to use a
+clearly-labelled representative dataset rather than fabricate a live connection), reconciled together
+end to end.
+
+1. **`packages/reconciliation-engine/samples/analyze-phoenix-and-jira.ts`** — a dev/demo script (not
+   part of any runtime API), runnable via
+   `pnpm --filter @phoenix-ai/reconciliation-engine poc:analyze-phoenix-and-jira`.
+2. **The Jira dataset (`samples/fixtures/phoenix-backlog-jira.ts`) models this project's OWN real Phase
+   6 backlog** — one issue per real P6-0X ticket — served through the real connector's `fetchImpl`
+   injection point, so the POC exercises real request-building/pagination/ADF-rendering code, not a
+   bypass.
+3. **The git side asks a deliberately strict question: is each ticket's ADR COMMITTED**, not merely
+   present on disk — the real git connector's `ls-tree`-at-HEAD view cannot see an uncommitted file by
+   construction (ADR 0014 decision 5).
+4. **Both sources' claims about "is this ticket done?" are reconciled per ticket.** At the time of this
+   run, every one of the 7 real tickets came back as a CONFLICT: Jira says done, git says not yet
+   committed — an honest, accurate finding (all of this session's P6-0X work was still uncommitted),
+   not a demo shortcoming, and exactly the class of gap FR-REC-04 exists to catch.
+5. **Everything assembles into one real, validated, round-tripping OKF bundle** — bridged
+   `WorkItemObject`s, the `ConflictObject`s reconciliation produced, and a two-source registry.
+
+Not built here: any new connector, bridge, or reconciliation logic (a POC exercising Phase 6's existing
+capabilities, the same scope boundary P3-11 drew for Phase 3's). See ADR 0032 "Limitations" for the
+full list.

@@ -40,4 +40,31 @@ describe('error handling', () => {
       message: 'An unexpected error occurred.',
     });
   });
+
+  it('masks EVERY non-ApiError server failure, not only status 500 (P8)', async () => {
+    const app = Fastify();
+    registerErrorHandling(app);
+    app.get('/boom', async () => {
+      throw Object.assign(new Error('bolt://neo4j:7687 MATCH (n {id: $id}) failed'), {
+        statusCode: 503,
+      });
+    });
+    const res = await app.inject({ method: 'GET', url: '/boom' });
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toEqual({
+      statusCode: 503,
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred.',
+    });
+  });
+
+  it('still returns the messages Phoenix writes for clients, including 5xx ApiErrors', async () => {
+    const app = Fastify();
+    registerErrorHandling(app);
+    app.get('/boom', async () => {
+      throw new ApiError(503, 'The knowledge graph is temporarily unavailable.');
+    });
+    const res = await app.inject({ method: 'GET', url: '/boom' });
+    expect(res.json().message).toBe('The knowledge graph is temporarily unavailable.');
+  });
 });

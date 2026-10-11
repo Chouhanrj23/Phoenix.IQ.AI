@@ -19,6 +19,8 @@ import {
   createNeo4jDriver,
   getFullGraph as queryFullGraph,
   loadNeo4jConfig,
+  Neo4jUnavailableError,
+  type GraphScope,
   type Neo4jConfig,
   type QueriedNode,
   type QueriedRelationship,
@@ -51,7 +53,17 @@ let cachedConfig: Neo4jConfig | undefined;
 
 function getDriverAndConfig(): { driver: Driver; config: Neo4jConfig } {
   if (cachedDriver === undefined || cachedConfig === undefined) {
-    cachedConfig = loadNeo4jConfig();
+    try {
+      cachedConfig = loadNeo4jConfig();
+    } catch (error) {
+      // P8: no graph configured is an unavailable graph (503, with the
+      // route's honest message) -- not an unexplained 500. The review store
+      // already treats the same condition as "graph unavailable".
+      throw new Neo4jUnavailableError(
+        `the knowledge graph is not configured: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
+      );
+    }
     cachedDriver = createNeo4jDriver(cachedConfig);
   }
   return { driver: cachedDriver, config: cachedConfig };
@@ -87,9 +99,9 @@ function toApiEdge(relationship: QueriedRelationship): GraphApiEdge {
   };
 }
 
-export async function getFullGraph(): Promise<FullGraphResponse> {
+export async function getFullGraph(scope?: GraphScope): Promise<FullGraphResponse> {
   const { driver, config } = getDriverAndConfig();
-  const graph = await queryFullGraph(driver, config.database);
+  const graph = await queryFullGraph(driver, config.database, scope);
   return {
     nodes: graph.nodes.map(toApiNode),
     edges: graph.relationships.map(toApiEdge),

@@ -19,7 +19,8 @@
     "@phoenix-ai/knowledge-graph": "workspace:*",
     "@phoenix-ai/graph-persistence": "workspace:*",
     "@phoenix-ai/reconciliation-engine": "workspace:*",
-    "neo4j-driver": "^6.2.0"
+    "neo4j-driver": "^6.2.0",
+    "@phoenix-ai/redaction-hardening": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^5.0.3"

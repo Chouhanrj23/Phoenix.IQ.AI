@@ -57,6 +57,18 @@ describe('apiProvider — real backend calls (P1-09)', () => {
     );
   });
 
+  it("shows the API's own explanation when it sends one, e.g. an unavailable graph (P8)", async () => {
+    mockFetchOnce(
+      { statusCode: 503, message: 'The knowledge graph is temporarily unavailable.' },
+      false,
+      503,
+      'Service Unavailable',
+    );
+    await expect(apiProvider.getFullGraph()).rejects.toThrow(
+      'The knowledge graph is temporarily unavailable.',
+    );
+  });
+
   it('resolves an empty array without throwing when the backend returns no data', async () => {
     mockFetchOnce([]);
     await expect(apiProvider.getDomains()).resolves.toEqual([]);

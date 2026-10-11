@@ -116,14 +116,20 @@ describe.runIf(process.env.PHOENIX_NEO4J_INTEGRATION !== 'skip')(
       if (!reachable || !driver) return skip('no reachable Neo4j instance');
       const session = driver.session({ database: DATABASE });
 
-      // Two real extracted nodes: one to be corrected, one that must not move.
+      // Two real extracted nodes, written as the pipeline writes them (P8:
+      // keyed on id AND systemId): one to be corrected, one that must not move.
       await session.run(
-        'MERGE (n:Container {id: $id}) SET n += {kind: "architecture.container", label: "Target", attr_technology: "Node.js/Express", provenanceJson: $prov}',
+        'MERGE (n:Container {id: $id, systemId: "aurora-commerce"}) SET n += {kind: "architecture.container", label: "Target", attr_technology: "Node.js/Express", provenanceJson: $prov}',
         { id: TARGET, prov: JSON.stringify([{ sourceId: 'repo://x', sourceType: 'source-code' }]) },
       );
       await session.run(
-        'MERGE (n:Container {id: $id}) SET n += {kind: "architecture.container", label: "Unrelated", attr_technology: "Python"}',
+        'MERGE (n:Container {id: $id, systemId: "aurora-commerce"}) SET n += {kind: "architecture.container", label: "Unrelated", attr_technology: "Python"}',
         { id: UNRELATED },
+      );
+      // P8 (FR-ORC-04): another tenant's node with the SAME id must never be corrected.
+      await session.run(
+        'MERGE (n:Container {id: $id, systemId: "other-tenant"}) SET n += {kind: "architecture.container", label: "Target", attr_technology: "Node.js/Express"}',
+        { id: TARGET },
       );
       const beforeCount = (await session.run('MATCH (n) RETURN count(n) AS c')).records[0]?.get(
         'c',
@@ -140,13 +146,18 @@ describe.runIf(process.env.PHOENIX_NEO4J_INTEGRATION !== 'skip')(
         reviewerId: 'reviewer-a',
         decidedAt: AT,
       });
-      await createGraphReviewDecisionStore(driver, DATABASE).save(decision);
+      await createGraphReviewDecisionStore(driver, DATABASE, { systemId: 'aurora-commerce' }).save(
+        decision,
+      );
 
       const result = await propagateCorrectionToGraph(driver, DATABASE, decision, { at: AT });
       expect(result.outcome).toBe('propagated');
 
       // The corrected value is queryable, and the extracted value is retained.
-      const corrected = await session.run('MATCH (n:Container {id: $id}) RETURN n', { id: TARGET });
+      const corrected = await session.run(
+        'MATCH (n:Container {id: $id, systemId: "aurora-commerce"}) RETURN n',
+        { id: TARGET },
+      );
       const properties = corrected.records[0]?.get('n').properties as Record<string, unknown>;
       expect(properties.attr_technology).toBe('Java / Spring Boot');
       expect(properties[CORRECTION_ATTRIBUTES.supersededValue]).toBe('Node.js/Express');
@@ -156,11 +167,20 @@ describe.runIf(process.env.PHOENIX_NEO4J_INTEGRATION !== 'skip')(
       expect(properties.id).toBe(TARGET);
       expect(String(properties.provenanceJson)).toContain('repo://x');
 
-      // Exactly ONE node still carries that id -- no duplicate was created.
-      const duplicates = await session.run('MATCH (n {id: $id}) RETURN count(n) AS c', {
+      // Exactly ONE node of this tenant still carries that id -- no duplicate was created.
+      const duplicates = await session.run(
+        'MATCH (n {id: $id, systemId: "aurora-commerce"}) RETURN count(n) AS c',
+        { id: TARGET },
+      );
+      expect(duplicates.records[0]?.get('c').toString()).toBe('1');
+
+      // The other tenant's same-id node is untouched.
+      const other = await session.run('MATCH (n {id: $id, systemId: "other-tenant"}) RETURN n', {
         id: TARGET,
       });
-      expect(duplicates.records[0]?.get('c').toString()).toBe('1');
+      const otherProps = other.records[0]?.get('n').properties as Record<string, unknown>;
+      expect(otherProps.attr_technology).toBe('Node.js/Express');
+      expect(otherProps[CORRECTION_ATTRIBUTES.reviewStatus]).toBeUndefined();
 
       // The decision is linked to the element it corrected.
       const linked = await session.run(
@@ -170,9 +190,10 @@ describe.runIf(process.env.PHOENIX_NEO4J_INTEGRATION !== 'skip')(
       expect(linked.records[0]?.get('c').toString()).toBe('1');
 
       // Unrelated data is exactly as it was, and nothing new was invented.
-      const unrelated = await session.run('MATCH (n:Container {id: $id}) RETURN n', {
-        id: UNRELATED,
-      });
+      const unrelated = await session.run(
+        'MATCH (n:Container {id: $id, systemId: "aurora-commerce"}) RETURN n',
+        { id: UNRELATED },
+      );
       const unrelatedProps = unrelated.records[0]?.get('n').properties as Record<string, unknown>;
       expect(unrelatedProps.attr_technology).toBe('Python');
       expect(unrelatedProps[CORRECTION_ATTRIBUTES.reviewStatus]).toBeUndefined();

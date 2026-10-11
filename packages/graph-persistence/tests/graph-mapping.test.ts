@@ -609,3 +609,62 @@ describe('CURRENTLY_PRODUCED_OBJECT_KINDS documents real Phase 3 coverage accura
     expect(CURRENTLY_PRODUCED_OBJECT_KINDS).toEqual(['integration.api', 'domain.entity']);
   });
 });
+
+describe('mapOkfBundleToGraph -- duplicate ids never reach the write path (P8)', () => {
+  it('excludes and reports BOTH objects that share an id, rather than letting MERGE collapse them', () => {
+    const impostor = { ...entity, identity: { ...entity.identity, id: container.identity.id } };
+    const result = mapOkfBundleToGraph({ ...BUNDLE, objects: [...ALL_OBJECTS, impostor] });
+
+    expect(result.nodes.some((node) => node.id === container.identity.id)).toBe(false);
+    const duplicateIssues = result.issues.filter((issue) => issue.id === container.identity.id);
+    expect(duplicateIssues).toHaveLength(2);
+    expect(duplicateIssues.map((issue) => issue.kind).sort()).toEqual(['Container', 'Entity']);
+    for (const issue of duplicateIssues) expect(issue.reason).toMatch(/duplicate id/);
+  });
+
+  it('excludes and reports both relationships that share an id', () => {
+    const clash = { ...hasAssociationRelationship, id: containsRelationship.id };
+    const result = mapOkfBundleToGraph({
+      ...BUNDLE,
+      relationships: [...ALL_RELATIONSHIPS, clash],
+    });
+
+    expect(result.relationships.some((r) => r.id === containsRelationship.id)).toBe(false);
+    expect(
+      result.issues.filter(
+        (issue) => issue.elementType === 'relationship' && issue.id === containsRelationship.id,
+      ),
+    ).toHaveLength(2);
+    // Unrelated relationships are untouched.
+    expect(result.relationships.map((r) => r.id)).toContain(dependsOnRelationship.id);
+  });
+
+  it('leaves a bundle with unique ids exactly as before', () => {
+    const result = mapOkfBundleToGraph(BUNDLE);
+    expect(result.issues).toEqual([]);
+    expect(result.nodes).toHaveLength(ALL_OBJECTS.length);
+    expect(result.relationships).toHaveLength(ALL_RELATIONSHIPS.length);
+  });
+});
+
+describe('kinds produced after Phase 4 reach the graph (P8)', () => {
+  it.each([
+    ['reconciliation.conflict', 'Conflict'],
+    ['workitem.issue', 'WorkItem'],
+    ['business.capability', 'Capability'],
+  ])('maps %s objects to :%s nodes instead of reporting them unmappable', (kind, label) => {
+    const result = mapOkfObjectToGraphNode({ ...entity, kind } as typeof entity);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.node.label).toBe(label);
+  });
+
+  it.each([
+    ['groundedIn', 'GROUNDED_IN'],
+    ['comprises', 'COMPRISES'],
+    ['realizedBy', 'REALIZED_BY'],
+  ])('maps %s relationships to %s instead of dropping the traceability edge', (kind, type) => {
+    const result = mapOkfRelationshipToGraphRelationship({ ...containsRelationship, kind });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.relationship.type).toBe(type);
+  });
+});

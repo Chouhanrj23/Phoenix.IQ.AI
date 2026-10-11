@@ -17,14 +17,16 @@ export const driftHistory: DriftRun[] = [
         id: 'drift-hist-1',
         elementName: 'Checkout Service',
         changeType: 'modified',
-        description: 'New outbound dependency on Fraud Detection Service added directly to the checkout path (previously async via event bus only).',
+        description:
+          'New outbound dependency on Fraud Detection Service added directly to the checkout path (previously async via event bus only).',
         detectedAt: '2026-07-06T09:00:00.000Z',
       },
       {
         id: 'drift-hist-2',
         elementName: 'Inventory Service',
         changeType: 'modified',
-        description: 'Schema change: new column added to WarehouseAllocation for partial-reservation support.',
+        description:
+          'Schema change: new column added to WarehouseAllocation for partial-reservation support.',
         detectedAt: '2026-07-06T09:00:00.000Z',
       },
     ],
@@ -38,7 +40,8 @@ export const driftHistory: DriftRun[] = [
         id: 'drift-hist-3',
         elementName: 'Aurora Commerce (Dummy Company used for reverse engineering)',
         changeType: 'added',
-        description: 'Baseline established: 142 elements extracted across 6 domains, 11 containers, and 2 execution flows.',
+        description:
+          'Baseline established: 142 elements extracted across 6 domains, 11 containers, and 2 execution flows.',
         detectedAt: '2026-06-22T09:00:00.000Z',
       },
     ],

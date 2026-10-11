@@ -17,7 +17,11 @@
  */
 
 import neo4j, { type Driver } from 'neo4j-driver';
-import type { Neo4jConfig } from './config.js';
+import {
+  DEFAULT_NEO4J_CONNECTION_ACQUISITION_TIMEOUT_MS,
+  DEFAULT_NEO4J_CONNECTION_TIMEOUT_MS,
+  type Neo4jConfig,
+} from './config.js';
 
 /** Thrown whenever this module cannot reach or use a real Neo4j instance -- never swallowed, always carries the original driver error as `cause`. */
 export class Neo4jUnavailableError extends Error {
@@ -27,9 +31,60 @@ export class Neo4jUnavailableError extends Error {
   }
 }
 
+/**
+ * Driver error codes that mean "Neo4j could not be reached or used", as
+ * opposed to "the query itself was wrong". `ServiceUnavailable`/
+ * `SessionExpired` are the driver's own connection-level codes; the security
+ * family covers credentials that stop working mid-session.
+ */
+const CONNECTIVITY_ERROR_CODES: ReadonlySet<string> = new Set([
+  'ServiceUnavailable',
+  'SessionExpired',
+  'Neo.TransientError.General.DatabaseUnavailable',
+]);
+
+/**
+ * Whether `error` is a connectivity/availability failure rather than a
+ * query/logic failure.
+ *
+ * `verifyNeo4jConnectivity` only proves the database was reachable at the
+ * START of an operation. A connection lost between that check and the actual
+ * read/write surfaces as a raw driver error, which callers previously could
+ * not tell apart from a logic bug -- so an outage mid-request became a 500
+ * instead of the documented "unavailable, nothing was saved" (P8 hardening).
+ */
+export function isNeo4jConnectivityError(error: unknown): boolean {
+  if (error instanceof Neo4jUnavailableError) return true;
+  if (typeof error !== 'object' || error === null) return false;
+  const code = (error as { code?: unknown }).code;
+  if (typeof code !== 'string') return false;
+  return CONNECTIVITY_ERROR_CODES.has(code) || code.startsWith('Neo.ClientError.Security.');
+}
+
+/**
+ * Re-throws a connectivity failure as `Neo4jUnavailableError` (original error
+ * kept as `cause`); returns `error` unchanged otherwise, so the caller decides
+ * how to report a non-connectivity failure.
+ */
+export function asNeo4jUnavailable(error: unknown, database: string): unknown {
+  if (error instanceof Neo4jUnavailableError) return error;
+  if (!isNeo4jConnectivityError(error)) return error;
+  return new Neo4jUnavailableError(
+    `Lost connection to Neo4j (database "${database}") during the operation: ${error instanceof Error ? error.message : String(error)}`,
+    { cause: error },
+  );
+}
+
 /** Creates a driver instance. Does not connect yet -- `neo4j-driver` connects lazily on first use, which is why `verifyNeo4jConnectivity` exists as a separate, explicit step. */
 export function createNeo4jDriver(config: Neo4jConfig): Driver {
-  return neo4j.driver(config.uri, neo4j.auth.basic(config.user, config.password));
+  return neo4j.driver(config.uri, neo4j.auth.basic(config.user, config.password), {
+    // P8: bounded waits, so an unreachable database fails fast as
+    // `Neo4jUnavailableError` instead of holding a request for the driver's
+    // 30 s defaults. See `DEFAULT_NEO4J_CONNECTION_TIMEOUT_MS`.
+    connectionTimeout: config.connectionTimeoutMs ?? DEFAULT_NEO4J_CONNECTION_TIMEOUT_MS,
+    connectionAcquisitionTimeout:
+      config.connectionAcquisitionTimeoutMs ?? DEFAULT_NEO4J_CONNECTION_ACQUISITION_TIMEOUT_MS,
+  });
 }
 
 /**

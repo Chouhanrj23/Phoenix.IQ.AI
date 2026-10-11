@@ -242,7 +242,11 @@ export interface ReviewDecisionOutcome {
    * be durably stored while the reviewed element has no graph node to update.
    */
   propagation?: {
-    outcome: 'propagated' | 'target-missing' | 'graph-unavailable' | 'failed';
+    /**
+     * `conflict` (P8): the graph's value changed after the reviewer saw it, so
+     * the correction was NOT written over it — the disagreement is kept.
+     */
+    outcome: 'propagated' | 'target-missing' | 'conflict' | 'graph-unavailable' | 'failed';
     reason: string;
   };
 }

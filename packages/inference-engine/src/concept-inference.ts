@@ -50,6 +50,7 @@ import {
   type InferenceProvider,
 } from './inference-contract.js';
 import type { VocabularyTerm } from './vocabulary.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 export interface BusinessConceptCandidate {
   readonly id: string;
@@ -198,7 +199,7 @@ export function inferBusinessConcepts(
     });
   }
 
-  return candidates.sort((a, b) => a.name.localeCompare(b.name));
+  return candidates.sort((a, b) => compareCodeUnits(a.name, b.name));
 }
 
 /**

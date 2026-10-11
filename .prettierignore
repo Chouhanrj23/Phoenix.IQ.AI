@@ -3,3 +3,6 @@ coverage
 .turbo
 node_modules
 pnpm-lock.yaml
+
+# Personal working notes, not project documentation (P8: kept out of the CI format gate).
+mydocs.md

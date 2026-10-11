@@ -20,6 +20,7 @@ import { Button } from '../components/ui/button.js';
 import { Badge } from '../components/ui/badge.js';
 import { cn } from '../lib/utils.js';
 import { pairwise } from '../lib/pairwise.js';
+import { FixtureNotice } from '../components/fixture-notice.js';
 
 function stepLabel(step: FlowStep, index: number): JSX.Element {
   return (
@@ -110,6 +111,7 @@ export function ExecutionFlowsPage(): JSX.Element {
         title="Execution Flows"
         description="Recovered step-by-step flows, each step tied to the entities it reads and writes."
       />
+      <FixtureNotice areas={['executionFlows']} />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {flows.map((flow) => (

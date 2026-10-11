@@ -10,7 +10,14 @@ export const integrations: Integration[] = [
     protocol: 'REST/HTTPS (synchronous)',
     dataExchanged: 'Card token, amount, currency, order reference → authorization/capture result',
     metadata: meta(
-      [prov('repo://aurora-commerce/services/payments-adapter', 'source-code', 'extraction-engine', 2)],
+      [
+        prov(
+          'repo://aurora-commerce/services/payments-adapter',
+          'source-code',
+          'extraction-engine',
+          2,
+        ),
+      ],
       conf('high', 0.9),
     ),
   },
@@ -23,7 +30,11 @@ export const integrations: Integration[] = [
     dataExchanged: 'Order + device signals → numeric risk score',
     metadata: meta(
       [prov('logs://gateway/2026-06', 'log', 'inference-engine', 5)],
-      conf('medium', 0.6, 'Only observed via gateway logs; no integration spec on file for request/response schema.'),
+      conf(
+        'medium',
+        0.6,
+        'Only observed via gateway logs; no integration spec on file for request/response schema.',
+      ),
     ),
   },
   {
@@ -47,10 +58,19 @@ export const integrations: Integration[] = [
     dataExchanged: 'Confirmed orders and inventory adjustments',
     metadata: meta(
       [
-        prov('repo://aurora-commerce/services/erp-connector', 'source-code', 'extraction-engine', 2),
+        prov(
+          'repo://aurora-commerce/services/erp-connector',
+          'source-code',
+          'extraction-engine',
+          2,
+        ),
         prov('ticket://JIRA-4821', 'ticket', 'inference-engine', 45),
       ],
-      conf('low', 0.4, 'Integration is active in code; a ticket proposes deprecating it with no evidence it happened.'),
+      conf(
+        'low',
+        0.4,
+        'Integration is active in code; a ticket proposes deprecating it with no evidence it happened.',
+      ),
     ),
   },
   {
@@ -61,7 +81,14 @@ export const integrations: Integration[] = [
     protocol: 'REST/HTTPS (synchronous)',
     dataExchanged: 'Order/shipment/refund events → rendered email or SMS',
     metadata: meta(
-      [prov('repo://aurora-commerce/services/notifications', 'source-code', 'extraction-engine', 2)],
+      [
+        prov(
+          'repo://aurora-commerce/services/notifications',
+          'source-code',
+          'extraction-engine',
+          2,
+        ),
+      ],
       conf('high', 0.89),
     ),
   },

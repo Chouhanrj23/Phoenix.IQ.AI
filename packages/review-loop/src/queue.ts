@@ -23,6 +23,7 @@
 
 import type { ConfidenceLevel, ReviewItem } from '@phoenix-ai/shared';
 import { targetIdForReviewItem } from './service.js';
+import { compareCodeUnits } from '@phoenix-ai/shared';
 
 /** Minimal shape this module needs from a relationship — satisfied by `QueriedRelationship` (P4-07) and by `CanonicalKnowledgeRelationship`. */
 export interface RelationshipEndpoints {
@@ -111,7 +112,8 @@ export function rankReviewQueue(
   });
 
   ranked.sort(
-    (a, b) => b.score - a.score || b.leverage - a.leverage || a.item.id.localeCompare(b.item.id),
+    (a, b) =>
+      b.score - a.score || b.leverage - a.leverage || compareCodeUnits(a.item.id, b.item.id),
   );
 
   return {
