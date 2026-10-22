@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   Bot,
   ArrowLeftRight,
+  House,
   Layers3,
 } from 'lucide-react';
 import { currentDataSourceMode, dataModeBadge, displayedCompany } from '../lib/data-origin.js';
@@ -36,7 +37,8 @@ const NAV_SECTIONS: Array<{ title: string | null; items: NavItem[] }> = [
   {
     title: null,
     items: [
-      { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
+      { to: '/', label: 'Homepage', icon: House, end: true },
+      { to: '/overview', label: 'Overview', icon: LayoutDashboard, end: true },
       { to: '/graph', label: 'Knowledge Graph', icon: Share2 },
       { to: '/system-map', label: 'System Map', icon: Map },
       { to: '/correlation', label: 'Cross-Correlation', icon: Waypoints },

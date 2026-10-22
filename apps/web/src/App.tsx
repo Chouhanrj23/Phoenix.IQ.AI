@@ -19,6 +19,7 @@ import { CorrelationExplorerPage } from './pages/CorrelationExplorerPage.js';
 import { SystemMapPage } from './pages/SystemMapPage.js';
 import { AgentPipelinePage } from './pages/AgentPipelinePage.js';
 import { ModuleWorkspacePage } from './pages/ModuleWorkspacePage.js';
+import { HomePage } from './pages/HomePage.js';
 import {
   getActiveCompany,
   hasSelectedCompany,
@@ -58,7 +59,9 @@ export function App(): JSX.Element {
               // from the previously selected company.
               <AppShell key={companyId} companyId={companyId}>
                 <Routes>
-                  <Route path="/" element={<OverviewPage />} />
+                  <Route path="/" element={<HomePage onOpenEngagement={selectCompany} />} />
+                  <Route path="/overview" element={<OverviewPage />} />
+                  <Route path="/home" element={<Navigate to="/" replace />} />
                   <Route path="/graph" element={<GraphExplorerPage />} />
                   <Route path="/correlation" element={<CorrelationExplorerPage />} />
                   <Route path="/system-map" element={<SystemMapPage />} />

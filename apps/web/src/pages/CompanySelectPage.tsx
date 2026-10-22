@@ -75,7 +75,15 @@ export function CompanySelectPage({
       </header>
 
       {/* Hero band */}
-      <div className="border-b border-slate-100 bg-gradient-to-b from-blue-50/70 to-white px-6 py-14 sm:px-10">
+      <div className="relative overflow-hidden border-b border-[#00338D]/15 bg-gradient-to-br from-[#00338D]/[0.06] via-[#00338D]/[0.02] to-white px-6 py-14 sm:px-10">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-20 -top-28 h-72 w-72 rounded-full bg-[#00338D]/12 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-[#00338D]/12 blur-3xl"
+        />
         <div className="mx-auto max-w-2xl text-center">
           <div className="mx-auto mb-4 h-0.5 w-10 rounded-full bg-[#00338D]" />
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#00338D]">
@@ -93,7 +101,7 @@ export function CompanySelectPage({
       </div>
 
       <main className="flex flex-1 flex-col items-center px-6 py-14 sm:px-10">
-        <div className="grid w-full max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid w-full max-w-6xl grid-cols-1 gap-6 md:grid-cols-2">
           {COMPANIES.map((company) => {
             const Icon = ICONS[company.id];
             const accent = ACCENT_CLASSES[company.accent];
@@ -110,9 +118,9 @@ export function CompanySelectPage({
                 title={availability?.note}
                 onClick={() => handlePick(company.id)}
                 className={cn(
-                  'group relative flex h-full flex-col items-start overflow-hidden rounded-lg border border-slate-200 bg-white pt-8 text-left shadow-sm transition-all duration-200',
+                  'group relative flex h-full flex-col items-start overflow-hidden rounded-xl border border-[#0091DA]/15 bg-white pt-8 text-left shadow-[0_14px_30px_-14px_rgba(0,51,141,0.28),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
                   selectable
-                    ? 'hover:-translate-y-0.5 hover:shadow-lg'
+                    ? 'hover:-translate-y-1 hover:border-[#00338D]/25 hover:shadow-[0_22px_40px_-18px_rgba(0,51,141,0.35),inset_0_1px_0_rgba(255,255,255,0.9)]'
                     : 'cursor-not-allowed opacity-60',
                 )}
               >
