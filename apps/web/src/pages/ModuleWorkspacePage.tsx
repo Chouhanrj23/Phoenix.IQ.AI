@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type JSX } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import {
   Bell,
@@ -10,10 +10,17 @@ import {
   Mail,
   Network,
   Send,
+  Sparkles,
   Ticket,
   Upload,
   X,
 } from 'lucide-react';
+import {
+  buildPrompt,
+  getSuggestions,
+  rankSuggestions,
+  type PromptSuggestion,
+} from '../lib/prompt-suggestions.js';
 import { Button } from '../components/ui/button.js';
 import {
   KNOWLEDGE_GRAPH_DESTINATIONS,
@@ -23,6 +30,8 @@ import {
 type ArtifactKind = {
   id: string;
   label: string;
+  analysisLabel?: string;
+  hideAnalysis?: boolean;
   description: string;
   icon: typeof FileText;
   accent: string;
@@ -34,6 +43,7 @@ const ARTIFACTS: ArtifactKind[] = [
   {
     id: 'brd',
     label: 'BRD',
+    hideAnalysis: true,
     description: 'Business requirements',
     icon: FileText,
     accent: 'border-l-blue-500',
@@ -42,7 +52,7 @@ const ARTIFACTS: ArtifactKind[] = [
   },
   {
     id: 'code',
-    label: 'Code',
+    label: 'Source Code',
     description: 'Source code and repositories',
     icon: Braces,
     accent: 'border-l-violet-500',
@@ -51,7 +61,8 @@ const ARTIFACTS: ArtifactKind[] = [
   },
   {
     id: 'screenshots',
-    label: 'SS',
+    label: 'Screenshots',
+    analysisLabel: 'Functional Specs',
     description: 'Screenshots and UI captures',
     icon: FileCode2,
     accent: 'border-l-amber-500',
@@ -69,7 +80,7 @@ const ARTIFACTS: ArtifactKind[] = [
   },
   {
     id: 'technical-documents',
-    label: 'Tech Document',
+    label: 'Technical Document',
     description: 'Architecture and technical specs',
     icon: FileText,
     accent: 'border-l-cyan-500',
@@ -123,16 +134,82 @@ const ARTIFACTS: ArtifactKind[] = [
   },
 ];
 
-const MODULES = ['module-1', 'module-2', 'module-3', 'module-4', 'module-5', 'module-6'];
+const MODULES = [
+  { id: 'module-1', name: 'Overview' },
+  { id: 'module-2', name: 'Accounts' },
+  { id: 'module-3', name: 'Payments and Transfer' },
+  { id: 'module-4', name: 'Deposits' },
+  { id: 'module-5', name: 'Cards' },
+  { id: 'module-6', name: 'Loans' },
+];
+
+function useAnimatedNumber(target: number): number {
+  const [value, setValue] = useState(0);
+  const current = useRef(0);
+  useEffect(() => {
+    const from = current.current;
+    const start = performance.now();
+    const duration = 800;
+    let frame = 0;
+    const tick = (now: number): void => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      current.current = Math.round(from + (target - from) * eased);
+      setValue(current.current);
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [target]);
+  return value;
+}
+
 export function ModuleWorkspacePage(): JSX.Element {
   const { moduleId = 'module-1' } = useParams();
   const [uploads, setUploads] = useState<Record<string, string[]>>({});
   const [prompts, setPrompts] = useState<Record<string, string>>({});
   const [outputs, setOutputs] = useState<Record<string, string>>({});
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
+  const [analysing, setAnalysing] = useState<Record<string, boolean>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
-  const moduleName = moduleId.replace('-', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const typers = useRef<Record<string, number>>({});
+  const analysisTimers = useRef<Record<string, number>>({});
+
+  useEffect(
+    () => () => {
+      Object.values(typers.current).forEach(window.clearInterval);
+      Object.values(analysisTimers.current).forEach(window.clearTimeout);
+    },
+    [],
+  );
+
+  function stopTyping(id: string): void {
+    window.clearInterval(typers.current[id]);
+  }
+
+  // Simulates the model streaming a suggested prompt into the textarea.
+  function typeIntoPrompt(artifact: ArtifactKind, suggestion: PromptSuggestion): void {
+    const id = artifact.id;
+    stopTyping(id);
+    const text = buildPrompt(suggestion, uploads[id] ?? []);
+    const existing = prompts[id] ?? '';
+    const base = existing.trim() ? `${existing.trimEnd()}\n\n` : '';
+    let position = 0;
+    typers.current[id] = window.setInterval(() => {
+      position = Math.min(position + 3, text.length);
+      setPrompts((previous) => ({ ...previous, [id]: base + text.slice(0, position) }));
+      if (position >= text.length) stopTyping(id);
+    }, 16);
+  }
+
+  const moduleName = MODULES.find((module) => module.id === moduleId)?.name ?? moduleId;
   const uploadCount = Object.values(uploads).flat().length;
+  const sourceAvailable = Math.round(
+    (ARTIFACTS.filter((artifact) => (uploads[artifact.id] ?? []).length > 0).length /
+      ARTIFACTS.length) *
+      100,
+  );
+  const animatedSourceAvailable = useAnimatedNumber(sourceAvailable);
 
   function addFiles(artifact: ArtifactKind, event: ChangeEvent<HTMLInputElement>): void {
     const selectedFiles = Array.from(event.target.files ?? []);
@@ -142,6 +219,13 @@ export function ModuleWorkspacePage(): JSX.Element {
     const rejectedFiles = selectedFiles.filter((file) => !validFiles.includes(file));
 
     if (validFiles.length) {
+      // Placeholder for the real LLM pass over the uploaded files.
+      setAnalysing((previous) => ({ ...previous, [artifact.id]: true }));
+      window.clearTimeout(analysisTimers.current[artifact.id]);
+      analysisTimers.current[artifact.id] = window.setTimeout(
+        () => setAnalysing((previous) => ({ ...previous, [artifact.id]: false })),
+        1800,
+      );
       setUploads((previous) => ({
         ...previous,
         [artifact.id]: [...(previous[artifact.id] ?? []), ...validFiles.map((file) => file.name)],
@@ -199,16 +283,50 @@ export function ModuleWorkspacePage(): JSX.Element {
       <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-4">
         {MODULES.map((module) => (
           <NavLink
-            key={module}
-            to={`/modules/${module}`}
+            key={module.id}
+            to={`/modules/${module.id}`}
             className={({ isActive }) =>
               `rounded-md px-4 py-2 text-sm font-medium transition-colors ${isActive ? 'bg-[#00338D] text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-[#00338D]'}`
             }
           >
-            {module.replace('-', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())}
+            {module.name}
           </NavLink>
         ))}
       </div>
+
+      <section
+        aria-labelledby="source-available-heading"
+        className="mb-6 rounded-lg border border-border bg-white p-4 shadow-sm"
+      >
+        <div className="mb-2 flex items-baseline justify-between">
+          <h2 id="source-available-heading" className="text-sm font-semibold">
+            Source Available Percentage
+          </h2>
+          <span className="text-2xl font-semibold tabular-nums text-[#00338D]">
+            {animatedSourceAvailable}%
+          </span>
+        </div>
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={sourceAvailable}
+          className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100"
+        >
+          <div
+            className="relative h-full overflow-hidden rounded-full bg-[#00338D] transition-[width] duration-700 ease-out"
+            style={{ width: `${sourceAvailable}%` }}
+          >
+            {sourceAvailable > 0 ? (
+              <span className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+            ) : null}
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {ARTIFACTS.filter((artifact) => (uploads[artifact.id] ?? []).length > 0).length} of{' '}
+          {ARTIFACTS.length} sources uploaded — each source adds 10%.
+        </p>
+      </section>
 
       <section aria-labelledby="evidence-heading">
         <div className="mb-3 flex items-center justify-between">
@@ -225,7 +343,7 @@ export function ModuleWorkspacePage(): JSX.Element {
             Each category accepts only the formats shown on its card
           </span>
         </div>
-        <div className="grid items-start gap-4 xl:grid-cols-2">
+        <div className="grid items-stretch gap-4 xl:grid-cols-2">
           {ARTIFACTS.map((artifact) => {
             const Icon = artifact.icon;
             const files = uploads[artifact.id] ?? [];
@@ -295,49 +413,96 @@ export function ModuleWorkspacePage(): JSX.Element {
                     {uploadErrors[artifact.id]}
                   </p>
                 ) : null}
-                <details className="mt-4 border-t border-slate-100 pt-3">
-                  <summary className="cursor-pointer text-xs font-semibold text-[#00338D] marker:text-[#00338D]">
-                    Configure LLM analysis
-                  </summary>
-                  <div className="pt-3">
-                    <label
-                      htmlFor={`${artifact.id}-prompt`}
-                      className="mb-1.5 block text-xs font-medium text-slate-700"
-                    >
-                      {artifact.label} analysis prompt
-                    </label>
-                    <textarea
-                      id={`${artifact.id}-prompt`}
-                      value={prompts[artifact.id] ?? ''}
-                      onChange={(event) =>
-                        setPrompts((previous) => ({
-                          ...previous,
-                          [artifact.id]: event.target.value,
-                        }))
-                      }
-                      placeholder={`What should the model reverse engineer from these ${artifact.label} files?`}
-                      className="min-h-20 w-full rounded-md border border-slate-300 p-3 text-xs outline-none transition placeholder:text-slate-400 focus:border-[#00338D] focus:ring-2 focus:ring-blue-100"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="mt-3 w-full bg-[#00338D] hover:bg-[#002a73]"
-                      onClick={() => generateOutput(artifact)}
-                    >
-                      <Send className="h-3.5 w-3.5" /> Generate {artifact.label} analysis
-                    </Button>
-                    <div className="mt-3 rounded-md border border-dashed border-slate-300 bg-slate-50 p-3">
-                      <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> {artifact.label}{' '}
-                        response
+                {artifact.hideAnalysis ? null : (
+                  <details className="mt-4 border-t border-slate-100 pt-3">
+                    <summary className="cursor-pointer text-xs font-semibold text-[#00338D] marker:text-[#00338D]">
+                      {artifact.analysisLabel
+                        ? `${artifact.analysisLabel} analysis`
+                        : 'Configure LLM analysis'}
+                    </summary>
+                    <div className="pt-3">
+                      <label
+                        htmlFor={`${artifact.id}-prompt`}
+                        className="mb-1.5 block text-xs font-medium text-slate-700"
+                      >
+                        {artifact.analysisLabel ?? artifact.label} analysis prompt
+                      </label>
+                      <textarea
+                        id={`${artifact.id}-prompt`}
+                        value={prompts[artifact.id] ?? ''}
+                        onChange={(event) => {
+                          stopTyping(artifact.id);
+                          setPrompts((previous) => ({
+                            ...previous,
+                            [artifact.id]: event.target.value,
+                          }));
+                        }}
+                        placeholder={`What should the model reverse engineer from these ${artifact.label} files?`}
+                        className="min-h-28 w-full rounded-md border border-slate-300 p-3 text-xs outline-none transition placeholder:text-slate-400 focus:border-[#00338D] focus:ring-2 focus:ring-blue-100"
+                      />
+                      <div className="mt-2" aria-live="polite">
+                        <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-[#00338D]">
+                          <Sparkles
+                            className={`h-3.5 w-3.5 ${analysing[artifact.id] ? 'animate-pulse' : ''}`}
+                          />
+                          {analysing[artifact.id]
+                            ? `Analysing ${(uploads[artifact.id] ?? []).length} file${(uploads[artifact.id] ?? []).length === 1 ? '' : 's'} to suggest prompts…`
+                            : (uploads[artifact.id] ?? []).length
+                              ? 'Suggested prompts based on your uploads'
+                              : 'Suggested prompts — upload files to tailor them'}
+                        </div>
+                        {analysing[artifact.id] ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {[28, 36, 24].map((width) => (
+                              <span
+                                key={width}
+                                style={{ width: `${width * 4}px` }}
+                                className="h-6 animate-pulse rounded-full bg-blue-100"
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {rankSuggestions(
+                              getSuggestions(artifact.id),
+                              prompts[artifact.id] ?? '',
+                              uploads[artifact.id] ?? [],
+                            ).map((suggestion) => (
+                              <button
+                                key={suggestion.id}
+                                type="button"
+                                title={buildPrompt(suggestion, uploads[artifact.id] ?? [])}
+                                onClick={() => typeIntoPrompt(artifact, suggestion)}
+                                className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-[#00338D] transition hover:bg-[#00338D] hover:text-white"
+                              >
+                                + {suggestion.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <p className="text-xs leading-5 text-slate-500">
-                        {outputs[artifact.id] ??
-                          'Generated output for this artifact type will appear here.'}
-                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="mt-3 w-full bg-[#00338D] hover:bg-[#002a73]"
+                        onClick={() => generateOutput(artifact)}
+                      >
+                        <Send className="h-3.5 w-3.5" /> Generate{' '}
+                        {artifact.analysisLabel ?? artifact.label} analysis
+                      </Button>
+                      <div className="mt-3 rounded-md border border-dashed border-slate-300 bg-slate-50 p-3">
+                        <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> {artifact.label}{' '}
+                          response
+                        </div>
+                        <p className="text-xs leading-5 text-slate-500">
+                          {outputs[artifact.id] ??
+                            'Generated output for this artifact type will appear here.'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </details>
+                  </details>
+                )}
               </div>
             );
           })}
