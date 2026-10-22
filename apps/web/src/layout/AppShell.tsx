@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   Bot,
   ArrowLeftRight,
+  Layers3,
 } from 'lucide-react';
 import { currentDataSourceMode, dataModeBadge, displayedCompany } from '../lib/data-origin.js';
 
@@ -41,6 +42,10 @@ const NAV_SECTIONS: Array<{ title: string | null; items: NavItem[] }> = [
       { to: '/correlation', label: 'Cross-Correlation', icon: Waypoints },
       { to: '/agents', label: 'Agent Pipeline', icon: Bot },
     ],
+  },
+  {
+    title: 'Workspace',
+    items: [{ to: '/modules/module-1', label: 'Modules', icon: Layers3 }],
   },
   {
     title: 'Architecture & Design',
@@ -118,19 +123,19 @@ export function AppShell({
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="flex w-64 shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-white">
+        <aside className="flex w-64 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
           <div className="border-b border-slate-200 p-3">
             <GlobalSearch />
           </div>
-          <nav className="flex-1 space-y-4 p-3">
+          <nav className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden p-2">
             {NAV_SECTIONS.map((section, i) => (
               <div key={section.title ?? `section-${i}`}>
                 {section.title ? (
-                  <div className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                  <div className="mb-0.5 px-3 text-[9px] font-semibold uppercase tracking-wide text-slate-400">
                     {section.title}
                   </div>
                 ) : null}
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {section.items.map(({ to, label, icon: Icon, end }) => (
                     <NavLink
                       key={to}
@@ -138,7 +143,7 @@ export function AppShell({
                       end={end ?? false}
                       className={({ isActive }) =>
                         cn(
-                          'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                          'flex items-center gap-2 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors',
                           isActive
                             ? 'bg-[#00338D] text-white shadow-sm'
                             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
@@ -153,10 +158,10 @@ export function AppShell({
               </div>
             ))}
           </nav>
-          <div className="border-t border-slate-200 p-3">
+          <div className="border-t border-slate-200 p-2">
             <NavLink
               to="/select"
-              className="flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+              className="flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
             >
               <ArrowLeftRight className="h-3.5 w-3.5" />
               Switch company

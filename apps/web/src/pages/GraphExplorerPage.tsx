@@ -15,6 +15,10 @@ import { NodeDetailPanel } from '../components/node-detail-panel.js';
 import { selectRepresentativeNodes } from '../lib/representative-view.js';
 import { cn } from '../lib/utils.js';
 import { orderGraphKinds } from '../lib/graph-kinds.js';
+import {
+  getModuleKnowledgeGraphUpdate,
+  KNOWLEDGE_GRAPH_DESTINATIONS,
+} from '../lib/module-knowledge-graph.js';
 
 // The mock provider only ever produces the first ten kinds below. The
 // remaining ones (P4-08) are the real Neo4j node labels
@@ -72,6 +76,7 @@ export function GraphExplorerPage(): JSX.Element {
   const [filterText, setFilterText] = useState('');
   const [selected, setSelected] = useState<GraphNode | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [moduleUpdate] = useState(() => getModuleKnowledgeGraphUpdate());
 
   const allKinds = useMemo(() => {
     if (!data) return [];
@@ -177,6 +182,34 @@ export function GraphExplorerPage(): JSX.Element {
         title="Knowledge Graph Explorer"
         description="Every output on every other page is a projection of this one shared graph — not independent documents. Filter by element type, or search to highlight a node."
       />
+
+      {moduleUpdate ? (
+        <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 p-4">
+          <div className="flex flex-col justify-between gap-2 sm:flex-row">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-800">
+                Module analysis staged locally
+              </h2>
+              <p className="mt-1 text-xs text-slate-600">
+                {moduleUpdate.artifactLabels.join(', ')} analysis from{' '}
+                {moduleUpdate.moduleId.replace('-', ' ')} is ready to inform the Knowledge Graph. No
+                backend graph records have been changed.
+              </p>
+            </div>
+            <span className="text-xs font-medium text-[#00338D]">
+              {moduleUpdate.artifactLabels.length} artifact type
+              {moduleUpdate.artifactLabels.length === 1 ? '' : 's'}
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {KNOWLEDGE_GRAPH_DESTINATIONS.map((destination) => (
+              <Badge key={destination} variant="outline">
+                {destination}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <input

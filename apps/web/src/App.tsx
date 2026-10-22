@@ -18,6 +18,7 @@ import { GraphExplorerPage } from './pages/GraphExplorerPage.js';
 import { CorrelationExplorerPage } from './pages/CorrelationExplorerPage.js';
 import { SystemMapPage } from './pages/SystemMapPage.js';
 import { AgentPipelinePage } from './pages/AgentPipelinePage.js';
+import { ModuleWorkspacePage } from './pages/ModuleWorkspacePage.js';
 import {
   getActiveCompany,
   hasSelectedCompany,
@@ -73,6 +74,7 @@ export function App(): JSX.Element {
                   <Route path="/gaps" element={<GapAnalysisPage />} />
                   <Route path="/drift" element={<DriftHistoryPage />} />
                   <Route path="/review" element={<ReviewPage />} />
+                  <Route path="/modules/:moduleId" element={<ModuleWorkspacePage />} />
                 </Routes>
               </AppShell>
             ) : (
