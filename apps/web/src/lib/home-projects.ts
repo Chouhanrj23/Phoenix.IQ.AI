@@ -32,7 +32,7 @@ export interface NewProjectInput {
   createdOn: string;
 }
 
-const DEFAULT_SUMMARY = 'Details will be announced when this project is scoped.';
+export const DEFAULT_SUMMARY = 'Details will be announced when this project is scoped.';
 
 // Metadata sources:
 // - Indian Banking System maps to the existing "fintech" engagement (see data/companies.ts).
@@ -166,9 +166,10 @@ export function saveCustomProjects(projects: HomeProject[]): void {
   }
 }
 
-export function createCustomProject(input: NewProjectInput): HomeProject {
+/** Returns `project` with the editable fields replaced by the form values. Routing and icon are kept. */
+export function applyProjectInput(project: HomeProject, input: NewProjectInput): HomeProject {
   return {
-    id: `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+    ...project,
     title: input.title.trim(),
     summary: input.summary.trim() || DEFAULT_SUMMARY,
     projectName: input.projectName.trim() || null,
@@ -176,4 +177,58 @@ export function createCustomProject(input: NewProjectInput): HomeProject {
     createdBy: input.createdBy.trim() || null,
     createdOn: input.createdOn || null,
   };
+}
+
+export function createCustomProject(input: NewProjectInput): HomeProject {
+  return applyProjectInput(
+    {
+      id: `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      title: '',
+      summary: DEFAULT_SUMMARY,
+      projectName: null,
+      completion: null,
+      createdBy: null,
+      createdOn: null,
+    },
+    input,
+  );
+}
+
+/**
+ * Edits to the built-in projects, plus the built-in ids the user deleted.
+ * Built-in projects are defined in code, so a delete hides the tile and an edit
+ * stores the new values here, leaving the defaults in HOME_PROJECTS untouched.
+ */
+export interface HomeProjectOverrides {
+  hidden: string[];
+  edits: Record<string, NewProjectInput>;
+}
+
+const OVERRIDES_KEY = 'phoenix.homeProjects.overrides.v1';
+const NO_OVERRIDES: HomeProjectOverrides = { hidden: [], edits: {} };
+
+export function loadProjectOverrides(): HomeProjectOverrides {
+  try {
+    const raw = window.localStorage.getItem(OVERRIDES_KEY);
+    if (!raw) return NO_OVERRIDES;
+    const parsed = JSON.parse(raw) as Partial<HomeProjectOverrides>;
+    const hidden = Array.isArray(parsed.hidden)
+      ? parsed.hidden.filter((id): id is string => typeof id === 'string')
+      : [];
+    const edits =
+      parsed.edits && typeof parsed.edits === 'object' && !Array.isArray(parsed.edits)
+        ? parsed.edits
+        : {};
+    return { hidden, edits };
+  } catch {
+    return NO_OVERRIDES;
+  }
+}
+
+export function saveProjectOverrides(overrides: HomeProjectOverrides): void {
+  try {
+    window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
+  } catch {
+    // Storage unavailable: the change lasts until the page reloads.
+  }
 }

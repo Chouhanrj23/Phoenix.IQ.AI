@@ -1,6 +1,6 @@
 import type { JSX, PointerEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Banknote, Layers } from 'lucide-react';
+import { ArrowRight, Banknote, Layers, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils.js';
 import type { HomeProject } from '../lib/home-projects.js';
 import type { CompanyId } from '../data/index.js';
@@ -36,9 +36,18 @@ interface HomeProjectTileProps {
   project: HomeProject;
   /** Activates the project's engagement before its route opens. */
   onOpenEngagement: (engagement: CompanyId) => void;
+  /** Shows an Edit button when provided. */
+  onEdit?: () => void;
+  /** Shows a Delete button when provided. */
+  onDelete?: () => void;
 }
 
-export function HomeProjectTile({ project, onOpenEngagement }: HomeProjectTileProps): JSX.Element {
+export function HomeProjectTile({
+  project,
+  onOpenEngagement,
+  onEdit,
+  onDelete,
+}: HomeProjectTileProps): JSX.Element {
   const isActive = project.to !== undefined;
   const nameOnly = project.nameOnly === true;
   // Tiles with a hover effect: the active tile and the name-only placeholders.
@@ -220,8 +229,8 @@ export function HomeProjectTile({ project, onOpenEngagement }: HomeProjectTilePr
         : 'cursor-default border-dashed border-slate-300 bg-slate-50/50',
   );
 
-  if (isActive && project.to) {
-    return (
+  const tile =
+    isActive && project.to ? (
       <Link
         to={project.to}
         data-home-tile
@@ -233,17 +242,48 @@ export function HomeProjectTile({ project, onOpenEngagement }: HomeProjectTilePr
       >
         {content}
       </Link>
+    ) : (
+      <div
+        data-home-tile
+        aria-disabled="true"
+        className={className}
+        onPointerMove={hasHoverFx ? trackSpotlight : undefined}
+      >
+        {content}
+      </div>
     );
-  }
 
+  if (!onEdit && !onDelete) return tile;
+
+  // The buttons sit beside the tile rather than inside it: a link cannot contain
+  // buttons, and clicking Edit or Delete must not open the project.
   return (
-    <div
-      data-home-tile
-      aria-disabled="true"
-      className={className}
-      onPointerMove={hasHoverFx ? trackSpotlight : undefined}
-    >
-      {content}
+    <div className="group/tile relative h-full">
+      {tile}
+      <div className="absolute bottom-4 right-4 z-10 flex gap-1 opacity-60 transition-opacity duration-300 focus-within:opacity-100 group-hover/tile:opacity-100 motion-reduce:transition-none">
+        {onEdit ? (
+          <button
+            type="button"
+            onClick={onEdit}
+            aria-label={`Edit ${project.title}`}
+            title="Edit"
+            className="rounded-md border border-slate-200 bg-white p-1.5 text-slate-500 shadow-sm transition-colors hover:border-[#0091DA]/40 hover:text-[#00338D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0091DA]"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+        {onDelete ? (
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label={`Delete ${project.title}`}
+            title="Delete"
+            className="rounded-md border border-slate-200 bg-white p-1.5 text-slate-500 shadow-sm transition-colors hover:border-rose-200 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

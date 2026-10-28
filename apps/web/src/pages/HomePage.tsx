@@ -1,13 +1,27 @@
 import { useMemo, useState, type JSX } from 'react';
-import { AddProjectDialog, AddProjectTile } from '../components/add-project.js';
+import {
+  AddProjectDialog,
+  AddProjectTile,
+  DeleteProjectDialog,
+} from '../components/add-project.js';
 import { HomeProjectTile } from '../components/home-project-tile.js';
 import type { CompanyId } from '../data/index.js';
 import {
+  applyProjectInput,
+  createCustomProject,
+  DEFAULT_SUMMARY,
   HOME_PROJECTS,
   loadCustomProjects,
+  loadProjectOverrides,
   saveCustomProjects,
+  saveProjectOverrides,
   type HomeProject,
+  type HomeProjectOverrides,
+  type NewProjectInput,
 } from '../lib/home-projects.js';
+
+/** Which dialog is open: a new project, or an edit of an existing one. */
+type ProjectDialog = { mode: 'add' } | { mode: 'edit'; project: HomeProject };
 
 // A very faint grid on white keeps the hero from looking flat without adding weight.
 const GRID_PATTERN =
@@ -20,9 +34,21 @@ interface HomePageProps {
 export function HomePage({ onOpenEngagement }: HomePageProps): JSX.Element {
   // Loaded once on mount; the lazy initializer keeps storage reads out of re-renders.
   const [customProjects, setCustomProjects] = useState<HomeProject[]>(() => loadCustomProjects());
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [overrides, setOverrides] = useState<HomeProjectOverrides>(() => loadProjectOverrides());
+  const [dialog, setDialog] = useState<ProjectDialog | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<HomeProject | null>(null);
 
-  const projects = useMemo(() => [...HOME_PROJECTS, ...customProjects], [customProjects]);
+  // Built-in projects minus the deleted ones, with any saved edits applied.
+  const projects = useMemo(() => {
+    const builtIn = HOME_PROJECTS.filter((project) => !overrides.hidden.includes(project.id)).map(
+      (project) => {
+        const edit = overrides.edits[project.id];
+        return edit ? applyProjectInput(project, edit) : project;
+      },
+    );
+    return [...builtIn, ...customProjects];
+  }, [customProjects, overrides]);
+  const hiddenCount = overrides.hidden.length;
   const available = projects.filter((project) => project.to !== undefined).length;
   const stats = [
     { label: 'Projects', value: projects.length },
@@ -30,11 +56,55 @@ export function HomePage({ onOpenEngagement }: HomePageProps): JSX.Element {
     { label: 'Upcoming', value: projects.length - available },
   ];
 
-  function handleCreate(project: HomeProject): void {
-    const next = [...customProjects, project];
+  function updateOverrides(next: HomeProjectOverrides): void {
+    setOverrides(next);
+    saveProjectOverrides(next);
+  }
+
+  function updateCustomProjects(next: HomeProject[]): void {
     setCustomProjects(next);
     saveCustomProjects(next);
   }
+
+  function handleSubmit(input: NewProjectInput): void {
+    if (dialog?.mode === 'add') {
+      updateCustomProjects([...customProjects, createCustomProject(input)]);
+    } else if (dialog?.mode === 'edit') {
+      const { id } = dialog.project;
+      if (customProjects.some((project) => project.id === id)) {
+        updateCustomProjects(
+          customProjects.map((project) =>
+            project.id === id ? applyProjectInput(project, input) : project,
+          ),
+        );
+      } else {
+        updateOverrides({ ...overrides, edits: { ...overrides.edits, [id]: input } });
+      }
+    }
+    setDialog(null);
+  }
+
+  function handleDelete(project: HomeProject): void {
+    if (customProjects.some((item) => item.id === project.id)) {
+      updateCustomProjects(customProjects.filter((item) => item.id !== project.id));
+    } else {
+      updateOverrides({ ...overrides, hidden: [...overrides.hidden, project.id] });
+    }
+    setPendingDelete(null);
+  }
+
+  // Edit form values for the project being edited, using the same defaults the tile shows.
+  const editing = dialog?.mode === 'edit' ? dialog.project : null;
+  const editInitial: NewProjectInput | undefined = editing
+    ? {
+        title: editing.title,
+        summary: editing.summary === DEFAULT_SUMMARY ? '' : editing.summary,
+        projectName: editing.projectName ?? '',
+        completion: editing.completion,
+        createdBy: editing.createdBy ?? '',
+        createdOn: editing.createdOn ?? '',
+      }
+    : undefined;
 
   return (
     <div className="space-y-8">
@@ -91,7 +161,18 @@ export function HomePage({ onOpenEngagement }: HomePageProps): JSX.Element {
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-700">All projects</h2>
-          <span className="text-xs text-slate-400">{projects.length} projects</span>
+          <div className="flex items-center gap-3">
+            {hiddenCount > 0 ? (
+              <button
+                type="button"
+                onClick={() => updateOverrides({ ...overrides, hidden: [] })}
+                className="text-xs font-medium text-[#0091DA] transition-colors hover:text-[#00338D] hover:underline"
+              >
+                Restore {hiddenCount} removed
+              </button>
+            ) : null}
+            <span className="text-xs text-slate-400">{projects.length} projects</span>
+          </div>
         </div>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
           {projects.map((project) => (
@@ -99,14 +180,28 @@ export function HomePage({ onOpenEngagement }: HomePageProps): JSX.Element {
               key={project.id}
               project={project}
               onOpenEngagement={onOpenEngagement}
+              onEdit={() => setDialog({ mode: 'edit', project })}
+              onDelete={() => setPendingDelete(project)}
             />
           ))}
-          <AddProjectTile onClick={() => setDialogOpen(true)} />
+          <AddProjectTile onClick={() => setDialog({ mode: 'add' })} />
         </div>
       </div>
 
-      {dialogOpen ? (
-        <AddProjectDialog onClose={() => setDialogOpen(false)} onCreate={handleCreate} />
+      {dialog ? (
+        <AddProjectDialog
+          initial={editInitial}
+          onClose={() => setDialog(null)}
+          onSubmit={handleSubmit}
+        />
+      ) : null}
+
+      {pendingDelete ? (
+        <DeleteProjectDialog
+          title={pendingDelete.title}
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={() => handleDelete(pendingDelete)}
+        />
       ) : null}
     </div>
   );

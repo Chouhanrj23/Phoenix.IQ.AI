@@ -143,6 +143,43 @@ const MODULES = [
   { id: 'module-6', name: 'Loans' },
 ];
 
+interface ModuleWorkspaceState {
+  uploads: Record<string, string[]>;
+  prompts: Record<string, string>;
+  outputs: Record<string, string>;
+}
+
+const WORKSPACE_KEY = 'phoenix.module-workspace.v1';
+const EMPTY_WORKSPACE: ModuleWorkspaceState = { uploads: {}, prompts: {}, outputs: {} };
+
+function loadAllWorkspaces(): Record<string, ModuleWorkspaceState> {
+  try {
+    const raw = window.localStorage.getItem(WORKSPACE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, ModuleWorkspaceState>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Each module's uploads, prompts and outputs, kept under its own id in this browser. */
+function loadModuleState(moduleId: string): ModuleWorkspaceState {
+  const saved = loadAllWorkspaces()[moduleId];
+  return saved
+    ? { uploads: saved.uploads ?? {}, prompts: saved.prompts ?? {}, outputs: saved.outputs ?? {} }
+    : EMPTY_WORKSPACE;
+}
+
+function saveModuleState(moduleId: string, state: ModuleWorkspaceState): void {
+  try {
+    window.localStorage.setItem(
+      WORKSPACE_KEY,
+      JSON.stringify({ ...loadAllWorkspaces(), [moduleId]: state }),
+    );
+  } catch {
+    // Storage unavailable: this module's work lasts until the page reloads.
+  }
+}
+
 function useAnimatedNumber(target: number): number {
   const [value, setValue] = useState(0);
   const current = useRef(0);
@@ -164,11 +201,17 @@ function useAnimatedNumber(target: number): number {
   return value;
 }
 
+/** Each module renders its own workspace. Keying on the id gives every module separate state. */
 export function ModuleWorkspacePage(): JSX.Element {
   const { moduleId = 'module-1' } = useParams();
-  const [uploads, setUploads] = useState<Record<string, string[]>>({});
-  const [prompts, setPrompts] = useState<Record<string, string>>({});
-  const [outputs, setOutputs] = useState<Record<string, string>>({});
+  return <ModuleWorkspace key={moduleId} moduleId={moduleId} />;
+}
+
+function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
+  const [initial] = useState(() => loadModuleState(moduleId));
+  const [uploads, setUploads] = useState<Record<string, string[]>>(initial.uploads);
+  const [prompts, setPrompts] = useState<Record<string, string>>(initial.prompts);
+  const [outputs, setOutputs] = useState<Record<string, string>>(initial.outputs);
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [analysing, setAnalysing] = useState<Record<string, boolean>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -182,6 +225,10 @@ export function ModuleWorkspacePage(): JSX.Element {
     },
     [],
   );
+
+  useEffect(() => {
+    saveModuleState(moduleId, { uploads, prompts, outputs });
+  }, [moduleId, uploads, prompts, outputs]);
 
   function stopTyping(id: string): void {
     window.clearInterval(typers.current[id]);
@@ -269,10 +316,6 @@ export function ModuleWorkspacePage(): JSX.Element {
             Reverse engineering workspace
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">{moduleName}</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Upload project evidence, then use an LLM prompt to generate implementation-ready
-            understanding of this module.
-          </p>
         </div>
         <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
           <span className="font-semibold">{uploadCount}</span> file{uploadCount === 1 ? '' : 's'}{' '}
@@ -324,7 +367,7 @@ export function ModuleWorkspacePage(): JSX.Element {
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
           {ARTIFACTS.filter((artifact) => (uploads[artifact.id] ?? []).length > 0).length} of{' '}
-          {ARTIFACTS.length} sources uploaded — each source adds 10%.
+          {ARTIFACTS.length} sources uploaded.
         </p>
       </section>
 
@@ -335,13 +378,9 @@ export function ModuleWorkspacePage(): JSX.Element {
               Evidence intake
             </h2>
             <p className="text-xs text-muted-foreground">
-              Each artifact has its own upload, LLM prompt, and generated response. Results are
-              combined locally for the Knowledge Graph — no backend is changed.
+              Each artifact has its own upload, LLM prompt, and generated response.
             </p>
           </div>
-          <span className="text-xs text-muted-foreground">
-            Each category accepts only the formats shown on its card
-          </span>
         </div>
         <div className="grid items-stretch gap-4 xl:grid-cols-2">
           {ARTIFACTS.map((artifact) => {

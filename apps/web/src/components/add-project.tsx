@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type JSX } from 'react';
 import { Plus, X } from 'lucide-react';
-import { createCustomProject, type HomeProject } from '../lib/home-projects.js';
+import type { NewProjectInput } from '../lib/home-projects.js';
 
 const INPUT_CLASS =
   'mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-slate-400 focus:border-[#0091DA] focus:ring-2 focus:ring-[#0091DA]/20';
@@ -25,18 +25,32 @@ export function AddProjectTile({ onClick }: { onClick: () => void }): JSX.Elemen
 }
 
 interface AddProjectDialogProps {
+  /** Pre-fills the form and switches it to edit mode. Omit to add a new project. */
+  initial?: NewProjectInput | undefined;
   onClose: () => void;
-  onCreate: (project: HomeProject) => void;
+  onSubmit: (input: NewProjectInput) => void;
 }
 
-/** Modal form for adding a project. New projects appear as upcoming placeholders. */
-export function AddProjectDialog({ onClose, onCreate }: AddProjectDialogProps): JSX.Element {
-  const [title, setTitle] = useState('');
-  const [summary, setSummary] = useState('');
-  const [projectName, setProjectName] = useState('');
-  const [completion, setCompletion] = useState('');
-  const [createdBy, setCreatedBy] = useState('');
-  const [createdOn, setCreatedOn] = useState('');
+/**
+ * Modal form for adding or editing a project. New projects appear as upcoming
+ * placeholders unless they are given a route.
+ */
+export function AddProjectDialog({
+  initial,
+  onClose,
+  onSubmit,
+}: AddProjectDialogProps): JSX.Element {
+  const isEdit = initial !== undefined;
+  const [title, setTitle] = useState(initial?.title ?? '');
+  const [summary, setSummary] = useState(initial?.summary ?? '');
+  const [projectName, setProjectName] = useState(initial?.projectName ?? '');
+  const [completion, setCompletion] = useState(
+    initial?.completion === null || initial?.completion === undefined
+      ? ''
+      : String(initial.completion),
+  );
+  const [createdBy, setCreatedBy] = useState(initial?.createdBy ?? '');
+  const [createdOn, setCreatedOn] = useState(initial?.createdOn ?? '');
   const [error, setError] = useState<string | null>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
@@ -59,16 +73,14 @@ export function AddProjectDialog({ onClose, onCreate }: AddProjectDialogProps): 
       setError('Completion must be a number between 0 and 100, or left empty.');
       return;
     }
-    onCreate(
-      createCustomProject({
-        title,
-        summary,
-        projectName,
-        completion: parsedCompletion,
-        createdBy,
-        createdOn,
-      }),
-    );
+    onSubmit({
+      title,
+      summary,
+      projectName,
+      completion: parsedCompletion,
+      createdBy,
+      createdOn,
+    });
     onClose();
   }
 
@@ -94,10 +106,12 @@ export function AddProjectDialog({ onClose, onCreate }: AddProjectDialogProps): 
               id="add-project-title"
               className="text-lg font-semibold tracking-tight text-slate-900"
             >
-              Add a project
+              {isEdit ? 'Edit project' : 'Add a project'}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              It appears as an upcoming project. Only the title is required.
+              {isEdit
+                ? 'Update the details shown on this project tile. Only the title is required.'
+                : 'It appears as an upcoming project. Only the title is required.'}
             </p>
           </div>
           <button
@@ -189,10 +203,71 @@ export function AddProjectDialog({ onClose, onCreate }: AddProjectDialogProps): 
               type="submit"
               className="rounded-lg bg-[#00338D] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#0091DA] active:scale-[0.98]"
             >
-              Add project
+              {isEdit ? 'Save changes' : 'Add project'}
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+interface DeleteProjectDialogProps {
+  title: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+/** Confirmation before a project is removed from the homepage. */
+export function DeleteProjectDialog({
+  title,
+  onCancel,
+  onConfirm,
+}: DeleteProjectDialogProps): JSX.Element {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-[2px]"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') onCancel();
+      }}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onCancel();
+      }}
+    >
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="delete-project-title"
+        aria-describedby="delete-project-description"
+        className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl"
+      >
+        <h2
+          id="delete-project-title"
+          className="text-lg font-semibold tracking-tight text-slate-900"
+        >
+          Delete project?
+        </h2>
+        <p id="delete-project-description" className="mt-2 text-sm text-slate-500">
+          <span className="font-medium text-slate-700">{title}</span> will be removed from the
+          homepage in this browser. Built-in projects can be restored later.
+        </p>
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            autoFocus
+            onClick={onCancel}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rose-700"
+          >
+            Delete
+          </button>
+        </div>
       </div>
     </div>
   );
