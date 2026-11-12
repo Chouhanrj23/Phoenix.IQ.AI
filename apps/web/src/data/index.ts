@@ -1,7 +1,7 @@
 import type { OkfDataProvider } from './types.js';
 import { mockProviderFor } from './mock/mockProvider.js';
 import { apiProvider } from './api/apiProvider.js';
-import { DEFAULT_COMPANY, type CompanyId } from './companies.js';
+import { COMPANY_IDS, DEFAULT_COMPANY, isCompanyAvailable, type CompanyId } from './companies.js';
 
 // Single switch between the two implementations. Everything in src/pages
 // and src/components consumes `dataProvider` and never imports mock/api
@@ -14,7 +14,8 @@ const STORAGE_KEY = 'phoenix.selectedCompany';
 function readStoredCompany(): CompanyId | null {
   if (typeof window === 'undefined') return null;
   const value = window.localStorage.getItem(STORAGE_KEY);
-  return value === 'aurora' || value === 'fintech' ? value : null;
+  const id = COMPANY_IDS.find((c) => c === value);
+  return id && isCompanyAvailable(id) ? id : null;
 }
 
 let activeCompany: CompanyId = readStoredCompany() ?? DEFAULT_COMPANY;

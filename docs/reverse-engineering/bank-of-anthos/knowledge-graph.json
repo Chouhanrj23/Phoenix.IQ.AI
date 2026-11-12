@@ -1,0 +1,2640 @@
+{
+  "nodes": [
+    {
+      "id": "bank-of-anthos",
+      "kind": "System",
+      "label": "Bank of Anthos",
+      "props": {
+        "description": "A sample HTTP-based web application that simulates a bank's payment processing network, allowing users to create artificial bank accounts and complete transactions."
+      }
+    },
+    {
+      "id": "module-1",
+      "kind": "Module",
+      "label": "Overview",
+      "props": {
+        "coverage": "full",
+        "summary": "Implements identity, login/sign-up, sessions, security, observability, and shared services"
+      }
+    },
+    {
+      "id": "module-2",
+      "kind": "Module",
+      "label": "Accounts",
+      "props": {
+        "coverage": "partial",
+        "summary": "Implements customer and bank-account lifecycle, profile, balances, and contacts/payees"
+      }
+    },
+    {
+      "id": "module-3",
+      "kind": "Module",
+      "label": "Payments and Transfer",
+      "props": {
+        "coverage": "partial",
+        "summary": "Implements sending money between accounts, external transfers, validation, and transaction history"
+      }
+    },
+    {
+      "id": "module-4",
+      "kind": "Module",
+      "label": "Deposits",
+      "props": {
+        "coverage": "partial",
+        "summary": "Implements deposits from external accounts and crediting balances"
+      }
+    },
+    {
+      "id": "module-5",
+      "kind": "Module",
+      "label": "Cards",
+      "props": {
+        "coverage": "none",
+        "summary": "No debit/credit card issuing, controls, or authorizations implemented"
+      }
+    },
+    {
+      "id": "module-6",
+      "kind": "Module",
+      "label": "Loans",
+      "props": {
+        "coverage": "none",
+        "summary": "No loan origination, servicing, repayments, or credit decisioning implemented"
+      }
+    },
+    {
+      "id": "dom-identity",
+      "kind": "Domain",
+      "label": "Identity Management",
+      "confidence": "high",
+      "props": {
+        "description": "Manages user authentication, authorization, and security"
+      }
+    },
+    {
+      "id": "agg-user",
+      "kind": "Aggregate",
+      "label": "User",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "dom-accounts",
+      "kind": "Domain",
+      "label": "Account Management",
+      "confidence": "high",
+      "props": {
+        "description": "Manages customer accounts and related information"
+      }
+    },
+    {
+      "id": "agg-account",
+      "kind": "Aggregate",
+      "label": "Account",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "agg-contact",
+      "kind": "Aggregate",
+      "label": "Contact",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "dom-payments",
+      "kind": "Domain",
+      "label": "Payments",
+      "confidence": "high",
+      "props": {
+        "description": "Handles money transfers between accounts"
+      }
+    },
+    {
+      "id": "agg-transaction",
+      "kind": "Aggregate",
+      "label": "Transaction",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "agg-balance",
+      "kind": "Aggregate",
+      "label": "Balance",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "dom-deposits",
+      "kind": "Domain",
+      "label": "Deposits",
+      "confidence": "high",
+      "props": {
+        "description": "Handles money coming into accounts from external sources"
+      }
+    },
+    {
+      "id": "agg-deposit",
+      "kind": "Aggregate",
+      "label": "Deposit",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "ent-user",
+      "kind": "Entity",
+      "label": "User",
+      "confidence": "high",
+      "props": {
+        "storage": "PostgreSQL accounts-db.users",
+        "attributes": "accountid, username, passhash, firstname, lastname, birthday, timezone, address, state, zip, ssn"
+      }
+    },
+    {
+      "id": "ent-account",
+      "kind": "Entity",
+      "label": "Account",
+      "confidence": "high",
+      "props": {
+        "storage": "PostgreSQL accounts-db.users",
+        "attributes": "accountid, username"
+      }
+    },
+    {
+      "id": "ent-contact",
+      "kind": "Entity",
+      "label": "Contact",
+      "confidence": "high",
+      "props": {
+        "storage": "PostgreSQL accounts-db.contacts",
+        "attributes": "username, label, account_num, routing_num, is_external"
+      }
+    },
+    {
+      "id": "ent-transaction",
+      "kind": "Entity",
+      "label": "Transaction",
+      "confidence": "high",
+      "props": {
+        "storage": "PostgreSQL ledger-db.TRANSACTIONS",
+        "attributes": "TRANSACTION_ID, FROM_ACCT, TO_ACCT, FROM_ROUTE, TO_ROUTE, AMOUNT, TIMESTAMP"
+      }
+    },
+    {
+      "id": "ent-balance",
+      "kind": "Entity",
+      "label": "Balance",
+      "confidence": "high",
+      "props": {
+        "storage": "PostgreSQL ledger-db (cached in memory)",
+        "attributes": "accountid, balance, last_updated"
+      }
+    },
+    {
+      "id": "ent-deposit",
+      "kind": "Entity",
+      "label": "Deposit",
+      "confidence": "high",
+      "props": {
+        "storage": "PostgreSQL ledger-db.TRANSACTIONS",
+        "attributes": "TRANSACTION_ID, TO_ACCT, TO_ROUTE, AMOUNT, TIMESTAMP"
+      }
+    },
+    {
+      "id": "act-user-login",
+      "kind": "Activity",
+      "label": "Authenticate user",
+      "module": "module-1",
+      "confidence": "high",
+      "props": {
+        "actor": "customer",
+        "endpoint": "POST /login"
+      }
+    },
+    {
+      "id": "act-user-signup",
+      "kind": "Activity",
+      "label": "Create user account",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {
+        "actor": "customer",
+        "endpoint": "POST /users"
+      }
+    },
+    {
+      "id": "act-view-balance",
+      "kind": "Activity",
+      "label": "View account balance",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {
+        "actor": "customer",
+        "endpoint": "GET /balances/<accountid>"
+      }
+    },
+    {
+      "id": "act-add-contact",
+      "kind": "Activity",
+      "label": "Add payment contact",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {
+        "actor": "customer",
+        "endpoint": "POST /contacts/<username>"
+      }
+    },
+    {
+      "id": "act-send-payment",
+      "kind": "Activity",
+      "label": "Send payment",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {
+        "actor": "customer",
+        "endpoint": "POST /transactions"
+      }
+    },
+    {
+      "id": "act-make-deposit",
+      "kind": "Activity",
+      "label": "Make deposit",
+      "module": "module-4",
+      "confidence": "high",
+      "props": {
+        "actor": "customer",
+        "endpoint": "POST /deposit"
+      }
+    },
+    {
+      "id": "act-view-transaction-history",
+      "kind": "Activity",
+      "label": "View transaction history",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {
+        "actor": "customer",
+        "endpoint": "GET /transactions/<accountid>"
+      }
+    },
+    {
+      "id": "act-validate-transaction",
+      "kind": "Activity",
+      "label": "Validate transaction",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {
+        "actor": "system",
+        "endpoint": ""
+      }
+    },
+    {
+      "id": "act-refresh-balance-cache",
+      "kind": "Activity",
+      "label": "Refresh balance cache",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {
+        "actor": "system",
+        "endpoint": ""
+      }
+    },
+    {
+      "id": "act-refresh-transaction-cache",
+      "kind": "Activity",
+      "label": "Refresh transaction cache",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {
+        "actor": "system",
+        "endpoint": ""
+      }
+    },
+    {
+      "id": "act-logout",
+      "kind": "Activity",
+      "label": "Logout user",
+      "module": "module-1",
+      "confidence": "high",
+      "props": {
+        "actor": "customer",
+        "endpoint": "POST /logout"
+      }
+    },
+    {
+      "id": "act-retrieve-contacts",
+      "kind": "Activity",
+      "label": "Retrieve contacts",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {
+        "actor": "customer",
+        "endpoint": "GET /contacts/<username>"
+      }
+    },
+    {
+      "id": "flow-user-login",
+      "kind": "Flow",
+      "label": "User Login Flow",
+      "module": "module-1",
+      "confidence": "high",
+      "props": {
+        "actor": "customer"
+      }
+    },
+    {
+      "id": "flow-user-signup",
+      "kind": "Flow",
+      "label": "User Signup Flow",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {
+        "actor": "customer"
+      }
+    },
+    {
+      "id": "flow-send-payment",
+      "kind": "Flow",
+      "label": "Send Payment Flow",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {
+        "actor": "customer"
+      }
+    },
+    {
+      "id": "flow-make-deposit",
+      "kind": "Flow",
+      "label": "Make Deposit Flow",
+      "module": "module-4",
+      "confidence": "high",
+      "props": {
+        "actor": "customer"
+      }
+    },
+    {
+      "id": "flow-view-history",
+      "kind": "Flow",
+      "label": "View Transaction History Flow",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {
+        "actor": "customer"
+      }
+    },
+    {
+      "id": "per-customer",
+      "kind": "Persona",
+      "label": "Bank Customer",
+      "confidence": "high",
+      "props": {
+        "role": "Individual banking customer"
+      }
+    },
+    {
+      "id": "per-operator",
+      "kind": "Persona",
+      "label": "System Operator",
+      "confidence": "high",
+      "props": {
+        "role": "IT operations staff maintaining the banking system"
+      }
+    },
+    {
+      "id": "per-engineer",
+      "kind": "Persona",
+      "label": "System Engineer",
+      "confidence": "high",
+      "props": {
+        "role": "Development and maintenance staff"
+      }
+    },
+    {
+      "id": "per-load-generator",
+      "kind": "Persona",
+      "label": "Load Generator",
+      "confidence": "high",
+      "props": {
+        "role": "Testing service simulating user activity"
+      }
+    },
+    {
+      "id": "jrn-customer-onboarding",
+      "kind": "Journey",
+      "label": "Customer Onboarding Journey",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "jrn-customer-payment",
+      "kind": "Journey",
+      "label": "Customer Payment Journey",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "jrn-operator-monitoring",
+      "kind": "Journey",
+      "label": "Operator Monitoring Journey",
+      "module": "module-1",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "jrn-engineer-maintenance",
+      "kind": "Journey",
+      "label": "Engineer Maintenance Journey",
+      "module": "module-1",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "jrn-load-testing",
+      "kind": "Journey",
+      "label": "Load Testing Journey",
+      "module": "module-1",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "rep-account-statement",
+      "kind": "Report",
+      "label": "Account Statement",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {
+        "implemented": "true"
+      }
+    },
+    {
+      "id": "rep-balance-summary",
+      "kind": "Report",
+      "label": "Balance Summary",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {
+        "implemented": "true"
+      }
+    },
+    {
+      "id": "rep-transaction-history",
+      "kind": "Report",
+      "label": "Transaction History",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {
+        "implemented": "true"
+      }
+    },
+    {
+      "id": "rep-operational-metrics",
+      "kind": "Report",
+      "label": "Operational Metrics",
+      "module": "module-1",
+      "confidence": "high",
+      "props": {
+        "implemented": "true"
+      }
+    },
+    {
+      "id": "rep-user-activity",
+      "kind": "Report",
+      "label": "User Activity Report",
+      "module": "module-1",
+      "confidence": "high",
+      "props": {
+        "implemented": "true"
+      }
+    },
+    {
+      "id": "rep-fraud-detection",
+      "kind": "Report",
+      "label": "Fraud Detection Report",
+      "module": "module-5",
+      "confidence": "inferred",
+      "props": {
+        "implemented": "false"
+      }
+    },
+    {
+      "id": "regulatory-compliance-report",
+      "kind": "Report",
+      "label": "Regulatory Compliance Report",
+      "module": "module-5",
+      "confidence": "inferred",
+      "props": {
+        "implemented": "false"
+      }
+    },
+    {
+      "id": "rep-reconciliation",
+      "kind": "Report",
+      "label": "Account Reconciliation Report",
+      "module": "module-5",
+      "confidence": "inferred",
+      "props": {
+        "implemented": "false"
+      }
+    },
+    {
+      "id": "rep-card-activity",
+      "kind": "Report",
+      "label": "Card Activity Report",
+      "module": "module-5",
+      "confidence": "inferred",
+      "props": {
+        "implemented": "false"
+      }
+    },
+    {
+      "id": "rep-loan-performance",
+      "kind": "Report",
+      "label": "Loan Performance Report",
+      "module": "module-6",
+      "confidence": "inferred",
+      "props": {
+        "implemented": "false"
+      }
+    },
+    {
+      "id": "rep-risk-assessment",
+      "kind": "Report",
+      "label": "Risk Assessment Report",
+      "module": "module-6",
+      "confidence": "inferred",
+      "props": {
+        "implemented": "false"
+      }
+    },
+    {
+      "id": "rep-capital-adequacy",
+      "kind": "Report",
+      "label": "Capital Adequacy Report",
+      "module": "module-6",
+      "confidence": "inferred",
+      "props": {
+        "implemented": "false"
+      }
+    },
+    {
+      "id": "cap-user-authentication",
+      "kind": "Capability",
+      "label": "User Authentication",
+      "module": "module-1",
+      "confidence": "high",
+      "props": {
+        "status": "implemented"
+      }
+    },
+    {
+      "id": "cap-user-registration",
+      "kind": "Capability",
+      "label": "User Registration",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {
+        "status": "implemented"
+      }
+    },
+    {
+      "id": "cap-account-management",
+      "kind": "Capability",
+      "label": "Account Management",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {
+        "status": "implemented"
+      }
+    },
+    {
+      "id": "cap-payment-processing",
+      "kind": "Capability",
+      "label": "Payment Processing",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {
+        "status": "implemented"
+      }
+    },
+    {
+      "id": "cap-balance-management",
+      "kind": "Capability",
+      "label": "Balance Management",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {
+        "status": "implemented"
+      }
+    },
+    {
+      "id": "cap-deposit-processing",
+      "kind": "Capability",
+      "label": "Deposit Processing",
+      "module": "module-4",
+      "confidence": "high",
+      "props": {
+        "status": "implemented"
+      }
+    },
+    {
+      "id": "cap-transaction-history",
+      "kind": "Capability",
+      "label": "Transaction History",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {
+        "status": "implemented"
+      }
+    },
+    {
+      "id": "cap-card-issuing",
+      "kind": "Capability",
+      "label": "Card Issuing",
+      "module": "module-5",
+      "confidence": "inferred",
+      "props": {
+        "status": "gap"
+      }
+    },
+    {
+      "id": "cap-loan-management",
+      "kind": "Capability",
+      "label": "Loan Management",
+      "module": "module-6",
+      "confidence": "inferred",
+      "props": {
+        "status": "gap"
+      }
+    },
+    {
+      "id": "cap-fraud-detection",
+      "kind": "Capability",
+      "label": "Fraud Detection",
+      "module": "module-5",
+      "confidence": "inferred",
+      "props": {
+        "status": "gap"
+      }
+    },
+    {
+      "id": "cap-regulatory-compliance",
+      "kind": "Capability",
+      "label": "Regulatory Compliance",
+      "module": "module-5",
+      "confidence": "inferred",
+      "props": {
+        "status": "gap"
+      }
+    },
+    {
+      "id": "cap-risk-management",
+      "kind": "Capability",
+      "label": "Risk Management",
+      "module": "module-6",
+      "confidence": "inferred",
+      "props": {
+        "status": "gap"
+      }
+    },
+    {
+      "id": "epic-security-enhancement",
+      "kind": "Epic",
+      "label": "Security Enhancement",
+      "module": "module-1",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "feat-multi-factor-auth",
+      "kind": "Feature",
+      "label": "Multi-Factor Authentication",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-001",
+      "kind": "Story",
+      "label": "Login with MFA",
+      "confidence": "inferred",
+      "props": {
+        "priority": "must",
+        "story": "As a bank customer, I want to use multi-factor authentication when logging in, so that to enhance the security of my account."
+      }
+    },
+    {
+      "id": "feat-identity-management",
+      "kind": "Feature",
+      "label": "Identity Management System",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-002",
+      "kind": "Story",
+      "label": "Integrate with Identity Provider",
+      "confidence": "inferred",
+      "props": {
+        "priority": "should",
+        "story": "As a system administrator, I want to integrate with an external identity management system, so that to centralize user authentication and authorization."
+      }
+    },
+    {
+      "id": "epic-account-management",
+      "kind": "Epic",
+      "label": "Account Management",
+      "module": "module-2",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "feat-user-profile-management",
+      "kind": "Feature",
+      "label": "User Profile Management",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "story-003",
+      "kind": "Story",
+      "label": "Update Personal Information",
+      "confidence": "high",
+      "props": {
+        "priority": "should",
+        "story": "As a bank customer, I want to update my personal information in the system, so that to keep my account details current and accurate."
+      }
+    },
+    {
+      "id": "feat-contact-management",
+      "kind": "Feature",
+      "label": "Contact Management",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "story-004",
+      "kind": "Story",
+      "label": "Manage Payment Contacts",
+      "confidence": "high",
+      "props": {
+        "priority": "should",
+        "story": "As a bank customer, I want to add, edit, and delete payment contacts, so that to easily send payments to frequently used recipients."
+      }
+    },
+    {
+      "id": "epic-payment-processing",
+      "kind": "Epic",
+      "label": "Payment Processing",
+      "module": "module-3",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "feat-payment-scheduling",
+      "kind": "Feature",
+      "label": "Payment Scheduling",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-005",
+      "kind": "Story",
+      "label": "Schedule Future Payment",
+      "confidence": "inferred",
+      "props": {
+        "priority": "could",
+        "story": "As a bank customer, I want to schedule a payment for a future date, so that to ensure bills are paid on time without manual intervention."
+      }
+    },
+    {
+      "id": "feat-payment-validation",
+      "kind": "Feature",
+      "label": "Enhanced Payment Validation",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "story-006",
+      "kind": "Story",
+      "label": "Validate Payment Details",
+      "confidence": "high",
+      "props": {
+        "priority": "should",
+        "story": "As a bank customer, I want to receive validation feedback when entering payment details, so that to catch errors before submitting a payment."
+      }
+    },
+    {
+      "id": "feat-transaction-history",
+      "kind": "Feature",
+      "label": "Transaction History Management",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "story-007",
+      "kind": "Story",
+      "label": "View Transaction History",
+      "confidence": "high",
+      "props": {
+        "priority": "must",
+        "story": "As a bank customer, I want to view my transaction history, so that to track my spending and verify transactions."
+      }
+    },
+    {
+      "id": "epic-deposit-processing",
+      "kind": "Epic",
+      "label": "Deposit Processing",
+      "module": "module-4",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "feat-deposit-verification",
+      "kind": "Feature",
+      "label": "Deposit Verification",
+      "confidence": "high",
+      "props": {}
+    },
+    {
+      "id": "story-008",
+      "kind": "Story",
+      "label": "Verify External Deposit",
+      "confidence": "high",
+      "props": {
+        "priority": "must",
+        "story": "As a bank customer, I want to verify that my external deposit has been processed, so that to ensure my funds are available in my account."
+      }
+    },
+    {
+      "id": "feat-deposit-scheduling",
+      "kind": "Feature",
+      "label": "Deposit Scheduling",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-009",
+      "kind": "Story",
+      "label": "Schedule Recurring Deposit",
+      "confidence": "inferred",
+      "props": {
+        "priority": "could",
+        "story": "As a bank customer, I want to schedule recurring deposits from my external account, so that to regularly fund my account without manual intervention."
+      }
+    },
+    {
+      "id": "epic-card-services",
+      "kind": "Epic",
+      "label": "Card Services",
+      "module": "module-5",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "feat-card-issuance",
+      "kind": "Feature",
+      "label": "Card Issuance",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-010",
+      "kind": "Story",
+      "label": "Issue New Card",
+      "confidence": "inferred",
+      "props": {
+        "priority": "must",
+        "story": "As a bank customer, I want to request a new debit/credit card, so that I can make purchases using my bank account."
+      }
+    },
+    {
+      "id": "feat-card-management",
+      "kind": "Feature",
+      "label": "Card Management",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-011",
+      "kind": "Story",
+      "label": "Manage My Card",
+      "confidence": "inferred",
+      "props": {
+        "priority": "should",
+        "story": "As a bank customer, I want to manage my existing cards, so that I can control access to my accounts."
+      }
+    },
+    {
+      "id": "feat-card-activity",
+      "kind": "Feature",
+      "label": "Card Activity Monitoring",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-012",
+      "kind": "Story",
+      "label": "Monitor Card Activity",
+      "confidence": "inferred",
+      "props": {
+        "priority": "should",
+        "story": "As a bank customer, I want to view my card transaction history, so that I can track my spending and identify unauthorized transactions."
+      }
+    },
+    {
+      "id": "epic-loan-services",
+      "kind": "Epic",
+      "label": "Loan Services",
+      "module": "module-6",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "feat-loan-origination",
+      "kind": "Feature",
+      "label": "Loan Origination",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-013",
+      "kind": "Story",
+      "label": "Apply for Loan",
+      "confidence": "inferred",
+      "props": {
+        "priority": "must",
+        "story": "As a bank customer, I want to apply for a new loan, so that I can borrow money for major purchases."
+      }
+    },
+    {
+      "id": "feat-loan-servicing",
+      "kind": "Feature",
+      "label": "Loan Servicing",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-014",
+      "kind": "Story",
+      "label": "Manage My Loan",
+      "confidence": "inferred",
+      "props": {
+        "priority": "should",
+        "story": "As a bank customer, I want to manage my existing loan, so that I can make payments and modify terms as needed."
+      }
+    },
+    {
+      "id": "feat-loan-monitoring",
+      "kind": "Feature",
+      "label": "Loan Performance Monitoring",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-015",
+      "kind": "Story",
+      "label": "Monitor Loan Performance",
+      "confidence": "inferred",
+      "props": {
+        "priority": "should",
+        "story": "As a loan officer, I want to monitor the performance of my loan portfolio, so that I can identify at-risk loans and take appropriate action."
+      }
+    },
+    {
+      "id": "epic-fraud-detection",
+      "kind": "Epic",
+      "label": "Fraud Detection System",
+      "module": "module-5",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "feat-real-time-monitoring",
+      "kind": "Feature",
+      "label": "Real-time Transaction Monitoring",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-016",
+      "kind": "Story",
+      "label": "Monitor Transactions in Real-time",
+      "confidence": "inferred",
+      "props": {
+        "priority": "must",
+        "story": "As a fraud analyst, I want to monitor transactions in real-time for suspicious activity, so that I can detect and prevent fraudulent transactions."
+      }
+    },
+    {
+      "id": "feat-pattern-detection",
+      "kind": "Feature",
+      "label": "Pattern Detection",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-017",
+      "kind": "Story",
+      "label": "Detect Fraudulent Patterns",
+      "confidence": "inferred",
+      "props": {
+        "priority": "should",
+        "story": "As a fraud analyst, I want to detect patterns of fraudulent behavior, so that I can identify organized fraud attempts."
+      }
+    },
+    {
+      "id": "feat-fraud-reports",
+      "kind": "Feature",
+      "label": "Fraud Reporting",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-018",
+      "kind": "Story",
+      "label": "Generate Fraud Reports",
+      "confidence": "inferred",
+      "props": {
+        "priority": "should",
+        "story": "As a fraud analyst, I want to generate reports on fraud detection activities, so that I can track fraud trends and measure the effectiveness of prevention measures."
+      }
+    },
+    {
+      "id": "epic-regulatory-compliance",
+      "kind": "Epic",
+      "label": "Regulatory Compliance",
+      "module": "module-5",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "feat-compliance-monitoring",
+      "kind": "Feature",
+      "label": "Compliance Monitoring",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-019",
+      "kind": "Story",
+      "label": "Monitor Regulatory Compliance",
+      "confidence": "inferred",
+      "props": {
+        "priority": "must",
+        "story": "As a compliance officer, I want to monitor compliance with banking regulations, so that I can ensure the bank meets all regulatory requirements."
+      }
+    },
+    {
+      "id": "feat-audit-trails",
+      "kind": "Feature",
+      "label": "Audit Trails",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-020",
+      "kind": "Story",
+      "label": "Maintain Audit Trails",
+      "confidence": "inferred",
+      "props": {
+        "priority": "must",
+        "story": "As a compliance officer, I want to maintain comprehensive audit trails, so that I can provide evidence of compliance during audits."
+      }
+    },
+    {
+      "id": "feat-compliance-reports",
+      "kind": "Feature",
+      "label": "Compliance Reporting",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-021",
+      "kind": "Story",
+      "label": "Generate Compliance Reports",
+      "confidence": "inferred",
+      "props": {
+        "priority": "should",
+        "story": "As a compliance officer, I want to generate reports for regulatory submissions, so that I can fulfill reporting requirements to regulatory bodies."
+      }
+    },
+    {
+      "id": "epic-risk-management",
+      "kind": "Epic",
+      "label": "Risk Management",
+      "module": "module-6",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "feat-risk-assessment",
+      "kind": "Feature",
+      "label": "Risk Assessment",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-022",
+      "kind": "Story",
+      "label": "Assess Customer Risk",
+      "confidence": "inferred",
+      "props": {
+        "priority": "must",
+        "story": "As a risk manager, I want to assess the financial risk of customers, so that I can make informed decisions about lending and services."
+      }
+    },
+    {
+      "id": "feat-risk-monitoring",
+      "kind": "Feature",
+      "label": "Risk Monitoring",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-023",
+      "kind": "Story",
+      "label": "Monitor Risk Exposure",
+      "confidence": "inferred",
+      "props": {
+        "priority": "should",
+        "story": "As a risk manager, I want to monitor risk exposure across the organization, so that I can identify and mitigate potential risks."
+      }
+    },
+    {
+      "id": "feat-risk-mitigation",
+      "kind": "Feature",
+      "label": "Risk Mitigation",
+      "confidence": "inferred",
+      "props": {}
+    },
+    {
+      "id": "story-024",
+      "kind": "Story",
+      "label": "Mitigate Identified Risks",
+      "confidence": "inferred",
+      "props": {
+        "priority": "should",
+        "story": "As a risk manager, I want to implement strategies to mitigate identified risks, so that I can reduce the organization's exposure to financial risks."
+      }
+    },
+    {
+      "id": "svc-frontend",
+      "kind": "Container",
+      "label": "Frontend",
+      "confidence": "high",
+      "props": {
+        "technology": "Python / Flask"
+      }
+    },
+    {
+      "id": "svc-userservice",
+      "kind": "Container",
+      "label": "User Service",
+      "confidence": "high",
+      "props": {
+        "technology": "Python / Flask"
+      }
+    },
+    {
+      "id": "svc-contacts",
+      "kind": "Container",
+      "label": "Contacts Service",
+      "confidence": "high",
+      "props": {
+        "technology": "Python / Flask"
+      }
+    },
+    {
+      "id": "svc-ledgerwriter",
+      "kind": "Container",
+      "label": "Ledger Writer",
+      "confidence": "high",
+      "props": {
+        "technology": "Java / Spring Boot"
+      }
+    },
+    {
+      "id": "svc-balancereader",
+      "kind": "Container",
+      "label": "Balance Reader",
+      "confidence": "high",
+      "props": {
+        "technology": "Java / Spring Boot"
+      }
+    },
+    {
+      "id": "svc-transactionhistory",
+      "kind": "Container",
+      "label": "Transaction History",
+      "confidence": "high",
+      "props": {
+        "technology": "Java / Spring Boot"
+      }
+    },
+    {
+      "id": "ds-accounts-db",
+      "kind": "Container",
+      "label": "Accounts DB",
+      "confidence": "high",
+      "props": {
+        "technology": "PostgreSQL"
+      }
+    },
+    {
+      "id": "ds-ledger-db",
+      "kind": "Container",
+      "label": "Ledger DB",
+      "confidence": "high",
+      "props": {
+        "technology": "PostgreSQL"
+      }
+    },
+    {
+      "id": "svc-loadgenerator",
+      "kind": "Container",
+      "label": "Load Generator",
+      "confidence": "high",
+      "props": {
+        "technology": "Python / Locust"
+      }
+    },
+    {
+      "id": "int-web-ui",
+      "kind": "Integration",
+      "label": "Customer web channel",
+      "confidence": "high",
+      "props": {
+        "protocol": "HTTP(S), HTML forms, session cookie holding the JWT",
+        "counterpart": "Customer browser"
+      }
+    },
+    {
+      "id": "int-accounts-db",
+      "kind": "Integration",
+      "label": "Accounts database",
+      "confidence": "high",
+      "props": {
+        "protocol": "SQL (SQLAlchemy)",
+        "counterpart": "PostgreSQL accounts-db"
+      }
+    },
+    {
+      "id": "int-ledger-db",
+      "kind": "Integration",
+      "label": "Ledger database",
+      "confidence": "high",
+      "props": {
+        "protocol": "JDBC (Spring Data JPA)",
+        "counterpart": "PostgreSQL ledger-db"
+      }
+    },
+    {
+      "id": "int-cloud-trace",
+      "kind": "Integration",
+      "label": "Distributed tracing export",
+      "confidence": "high",
+      "props": {
+        "protocol": "OpenTelemetry exporter",
+        "counterpart": "Google Cloud Trace (OpenTelemetry)"
+      }
+    },
+    {
+      "id": "int-cloud-monitoring",
+      "kind": "Integration",
+      "label": "Metrics export",
+      "confidence": "high",
+      "props": {
+        "protocol": "Micrometer Stackdriver registry",
+        "counterpart": "Google Cloud Monitoring (Micrometer / Stackdriver)"
+      }
+    },
+    {
+      "id": "int-external-routing",
+      "kind": "Integration",
+      "label": "External bank accounts (simulated)",
+      "confidence": "inferred",
+      "props": {
+        "protocol": "None: recorded as ledger entries only",
+        "counterpart": "Other banks by routing number"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "bank-of-anthos",
+      "target": "module-1",
+      "type": "HAS_MODULE"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "module-2",
+      "type": "HAS_MODULE"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "module-3",
+      "type": "HAS_MODULE"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "module-4",
+      "type": "HAS_MODULE"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "module-5",
+      "type": "HAS_MODULE"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "module-6",
+      "type": "HAS_MODULE"
+    },
+    {
+      "source": "module-1",
+      "target": "dom-identity",
+      "type": "COVERS_DOMAIN"
+    },
+    {
+      "source": "dom-identity",
+      "target": "agg-user",
+      "type": "HAS_AGGREGATE"
+    },
+    {
+      "source": "agg-user",
+      "target": "ent-user",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "module-2",
+      "target": "dom-accounts",
+      "type": "COVERS_DOMAIN"
+    },
+    {
+      "source": "dom-accounts",
+      "target": "agg-account",
+      "type": "HAS_AGGREGATE"
+    },
+    {
+      "source": "agg-account",
+      "target": "ent-account",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "dom-accounts",
+      "target": "agg-contact",
+      "type": "HAS_AGGREGATE"
+    },
+    {
+      "source": "agg-contact",
+      "target": "ent-contact",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "module-3",
+      "target": "dom-payments",
+      "type": "COVERS_DOMAIN"
+    },
+    {
+      "source": "dom-payments",
+      "target": "agg-transaction",
+      "type": "HAS_AGGREGATE"
+    },
+    {
+      "source": "agg-transaction",
+      "target": "ent-transaction",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "dom-payments",
+      "target": "agg-balance",
+      "type": "HAS_AGGREGATE"
+    },
+    {
+      "source": "agg-balance",
+      "target": "ent-balance",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "module-4",
+      "target": "dom-deposits",
+      "type": "COVERS_DOMAIN"
+    },
+    {
+      "source": "dom-deposits",
+      "target": "agg-deposit",
+      "type": "HAS_AGGREGATE"
+    },
+    {
+      "source": "agg-deposit",
+      "target": "ent-deposit",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "dom-identity",
+      "target": "ent-user",
+      "type": "OWNS_ENTITY"
+    },
+    {
+      "source": "dom-accounts",
+      "target": "ent-account",
+      "type": "OWNS_ENTITY"
+    },
+    {
+      "source": "dom-accounts",
+      "target": "ent-contact",
+      "type": "OWNS_ENTITY"
+    },
+    {
+      "source": "dom-payments",
+      "target": "ent-transaction",
+      "type": "OWNS_ENTITY"
+    },
+    {
+      "source": "dom-payments",
+      "target": "ent-balance",
+      "type": "OWNS_ENTITY"
+    },
+    {
+      "source": "dom-deposits",
+      "target": "ent-deposit",
+      "type": "OWNS_ENTITY"
+    },
+    {
+      "source": "ent-user",
+      "target": "ent-account",
+      "type": "RELATES_1_1"
+    },
+    {
+      "source": "ent-user",
+      "target": "ent-contact",
+      "type": "RELATES_1_N"
+    },
+    {
+      "source": "ent-account",
+      "target": "ent-transaction",
+      "type": "RELATES_1_N"
+    },
+    {
+      "source": "ent-account",
+      "target": "ent-balance",
+      "type": "RELATES_1_1"
+    },
+    {
+      "source": "ent-account",
+      "target": "ent-deposit",
+      "type": "RELATES_1_N"
+    },
+    {
+      "source": "module-1",
+      "target": "act-user-login",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-identity",
+      "target": "act-user-login",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-user-login",
+      "target": "svc-userservice",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-2",
+      "target": "act-user-signup",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-identity",
+      "target": "act-user-signup",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-user-signup",
+      "target": "svc-userservice",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-2",
+      "target": "act-view-balance",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-payments",
+      "target": "act-view-balance",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-view-balance",
+      "target": "svc-balancereader",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-2",
+      "target": "act-add-contact",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-accounts",
+      "target": "act-add-contact",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-add-contact",
+      "target": "svc-contacts",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-3",
+      "target": "act-send-payment",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-payments",
+      "target": "act-send-payment",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-send-payment",
+      "target": "svc-ledgerwriter",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-4",
+      "target": "act-make-deposit",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-deposits",
+      "target": "act-make-deposit",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-make-deposit",
+      "target": "svc-ledgerwriter",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-3",
+      "target": "act-view-transaction-history",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-payments",
+      "target": "act-view-transaction-history",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-view-transaction-history",
+      "target": "svc-transactionhistory",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-3",
+      "target": "act-validate-transaction",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-payments",
+      "target": "act-validate-transaction",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-validate-transaction",
+      "target": "svc-ledgerwriter",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-3",
+      "target": "act-refresh-balance-cache",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-payments",
+      "target": "act-refresh-balance-cache",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-refresh-balance-cache",
+      "target": "svc-balancereader",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-3",
+      "target": "act-refresh-transaction-cache",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-payments",
+      "target": "act-refresh-transaction-cache",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-refresh-transaction-cache",
+      "target": "svc-transactionhistory",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-1",
+      "target": "act-logout",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-identity",
+      "target": "act-logout",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-logout",
+      "target": "svc-frontend",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-2",
+      "target": "act-retrieve-contacts",
+      "type": "HAS_ACTIVITY"
+    },
+    {
+      "source": "dom-accounts",
+      "target": "act-retrieve-contacts",
+      "type": "PERFORMS"
+    },
+    {
+      "source": "act-retrieve-contacts",
+      "target": "svc-contacts",
+      "type": "EXECUTED_BY"
+    },
+    {
+      "source": "module-1",
+      "target": "flow-user-login",
+      "type": "HAS_FLOW"
+    },
+    {
+      "source": "flow-user-login",
+      "target": "act-user-login",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-user-login",
+      "target": "act-user-login",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-user-login",
+      "target": "ent-user",
+      "type": "READS"
+    },
+    {
+      "source": "flow-user-login",
+      "target": "act-user-login",
+      "type": "STEP"
+    },
+    {
+      "source": "module-2",
+      "target": "flow-user-signup",
+      "type": "HAS_FLOW"
+    },
+    {
+      "source": "flow-user-signup",
+      "target": "act-user-signup",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-user-signup",
+      "target": "act-user-signup",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-user-signup",
+      "target": "ent-user",
+      "type": "WRITES"
+    },
+    {
+      "source": "flow-user-signup",
+      "target": "act-user-signup",
+      "type": "STEP"
+    },
+    {
+      "source": "module-3",
+      "target": "flow-send-payment",
+      "type": "HAS_FLOW"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "act-send-payment",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "ent-contact",
+      "type": "READS"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "act-validate-transaction",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "ent-balance",
+      "type": "READS"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "ent-transaction",
+      "type": "READS"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "act-send-payment",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "ent-transaction",
+      "type": "WRITES"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "ent-balance",
+      "type": "WRITES"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "act-refresh-balance-cache",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "ent-balance",
+      "type": "WRITES"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "ent-balance",
+      "type": "READS"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "act-send-payment",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-send-payment",
+      "target": "ent-balance",
+      "type": "READS"
+    },
+    {
+      "source": "module-4",
+      "target": "flow-make-deposit",
+      "type": "HAS_FLOW"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "act-make-deposit",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "ent-contact",
+      "type": "READS"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "act-validate-transaction",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "ent-contact",
+      "type": "READS"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "act-make-deposit",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "ent-deposit",
+      "type": "WRITES"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "ent-balance",
+      "type": "WRITES"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "act-refresh-balance-cache",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "ent-balance",
+      "type": "WRITES"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "ent-balance",
+      "type": "READS"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "act-make-deposit",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-make-deposit",
+      "target": "ent-balance",
+      "type": "READS"
+    },
+    {
+      "source": "module-3",
+      "target": "flow-view-history",
+      "type": "HAS_FLOW"
+    },
+    {
+      "source": "flow-view-history",
+      "target": "act-view-transaction-history",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-view-history",
+      "target": "act-view-transaction-history",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-view-history",
+      "target": "ent-transaction",
+      "type": "READS"
+    },
+    {
+      "source": "flow-view-history",
+      "target": "act-view-transaction-history",
+      "type": "STEP"
+    },
+    {
+      "source": "flow-view-history",
+      "target": "ent-transaction",
+      "type": "READS"
+    },
+    {
+      "source": "per-customer",
+      "target": "jrn-customer-onboarding",
+      "type": "UNDERTAKES"
+    },
+    {
+      "source": "jrn-customer-onboarding",
+      "target": "flow-user-signup",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "per-customer",
+      "target": "jrn-customer-payment",
+      "type": "UNDERTAKES"
+    },
+    {
+      "source": "jrn-customer-payment",
+      "target": "flow-send-payment",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "per-operator",
+      "target": "jrn-operator-monitoring",
+      "type": "UNDERTAKES"
+    },
+    {
+      "source": "per-engineer",
+      "target": "jrn-engineer-maintenance",
+      "type": "UNDERTAKES"
+    },
+    {
+      "source": "per-load-generator",
+      "target": "jrn-load-testing",
+      "type": "UNDERTAKES"
+    },
+    {
+      "source": "module-2",
+      "target": "rep-account-statement",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "rep-account-statement",
+      "target": "ent-account",
+      "type": "READS"
+    },
+    {
+      "source": "rep-account-statement",
+      "target": "ent-transaction",
+      "type": "READS"
+    },
+    {
+      "source": "module-2",
+      "target": "rep-balance-summary",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "rep-balance-summary",
+      "target": "ent-account",
+      "type": "READS"
+    },
+    {
+      "source": "rep-balance-summary",
+      "target": "ent-balance",
+      "type": "READS"
+    },
+    {
+      "source": "module-3",
+      "target": "rep-transaction-history",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "rep-transaction-history",
+      "target": "ent-transaction",
+      "type": "READS"
+    },
+    {
+      "source": "module-1",
+      "target": "rep-operational-metrics",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "module-1",
+      "target": "rep-user-activity",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "rep-user-activity",
+      "target": "ent-user",
+      "type": "READS"
+    },
+    {
+      "source": "module-5",
+      "target": "rep-fraud-detection",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "rep-fraud-detection",
+      "target": "ent-transaction",
+      "type": "READS"
+    },
+    {
+      "source": "module-5",
+      "target": "regulatory-compliance-report",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "regulatory-compliance-report",
+      "target": "ent-user",
+      "type": "READS"
+    },
+    {
+      "source": "regulatory-compliance-report",
+      "target": "ent-account",
+      "type": "READS"
+    },
+    {
+      "source": "regulatory-compliance-report",
+      "target": "ent-transaction",
+      "type": "READS"
+    },
+    {
+      "source": "module-5",
+      "target": "rep-reconciliation",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "rep-reconciliation",
+      "target": "ent-account",
+      "type": "READS"
+    },
+    {
+      "source": "rep-reconciliation",
+      "target": "ent-balance",
+      "type": "READS"
+    },
+    {
+      "source": "module-5",
+      "target": "rep-card-activity",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "module-6",
+      "target": "rep-loan-performance",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "module-6",
+      "target": "rep-risk-assessment",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "module-6",
+      "target": "rep-capital-adequacy",
+      "type": "HAS_REPORT"
+    },
+    {
+      "source": "module-1",
+      "target": "cap-user-authentication",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "cap-user-authentication",
+      "target": "act-user-login",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "cap-user-authentication",
+      "target": "act-logout",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "module-2",
+      "target": "cap-user-registration",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "cap-user-registration",
+      "target": "act-user-signup",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "module-2",
+      "target": "cap-account-management",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "cap-account-management",
+      "target": "act-add-contact",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "cap-account-management",
+      "target": "act-retrieve-contacts",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "module-3",
+      "target": "cap-payment-processing",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "cap-payment-processing",
+      "target": "act-send-payment",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "cap-payment-processing",
+      "target": "act-validate-transaction",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "module-2",
+      "target": "cap-balance-management",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "cap-balance-management",
+      "target": "act-view-balance",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "cap-balance-management",
+      "target": "act-refresh-balance-cache",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "module-4",
+      "target": "cap-deposit-processing",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "cap-deposit-processing",
+      "target": "act-make-deposit",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "cap-deposit-processing",
+      "target": "act-validate-transaction",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "module-3",
+      "target": "cap-transaction-history",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "cap-transaction-history",
+      "target": "act-view-transaction-history",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "cap-transaction-history",
+      "target": "act-refresh-transaction-cache",
+      "type": "REALISED_BY"
+    },
+    {
+      "source": "module-5",
+      "target": "cap-card-issuing",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "module-6",
+      "target": "cap-loan-management",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "module-5",
+      "target": "cap-fraud-detection",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "module-5",
+      "target": "cap-regulatory-compliance",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "module-6",
+      "target": "cap-risk-management",
+      "type": "HAS_CAPABILITY"
+    },
+    {
+      "source": "cap-user-authentication",
+      "target": "epic-security-enhancement",
+      "type": "DELIVERED_BY"
+    },
+    {
+      "source": "module-1",
+      "target": "epic-security-enhancement",
+      "type": "HAS_EPIC"
+    },
+    {
+      "source": "epic-security-enhancement",
+      "target": "feat-multi-factor-auth",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-multi-factor-auth",
+      "target": "story-001",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-security-enhancement",
+      "target": "feat-identity-management",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-identity-management",
+      "target": "story-002",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "cap-user-registration",
+      "target": "epic-account-management",
+      "type": "DELIVERED_BY"
+    },
+    {
+      "source": "cap-account-management",
+      "target": "epic-account-management",
+      "type": "DELIVERED_BY"
+    },
+    {
+      "source": "module-2",
+      "target": "epic-account-management",
+      "type": "HAS_EPIC"
+    },
+    {
+      "source": "epic-account-management",
+      "target": "feat-user-profile-management",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-user-profile-management",
+      "target": "story-003",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-account-management",
+      "target": "feat-contact-management",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-contact-management",
+      "target": "story-004",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "cap-payment-processing",
+      "target": "epic-payment-processing",
+      "type": "DELIVERED_BY"
+    },
+    {
+      "source": "cap-transaction-history",
+      "target": "epic-payment-processing",
+      "type": "DELIVERED_BY"
+    },
+    {
+      "source": "module-3",
+      "target": "epic-payment-processing",
+      "type": "HAS_EPIC"
+    },
+    {
+      "source": "epic-payment-processing",
+      "target": "feat-payment-scheduling",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-payment-scheduling",
+      "target": "story-005",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-payment-processing",
+      "target": "feat-payment-validation",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-payment-validation",
+      "target": "story-006",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-payment-processing",
+      "target": "feat-transaction-history",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-transaction-history",
+      "target": "story-007",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "cap-deposit-processing",
+      "target": "epic-deposit-processing",
+      "type": "DELIVERED_BY"
+    },
+    {
+      "source": "module-4",
+      "target": "epic-deposit-processing",
+      "type": "HAS_EPIC"
+    },
+    {
+      "source": "epic-deposit-processing",
+      "target": "feat-deposit-verification",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-deposit-verification",
+      "target": "story-008",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-deposit-processing",
+      "target": "feat-deposit-scheduling",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-deposit-scheduling",
+      "target": "story-009",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "cap-card-issuing",
+      "target": "epic-card-services",
+      "type": "DELIVERED_BY"
+    },
+    {
+      "source": "module-5",
+      "target": "epic-card-services",
+      "type": "HAS_EPIC"
+    },
+    {
+      "source": "epic-card-services",
+      "target": "feat-card-issuance",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-card-issuance",
+      "target": "story-010",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-card-services",
+      "target": "feat-card-management",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-card-management",
+      "target": "story-011",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-card-services",
+      "target": "feat-card-activity",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-card-activity",
+      "target": "story-012",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "cap-loan-management",
+      "target": "epic-loan-services",
+      "type": "DELIVERED_BY"
+    },
+    {
+      "source": "module-6",
+      "target": "epic-loan-services",
+      "type": "HAS_EPIC"
+    },
+    {
+      "source": "epic-loan-services",
+      "target": "feat-loan-origination",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-loan-origination",
+      "target": "story-013",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-loan-services",
+      "target": "feat-loan-servicing",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-loan-servicing",
+      "target": "story-014",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-loan-services",
+      "target": "feat-loan-monitoring",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-loan-monitoring",
+      "target": "story-015",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "cap-fraud-detection",
+      "target": "epic-fraud-detection",
+      "type": "DELIVERED_BY"
+    },
+    {
+      "source": "module-5",
+      "target": "epic-fraud-detection",
+      "type": "HAS_EPIC"
+    },
+    {
+      "source": "epic-fraud-detection",
+      "target": "feat-real-time-monitoring",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-real-time-monitoring",
+      "target": "story-016",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-fraud-detection",
+      "target": "feat-pattern-detection",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-pattern-detection",
+      "target": "story-017",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-fraud-detection",
+      "target": "feat-fraud-reports",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-fraud-reports",
+      "target": "story-018",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "cap-regulatory-compliance",
+      "target": "epic-regulatory-compliance",
+      "type": "DELIVERED_BY"
+    },
+    {
+      "source": "module-5",
+      "target": "epic-regulatory-compliance",
+      "type": "HAS_EPIC"
+    },
+    {
+      "source": "epic-regulatory-compliance",
+      "target": "feat-compliance-monitoring",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-compliance-monitoring",
+      "target": "story-019",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-regulatory-compliance",
+      "target": "feat-audit-trails",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-audit-trails",
+      "target": "story-020",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-regulatory-compliance",
+      "target": "feat-compliance-reports",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-compliance-reports",
+      "target": "story-021",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "cap-risk-management",
+      "target": "epic-risk-management",
+      "type": "DELIVERED_BY"
+    },
+    {
+      "source": "module-6",
+      "target": "epic-risk-management",
+      "type": "HAS_EPIC"
+    },
+    {
+      "source": "epic-risk-management",
+      "target": "feat-risk-assessment",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-risk-assessment",
+      "target": "story-022",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-risk-management",
+      "target": "feat-risk-monitoring",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-risk-monitoring",
+      "target": "story-023",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "epic-risk-management",
+      "target": "feat-risk-mitigation",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feat-risk-mitigation",
+      "target": "story-024",
+      "type": "HAS_STORY"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "svc-frontend",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "svc-userservice",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "svc-contacts",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "svc-ledgerwriter",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "svc-balancereader",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "svc-transactionhistory",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "ds-accounts-db",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "ds-ledger-db",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "svc-loadgenerator",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "svc-frontend",
+      "target": "svc-userservice",
+      "type": "CALLS"
+    },
+    {
+      "source": "svc-frontend",
+      "target": "svc-contacts",
+      "type": "CALLS"
+    },
+    {
+      "source": "svc-frontend",
+      "target": "svc-ledgerwriter",
+      "type": "CALLS"
+    },
+    {
+      "source": "svc-frontend",
+      "target": "svc-balancereader",
+      "type": "CALLS"
+    },
+    {
+      "source": "svc-frontend",
+      "target": "svc-transactionhistory",
+      "type": "CALLS"
+    },
+    {
+      "source": "svc-ledgerwriter",
+      "target": "svc-balancereader",
+      "type": "CALLS"
+    },
+    {
+      "source": "svc-ledgerwriter",
+      "target": "ds-ledger-db",
+      "type": "CALLS"
+    },
+    {
+      "source": "svc-balancereader",
+      "target": "ds-ledger-db",
+      "type": "CALLS"
+    },
+    {
+      "source": "svc-transactionhistory",
+      "target": "ds-ledger-db",
+      "type": "CALLS"
+    },
+    {
+      "source": "svc-userservice",
+      "target": "ds-accounts-db",
+      "type": "CALLS"
+    },
+    {
+      "source": "svc-contacts",
+      "target": "ds-accounts-db",
+      "type": "CALLS"
+    },
+    {
+      "source": "svc-loadgenerator",
+      "target": "svc-frontend",
+      "type": "CALLS"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "int-web-ui",
+      "type": "INTEGRATES_WITH"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "int-accounts-db",
+      "type": "INTEGRATES_WITH"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "int-ledger-db",
+      "type": "INTEGRATES_WITH"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "int-cloud-trace",
+      "type": "INTEGRATES_WITH"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "int-cloud-monitoring",
+      "type": "INTEGRATES_WITH"
+    },
+    {
+      "source": "bank-of-anthos",
+      "target": "int-external-routing",
+      "type": "INTEGRATES_WITH"
+    }
+  ]
+}

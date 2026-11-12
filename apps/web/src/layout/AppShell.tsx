@@ -23,6 +23,7 @@ import {
   ArrowLeftRight,
   House,
   Layers3,
+  FileText,
 } from 'lucide-react';
 import { currentDataSourceMode, dataModeBadge, displayedCompany } from '../lib/data-origin.js';
 
@@ -62,6 +63,7 @@ const NAV_SECTIONS: Array<{ title: string | null; items: NavItem[] }> = [
   {
     title: 'Product & Requirements',
     items: [
+      { to: '/brd', label: 'Requirements (BRD)', icon: FileText },
       { to: '/personas', label: 'Personas & Journeys', icon: Users },
       { to: '/backlog', label: 'Backlog', icon: ListChecks },
       { to: '/flows', label: 'Execution Flows', icon: GitBranch },

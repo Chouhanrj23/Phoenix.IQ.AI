@@ -54,3 +54,6 @@ artifacts/
 
 # Personal, non-project notes kept locally (not Phoenix documentation)
 mydocs.md
+
+# Files uploaded on the Modules page for "Generate BRD" (may contain client material)
+inputs/

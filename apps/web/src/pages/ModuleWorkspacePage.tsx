@@ -25,6 +25,16 @@ import {
 import { Button } from '../components/ui/button.js';
 import { ModuleQuiz } from '../components/module-quiz.js';
 import { FinalReport } from '../components/final-report.js';
+import { ModuleAnalysis } from '../components/module-analysis.js';
+import { GenerateBrdPanel } from '../components/generate-brd-panel.js';
+import { getActiveCompany, getCompany } from '../data/index.js';
+import {
+  PROJECT_FOR_ENGAGEMENT,
+  deleteInput,
+  listInputs,
+  uploadInput,
+  type InputsListing,
+} from '../lib/re-inputs.js';
 import {
   EMPTY_QUIZ_STATE,
   QUIZ_LEVELS,
@@ -59,7 +69,7 @@ const ARTIFACTS: ArtifactKind[] = [
     icon: FileText,
     accent: 'border-l-blue-500',
     iconColour: 'text-blue-600 bg-blue-50',
-    allowedExtensions: ['.pdf', '.doc', '.docx', '.md'],
+    allowedExtensions: ['.md', '.txt', '.docx', '.html'],
   },
   {
     id: 'code',
@@ -68,7 +78,23 @@ const ARTIFACTS: ArtifactKind[] = [
     icon: Braces,
     accent: 'border-l-violet-500',
     iconColour: 'text-violet-600 bg-violet-50',
-    allowedExtensions: ['.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.cs', '.go', '.zip'],
+    allowedExtensions: [
+      '.ts',
+      '.tsx',
+      '.js',
+      '.jsx',
+      '.py',
+      '.java',
+      '.cs',
+      '.go',
+      '.kt',
+      '.sql',
+      '.yaml',
+      '.yml',
+      '.json',
+      '.xml',
+      '.properties',
+    ],
   },
   {
     id: 'screenshots',
@@ -96,7 +122,7 @@ const ARTIFACTS: ArtifactKind[] = [
     icon: FileText,
     accent: 'border-l-cyan-500',
     iconColour: 'text-cyan-600 bg-cyan-50',
-    allowedExtensions: ['.pdf', '.doc', '.docx', '.md'],
+    allowedExtensions: ['.md', '.txt', '.docx', '.html'],
   },
   {
     id: 'tickets',
@@ -105,7 +131,7 @@ const ARTIFACTS: ArtifactKind[] = [
     icon: Ticket,
     accent: 'border-l-rose-500',
     iconColour: 'text-rose-600 bg-rose-50',
-    allowedExtensions: ['.pdf', '.csv', '.json', '.xlsx'],
+    allowedExtensions: ['.csv', '.json', '.txt', '.md'],
   },
   {
     id: 'data-models',
@@ -123,7 +149,7 @@ const ARTIFACTS: ArtifactKind[] = [
     icon: Database,
     accent: 'border-l-emerald-500',
     iconColour: 'text-emerald-600 bg-emerald-50',
-    allowedExtensions: ['.sql', '.csv', '.json', '.dump', '.bak'],
+    allowedExtensions: ['.sql', '.csv', '.json'],
   },
   {
     id: 'email',
@@ -132,7 +158,7 @@ const ARTIFACTS: ArtifactKind[] = [
     icon: Mail,
     accent: 'border-l-orange-500',
     iconColour: 'text-orange-600 bg-orange-50',
-    allowedExtensions: ['.eml', '.msg', '.pdf', '.html', '.txt'],
+    allowedExtensions: ['.eml', '.html', '.txt'],
   },
   {
     id: 'telemetrics',
@@ -227,6 +253,9 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
     () => loadAllQuizStates()[moduleId] ?? EMPTY_QUIZ_STATE,
   );
   const [quizOpen, setQuizOpen] = useState(false);
+  const engagement = getActiveCompany();
+  const project = PROJECT_FOR_ENGAGEMENT[engagement];
+  const [listing, setListing] = useState<InputsListing | null>(null);
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [analysing, setAnalysing] = useState<Record<string, boolean>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -278,40 +307,63 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
   );
   const animatedSourceAvailable = useAnimatedNumber(sourceAvailable);
 
-  function addFiles(artifact: ArtifactKind, event: ChangeEvent<HTMLInputElement>): void {
+  // Uploaded files are saved on the dev server under inputs/<project>/<card>/<module>/,
+  // where the "Generate BRD" run reads them. The server's listing is the source of truth.
+  function applyListing(next: InputsListing): void {
+    setListing(next);
+    const forModule: Record<string, string[]> = {};
+    for (const f of next.files) if (f.module === moduleId) (forModule[f.kind] ??= []).push(f.name);
+    setUploads(forModule);
+  }
+
+  useEffect(() => {
+    listInputs(project)
+      .then(applyListing)
+      .catch(() => {
+        // Without the dev server's endpoints the cards keep their local file list.
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project, moduleId]);
+
+  async function addFiles(
+    artifact: ArtifactKind,
+    event: ChangeEvent<HTMLInputElement>,
+  ): Promise<void> {
     const selectedFiles = Array.from(event.target.files ?? []);
+    event.target.value = '';
     const validFiles = selectedFiles.filter((file) =>
       artifact.allowedExtensions.some((extension) => file.name.toLowerCase().endsWith(extension)),
     );
     const rejectedFiles = selectedFiles.filter((file) => !validFiles.includes(file));
+    const problems = rejectedFiles.length
+      ? [
+          `${rejectedFiles.map((file) => file.name).join(', ')} rejected. Allowed: ${artifact.allowedExtensions.join(', ')}.`,
+        ]
+      : [];
 
     if (validFiles.length) {
-      // Placeholder for the real LLM pass over the uploaded files.
       setAnalysing((previous) => ({ ...previous, [artifact.id]: true }));
-      window.clearTimeout(analysisTimers.current[artifact.id]);
-      analysisTimers.current[artifact.id] = window.setTimeout(
-        () => setAnalysing((previous) => ({ ...previous, [artifact.id]: false })),
-        1800,
-      );
-      setUploads((previous) => ({
-        ...previous,
-        [artifact.id]: [...(previous[artifact.id] ?? []), ...validFiles.map((file) => file.name)],
-      }));
+      for (const file of validFiles) {
+        try {
+          applyListing(await uploadInput(project, artifact.id, moduleId, file));
+        } catch (err) {
+          problems.push(`${file.name} was not saved: ${(err as Error).message}`);
+        }
+      }
+      setAnalysing((previous) => ({ ...previous, [artifact.id]: false }));
     }
-    setUploadErrors((previous) => ({
-      ...previous,
-      [artifact.id]: rejectedFiles.length
-        ? `${rejectedFiles.map((file) => file.name).join(', ')} rejected. Allowed: ${artifact.allowedExtensions.join(', ')}.`
-        : '',
-    }));
-    event.target.value = '';
+    setUploadErrors((previous) => ({ ...previous, [artifact.id]: problems.join(' ') }));
   }
 
-  function removeFile(kind: string, fileName: string): void {
-    setUploads((previous) => ({
-      ...previous,
-      [kind]: previous[kind]?.filter((name) => name !== fileName) ?? [],
-    }));
+  async function removeFile(kind: string, fileName: string): Promise<void> {
+    try {
+      applyListing(await deleteInput(project, kind, moduleId, fileName));
+    } catch (err) {
+      setUploadErrors((previous) => ({
+        ...previous,
+        [kind]: `${fileName} was not removed: ${(err as Error).message}`,
+      }));
+    }
   }
 
   function generateOutput(artifact: ArtifactKind): void {
@@ -376,6 +428,15 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
           </NavLink>
         ))}
       </div>
+
+      <GenerateBrdPanel
+        project={project}
+        projectName={getCompany(engagement).name}
+        listing={listing}
+        onListing={applyListing}
+      />
+
+      <ModuleAnalysis moduleId={moduleId} />
 
       <section
         aria-labelledby="source-available-heading"
@@ -463,7 +524,7 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
                   type="file"
                   multiple
                   accept={artifact.allowedExtensions.join(',')}
-                  onChange={(event) => addFiles(artifact, event)}
+                  onChange={(event) => void addFiles(artifact, event)}
                 />
                 {files.length ? (
                   <div className="mt-3 space-y-1">
@@ -477,7 +538,7 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
                           type="button"
                           className="text-slate-400 hover:text-rose-600"
                           aria-label={`Remove ${file}`}
-                          onClick={() => removeFile(artifact.id, file)}
+                          onClick={() => void removeFile(artifact.id, file)}
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>

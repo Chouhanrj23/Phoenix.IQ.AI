@@ -1,4 +1,7 @@
+import { getReport } from '../reverse-engineering/index.js';
+
 export type CompanyId = 'aurora' | 'fintech';
+export const COMPANY_IDS: readonly CompanyId[] = ['aurora', 'fintech'];
 
 export interface CompanyOption {
   id: CompanyId;
@@ -31,7 +34,17 @@ export const COMPANIES: CompanyOption[] = [
     stats: { elements: 142, domains: 6, integrations: 5 },
     accent: 'cobalt',
   },
-  {
+  bankingEngagement(),
+];
+
+/**
+ * The banking engagement. When the reverse-engineering run has produced its
+ * report (Bank of Anthos, `pnpm reverse-engineer`), the engagement shows that
+ * analysis and its description and headline stats come from it; otherwise it
+ * falls back to the demo fixtures.
+ */
+function bankingEngagement(): CompanyOption {
+  const base: CompanyOption = {
     id: 'fintech',
     name: 'Fintech - Banking System',
     shortName: 'Banking System',
@@ -41,14 +54,30 @@ export const COMPANIES: CompanyOption[] = [
       'A digital-first neobank offering checking/savings accounts, card issuing, and P2P payments, integrated with a third-party core banking ledger, card processor, KYC/AML vendor, and ACH payment rail.',
     stats: { elements: 131, domains: 6, integrations: 5 },
     accent: 'blue',
-  },
-];
+  };
+  const report = getReport('fintech');
+  if (!report) return base;
+  return {
+    ...base,
+    tagline: 'Accounts, payments, deposits & history — reverse-engineered from Bank of Anthos',
+    description: report.systemSummary.description,
+    stats: {
+      elements: report.systemSummary.totalElements,
+      domains: report.domains.length,
+      integrations: report.integrations.length,
+    },
+  };
+}
 
 export const DEFAULT_COMPANY: CompanyId = 'aurora';
 
 const COMPANIES_BY_ID: Record<CompanyId, CompanyOption> = Object.fromEntries(
   COMPANIES.map((c) => [c.id, c]),
 ) as Record<CompanyId, CompanyOption>;
+
+export function isCompanyAvailable(id: CompanyId): boolean {
+  return id in COMPANIES_BY_ID;
+}
 
 export function getCompany(id: CompanyId): CompanyOption {
   return COMPANIES_BY_ID[id] ?? COMPANIES_BY_ID[DEFAULT_COMPANY];

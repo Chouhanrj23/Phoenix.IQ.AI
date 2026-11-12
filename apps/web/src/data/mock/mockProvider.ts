@@ -2,6 +2,7 @@ import type { C4Level, OkfDataProvider } from '../types.js';
 import type { CompanyId } from '../companies.js';
 import { auroraBundle } from './aurora/index.js';
 import { fintechBundle } from './fintech/index.js';
+import { getReport, reportBundle } from '../../reverse-engineering/index.js';
 
 type CompanyBundle = typeof auroraBundle;
 
@@ -70,9 +71,15 @@ function providerFor(bundle: CompanyBundle): OkfDataProvider {
   };
 }
 
+// The banking engagement shows the reverse-engineered Bank of Anthos report
+// (`pnpm reverse-engineer`) when it exists, and the demo fixtures otherwise.
+const bankingReport = getReport('fintech');
+
 const providersByCompany: Record<CompanyId, OkfDataProvider> = {
   aurora: providerFor(auroraBundle),
-  fintech: providerFor(fintechBundle),
+  fintech: providerFor(
+    bankingReport ? (reportBundle(bankingReport) as CompanyBundle) : fintechBundle,
+  ),
 };
 
 /** Returns the mock provider bound to a specific company's fixture dataset. */

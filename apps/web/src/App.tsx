@@ -20,6 +20,7 @@ import { SystemMapPage } from './pages/SystemMapPage.js';
 import { AgentPipelinePage } from './pages/AgentPipelinePage.js';
 import { ModuleWorkspacePage } from './pages/ModuleWorkspacePage.js';
 import { HomePage } from './pages/HomePage.js';
+import { BrdPage } from './pages/BrdPage.js';
 import {
   getActiveCompany,
   hasSelectedCompany,
@@ -78,6 +79,7 @@ export function App(): JSX.Element {
                   <Route path="/drift" element={<DriftHistoryPage />} />
                   <Route path="/review" element={<ReviewPage />} />
                   <Route path="/modules/:moduleId" element={<ModuleWorkspacePage />} />
+                  <Route path="/brd" element={<BrdPage />} />
                 </Routes>
               </AppShell>
             ) : (

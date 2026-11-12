@@ -1,5 +1,6 @@
 import { Users, ShieldCheck, IdCard, ChartPie, Globe, type LucideIcon } from 'lucide-react';
 import { getCompany, type CompanyId } from '../data/index.js';
+import { getReport } from '../reverse-engineering/index.js';
 
 export interface HomeProject {
   id: string;
@@ -44,9 +45,31 @@ export const DEFAULT_SUMMARY = 'Details will be announced when this project is s
 //   Its name is pulled from there so it stays in sync with the engagement list.
 // - createdBy is set to the project owner. createdOn is the repository's first
 //   commit date. Update either here if they should change.
-// - completion is a placeholder of 20% for the Indian Banking System, set for the
-//   visual preview. Replace it with the real figure (or null) once one is reported.
+// - completion and confidence come from the reverse-engineering report (Bank of
+//   Anthos) once `pnpm reverse-engineer` has produced it: completion = share of the
+//   six modules the system implements; confidence = share of extracted elements
+//   backed by direct evidence at medium-or-better confidence. Without a report
+//   they fall back to the 20% / 92% preview placeholders.
 const BANKING_ENGAGEMENT = getCompany('fintech');
+
+function bankingMetrics(): { completion: number; confidence: number } {
+  const report = getReport('fintech');
+  if (!report) return { completion: 20, confidence: 92 };
+  const levels = [
+    ...report.domains,
+    ...report.entities,
+    ...report.activities,
+    ...report.executionFlows,
+    ...report.capabilities,
+    ...report.reports,
+    ...report.personas,
+  ].map((e) => e.metadata.confidence.level);
+  const strong = levels.filter((l) => l === 'high' || l === 'medium').length;
+  return {
+    completion: Math.round(report.systemSummary.coverageScore * 100),
+    confidence: levels.length ? Math.round((strong / levels.length) * 100) : 0,
+  };
+}
 
 export const HOME_PROJECTS: HomeProject[] = [
   {
@@ -56,8 +79,7 @@ export const HOME_PROJECTS: HomeProject[] = [
     to: '/overview',
     summary: BANKING_ENGAGEMENT.tagline,
     projectName: BANKING_ENGAGEMENT.name,
-    completion: 20,
-    confidence: 92,
+    ...bankingMetrics(),
     createdBy: 'Abhijith',
     createdOn: '2026-07-23',
   },
