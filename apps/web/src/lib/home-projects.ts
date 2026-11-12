@@ -18,6 +18,11 @@ export interface HomeProject {
   projectName: string | null;
   /** 0–100. Null means no completion figure has been reported yet. */
   completion: number | null;
+  /**
+   * 0–100. How much of the project the LLM understood well enough to generate output.
+   * 90 or more is a good score. 0 until the LLM is integrated for the project.
+   */
+  confidence: number;
   createdBy: string | null;
   /** ISO date (YYYY-MM-DD). */
   createdOn: string | null;
@@ -52,6 +57,7 @@ export const HOME_PROJECTS: HomeProject[] = [
     summary: BANKING_ENGAGEMENT.tagline,
     projectName: BANKING_ENGAGEMENT.name,
     completion: 20,
+    confidence: 92,
     createdBy: 'Abhijith',
     createdOn: '2026-07-23',
   },
@@ -63,6 +69,7 @@ export const HOME_PROJECTS: HomeProject[] = [
     summary: DEFAULT_SUMMARY,
     projectName: null,
     completion: 0,
+    confidence: 0,
     createdBy: null,
     createdOn: null,
   },
@@ -74,6 +81,7 @@ export const HOME_PROJECTS: HomeProject[] = [
     summary: DEFAULT_SUMMARY,
     projectName: null,
     completion: 0,
+    confidence: 0,
     createdBy: null,
     createdOn: null,
   },
@@ -85,6 +93,7 @@ export const HOME_PROJECTS: HomeProject[] = [
     summary: DEFAULT_SUMMARY,
     projectName: null,
     completion: 0,
+    confidence: 0,
     createdBy: null,
     createdOn: null,
   },
@@ -96,6 +105,7 @@ export const HOME_PROJECTS: HomeProject[] = [
     summary: DEFAULT_SUMMARY,
     projectName: null,
     completion: 0,
+    confidence: 0,
     createdBy: null,
     createdOn: null,
   },
@@ -107,6 +117,7 @@ export const HOME_PROJECTS: HomeProject[] = [
     summary: DEFAULT_SUMMARY,
     projectName: null,
     completion: 0,
+    confidence: 0,
     createdBy: null,
     createdOn: null,
   },
@@ -148,6 +159,7 @@ export function loadCustomProjects(): HomeProject[] {
           summary: asText(item.summary) ?? DEFAULT_SUMMARY,
           projectName: asText(item.projectName),
           completion: asCompletion(item.completion),
+          confidence: asCompletion(item.confidence) ?? 0,
           createdBy: asText(item.createdBy),
           createdOn: asText(item.createdOn),
         },
@@ -187,6 +199,7 @@ export function createCustomProject(input: NewProjectInput): HomeProject {
       summary: DEFAULT_SUMMARY,
       projectName: null,
       completion: null,
+      confidence: 0,
       createdBy: null,
       createdOn: null,
     },

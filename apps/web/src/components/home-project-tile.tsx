@@ -54,11 +54,10 @@ export function HomeProjectTile({
   const hasHoverFx = isActive || nameOnly;
   const Icon = project.icon ?? (isActive ? Banknote : Layers);
   const hasCompletion = project.completion !== null;
+  const confidence = Math.min(100, Math.max(0, project.confidence));
   const completion = hasCompletion ? Math.min(100, Math.max(0, project.completion ?? 0)) : 0;
 
-  // The active tile keeps its identity visible and reveals the detail block on
-  // hover or keyboard focus. Touch screens (no fine pointer) always show it, so
-  // the information never depends on hover.
+  // The detail block is always visible; it never depends on hover.
   const details = (
     <dl className="space-y-3 border-t border-slate-100 pt-4 text-xs">
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -99,6 +98,42 @@ export function HomeProjectTile({
               style={{ width: `${completion}%` }}
             />
           </div>
+        </div>
+
+        <div className="col-span-2">
+          <div className="flex items-baseline justify-between">
+            <dt className="text-slate-400">Confidence score</dt>
+            <dd
+              className={cn(
+                'font-semibold tabular-nums',
+                confidence > 90 ? 'text-sm text-emerald-600' : 'text-sm text-slate-700',
+              )}
+            >
+              {confidence}%
+              {confidence > 90 ? (
+                <span className="ml-1.5 text-[11px] font-medium">Good</span>
+              ) : null}
+            </dd>
+          </div>
+          <div
+            role="progressbar"
+            aria-label={`Confidence score for ${project.title}`}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={confidence}
+            className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100"
+          >
+            <div
+              className={cn(
+                'h-full rounded-full',
+                confidence > 90 ? 'bg-emerald-500' : 'bg-slate-300',
+              )}
+              style={{ width: `${confidence}%` }}
+            />
+          </div>
+          {confidence === 0 ? (
+            <p className="mt-1 text-[11px] text-slate-400">Not integrated with the LLM yet</p>
+          ) : null}
         </div>
 
         <div>
@@ -180,21 +215,7 @@ export function HomeProjectTile({
         <p className="relative mt-1.5 text-sm leading-relaxed text-slate-500">{project.summary}</p>
       )}
 
-      {isActive ? (
-        <div
-          className={cn(
-            'relative grid transition-[grid-template-rows,opacity] duration-700 motion-reduce:transition-none',
-            EASE,
-            'pointer-fine:grid-rows-[0fr] pointer-fine:opacity-0 pointer-fine:group-focus-visible:grid-rows-[1fr] pointer-fine:group-focus-visible:opacity-100 pointer-fine:group-hover:grid-rows-[1fr] pointer-fine:group-hover:opacity-100',
-          )}
-        >
-          <div className="min-h-0 overflow-hidden">
-            <div className="mt-5">{details}</div>
-          </div>
-        </div>
-      ) : (
-        <div className="relative mt-5">{details}</div>
-      )}
+      <div className="relative mt-5">{details}</div>
 
       {/* The active tile's "Open project" line is matched by an empty spacer on
           placeholders, so expanding the details on hover never changes row height. */}
@@ -220,7 +241,7 @@ export function HomeProjectTile({
 
   const className = cn(
     // min-h keeps every row as tall as the expanded active tile, so hovering never shifts the grid.
-    'group relative flex h-full min-h-[25rem] flex-col overflow-hidden rounded-xl border bg-white p-6 shadow-sm transition-[transform,box-shadow,border-color] duration-500 motion-reduce:transition-none',
+    'group relative flex h-full min-h-[30rem] flex-col overflow-hidden rounded-xl border bg-white p-6 shadow-sm transition-[transform,box-shadow,border-color] duration-500 motion-reduce:transition-none',
     EASE,
     isActive
       ? 'border-slate-200 hover:-translate-y-1 hover:border-[#0091DA]/30 hover:shadow-xl hover:shadow-[#00338D]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0091DA] focus-visible:ring-offset-2 motion-reduce:hover:translate-y-0'

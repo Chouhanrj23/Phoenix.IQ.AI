@@ -7,6 +7,7 @@ import {
   Database,
   FileCode2,
   FileText,
+  GraduationCap,
   Mail,
   Network,
   Send,
@@ -22,6 +23,16 @@ import {
   type PromptSuggestion,
 } from '../lib/prompt-suggestions.js';
 import { Button } from '../components/ui/button.js';
+import { ModuleQuiz } from '../components/module-quiz.js';
+import { FinalReport } from '../components/final-report.js';
+import {
+  EMPTY_QUIZ_STATE,
+  QUIZ_LEVELS,
+  isModuleQuizComplete,
+  loadAllQuizStates,
+  saveQuizState,
+  type ModuleQuizState,
+} from '../lib/module-quiz.js';
 import {
   KNOWLEDGE_GRAPH_DESTINATIONS,
   saveModuleKnowledgeGraphUpdate,
@@ -212,6 +223,10 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
   const [uploads, setUploads] = useState<Record<string, string[]>>(initial.uploads);
   const [prompts, setPrompts] = useState<Record<string, string>>(initial.prompts);
   const [outputs, setOutputs] = useState<Record<string, string>>(initial.outputs);
+  const [quiz, setQuiz] = useState<ModuleQuizState>(
+    () => loadAllQuizStates()[moduleId] ?? EMPTY_QUIZ_STATE,
+  );
+  const [quizOpen, setQuizOpen] = useState(false);
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [analysing, setAnalysing] = useState<Record<string, boolean>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -229,6 +244,11 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
   useEffect(() => {
     saveModuleState(moduleId, { uploads, prompts, outputs });
   }, [moduleId, uploads, prompts, outputs]);
+
+  function updateQuiz(next: ModuleQuizState): void {
+    setQuiz(next);
+    saveQuizState(moduleId, next);
+  }
 
   function stopTyping(id: string): void {
     window.clearInterval(typers.current[id]);
@@ -317,9 +337,29 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">{moduleName}</h1>
         </div>
-        <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
-          <span className="font-semibold">{uploadCount}</span> file{uploadCount === 1 ? '' : 's'}{' '}
-          staged for analysis
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+            <span className="font-semibold">{uploadCount}</span> file{uploadCount === 1 ? '' : 's'}{' '}
+            staged for analysis
+          </div>
+          {isModuleQuizComplete(quiz) ? (
+            <span className="flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Quiz completed
+            </span>
+          ) : null}
+          <Button
+            type="button"
+            size="sm"
+            className="bg-[#00338D] hover:bg-[#002a73]"
+            onClick={() => setQuizOpen(true)}
+          >
+            <GraduationCap className="h-3.5 w-3.5" />
+            {isModuleQuizComplete(quiz)
+              ? 'Review quiz'
+              : quiz.completed.length
+                ? `Continue quiz (${quiz.completed.length}/${QUIZ_LEVELS.length})`
+                : 'Quiz'}
+          </Button>
         </div>
       </div>
 
@@ -580,6 +620,17 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
           ))}
         </div>
       </section>
+
+      <FinalReport modules={MODULES} refreshKey={quiz} />
+
+      {quizOpen ? (
+        <ModuleQuiz
+          moduleName={moduleName}
+          state={quiz}
+          onChange={updateQuiz}
+          onClose={() => setQuizOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
