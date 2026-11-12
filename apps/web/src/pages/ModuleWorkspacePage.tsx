@@ -25,7 +25,6 @@ import {
 import { Button } from '../components/ui/button.js';
 import { ModuleQuiz } from '../components/module-quiz.js';
 import { FinalReport } from '../components/final-report.js';
-import { ModuleAnalysis } from '../components/module-analysis.js';
 import { GenerateBrdPanel } from '../components/generate-brd-panel.js';
 import { getActiveCompany, getCompany } from '../data/index.js';
 import {
@@ -36,13 +35,15 @@ import {
   type InputsListing,
 } from '../lib/re-inputs.js';
 import {
-  EMPTY_QUIZ_STATE,
   QUIZ_LEVELS,
   isModuleQuizComplete,
   loadAllQuizStates,
+  quizStateFor,
   saveQuizState,
   type ModuleQuizState,
 } from '../lib/module-quiz.js';
+import { hasReport } from '../reverse-engineering/index.js';
+import { getModuleQuiz, getProjectQuiz } from '../reverse-engineering/quizzes.js';
 import {
   KNOWLEDGE_GRAPH_DESTINATIONS,
   saveModuleKnowledgeGraphUpdate,
@@ -249,12 +250,16 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
   const [uploads, setUploads] = useState<Record<string, string[]>>(initial.uploads);
   const [prompts, setPrompts] = useState<Record<string, string>>(initial.prompts);
   const [outputs, setOutputs] = useState<Record<string, string>>(initial.outputs);
-  const [quiz, setQuiz] = useState<ModuleQuizState>(
-    () => loadAllQuizStates()[moduleId] ?? EMPTY_QUIZ_STATE,
-  );
-  const [quizOpen, setQuizOpen] = useState(false);
   const engagement = getActiveCompany();
   const project = PROJECT_FOR_ENGAGEMENT[engagement];
+  // Questions come from the project's final BRD; progress saved against an older
+  // version of them is dropped so answers always match the questions shown.
+  const projectQuiz = getProjectQuiz(project);
+  const moduleQuiz = getModuleQuiz(project, moduleId);
+  const [quiz, setQuiz] = useState<ModuleQuizState>(() =>
+    quizStateFor(loadAllQuizStates()[moduleId], projectQuiz?.sourceHash),
+  );
+  const [quizOpen, setQuizOpen] = useState(false);
   const [listing, setListing] = useState<InputsListing | null>(null);
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [analysing, setAnalysing] = useState<Record<string, boolean>>({});
@@ -374,8 +379,8 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
     setOutputs((previous) => ({
       ...previous,
       [artifact.id]: files.length
-        ? `Ready for LLM integration. ${files.length} ${artifact.label} file${files.length === 1 ? '' : 's'} and this card's prompt will be sent to your future model integration. The response is staged for the combined Knowledge Graph update.`
-        : `Upload ${artifact.label} evidence first. This card's generated response will be included in the combined Knowledge Graph update.`,
+        ? `${files.length} ${artifact.label} file${files.length === 1 ? '' : 's'} staged for the LLM.`
+        : `Upload ${artifact.label} files first.`,
     }));
     saveModuleKnowledgeGraphUpdate(moduleId, artifactLabels);
   }
@@ -384,9 +389,6 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
     <div className="-mb-4 flex flex-col">
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-[#00338D]">
-            Reverse engineering workspace
-          </p>
           <h1 className="text-2xl font-semibold tracking-tight">{moduleName}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -399,6 +401,12 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
               <CheckCircle2 className="h-3.5 w-3.5" /> Quiz completed
             </span>
           ) : null}
+          <NavLink
+            to="/brd"
+            className="inline-flex h-8 items-center rounded-md bg-[#00338D] px-3 text-xs font-medium text-white hover:bg-[#002a73]"
+          >
+            Open full BRD
+          </NavLink>
           <Button
             type="button"
             size="sm"
@@ -435,8 +443,6 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
         listing={listing}
         onListing={applyListing}
       />
-
-      <ModuleAnalysis moduleId={moduleId} />
 
       <section
         aria-labelledby="source-available-heading"
@@ -478,9 +484,6 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
             <h2 id="evidence-heading" className="text-base font-semibold">
               Evidence intake
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Each artifact has its own upload, LLM prompt, and generated response.
-            </p>
           </div>
         </div>
         <div className="grid items-stretch gap-4 xl:grid-cols-2">
@@ -502,15 +505,13 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
                     <div>
                       <h3 className="text-sm font-semibold">{artifact.label}</h3>
                       <p className="text-[11px] text-muted-foreground">{artifact.description}</p>
-                      <p className="mt-0.5 text-[10px] font-medium text-slate-500">
-                        Allowed: {artifact.allowedExtensions.join(', ')}
-                      </p>
                     </div>
                   </div>
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
+                    title={`Allowed: ${artifact.allowedExtensions.join(', ')}`}
                     onClick={() => inputs.current[artifact.id]?.click()}
                   >
                     <Upload className="h-3.5 w-3.5" /> Upload
@@ -561,10 +562,7 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
                         : 'Configure LLM analysis'}
                     </summary>
                     <div className="pt-3">
-                      <label
-                        htmlFor={`${artifact.id}-prompt`}
-                        className="mb-1.5 block text-xs font-medium text-slate-700"
-                      >
+                      <label htmlFor={`${artifact.id}-prompt`} className="sr-only">
                         {artifact.analysisLabel ?? artifact.label} analysis prompt
                       </label>
                       <textarea
@@ -586,10 +584,10 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
                             className={`h-3.5 w-3.5 ${analysing[artifact.id] ? 'animate-pulse' : ''}`}
                           />
                           {analysing[artifact.id]
-                            ? `Analysing ${(uploads[artifact.id] ?? []).length} file${(uploads[artifact.id] ?? []).length === 1 ? '' : 's'} to suggest prompts…`
+                            ? 'Analysing uploads…'
                             : (uploads[artifact.id] ?? []).length
-                              ? 'Suggested prompts based on your uploads'
-                              : 'Suggested prompts — upload files to tailor them'}
+                              ? 'Suggested prompts'
+                              : 'Upload files for tailored prompts'}
                         </div>
                         {analysing[artifact.id] ? (
                           <div className="flex flex-wrap gap-1.5">
@@ -636,8 +634,7 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
                           response
                         </div>
                         <p className="text-xs leading-5 text-slate-500">
-                          {outputs[artifact.id] ??
-                            'Generated output for this artifact type will appear here.'}
+                          {outputs[artifact.id] ?? 'No output yet.'}
                         </p>
                       </div>
                     </div>
@@ -658,10 +655,6 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
             <h2 id="knowledge-graph-heading" className="text-base font-semibold text-slate-800">
               Combined output → Knowledge Graph
             </h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Every generated artifact response is combined locally and reflected in the Knowledge
-              Graph workspace. Backend graph data is not modified.
-            </p>
           </div>
           <NavLink
             to="/graph"
@@ -686,7 +679,11 @@ function ModuleWorkspace({ moduleId }: { moduleId: string }): JSX.Element {
 
       {quizOpen ? (
         <ModuleQuiz
+          project={project}
+          moduleId={moduleId}
           moduleName={moduleName}
+          quiz={moduleQuiz}
+          hasBrd={hasReport(engagement)}
           state={quiz}
           onChange={updateQuiz}
           onClose={() => setQuizOpen(false)}

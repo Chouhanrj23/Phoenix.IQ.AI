@@ -68,3 +68,31 @@ export const startGeneration = (project: string) =>
   call<{ started: boolean }>('POST', 'generate', { project });
 
 export const getRunStatus = (project: string) => call<RunStatus>('GET', 'status', { project });
+
+/** Merges the saved expert answers into the BRD and re-renders it. */
+export const startBrdUpdate = (project: string) =>
+  call<{ started: boolean }>('POST', 'brd/apply-answers', { project });
+
+export const getBrdUpdateStatus = (project: string) =>
+  call<RunStatus>('GET', 'brd/apply-status', { project });
+
+export const startQuizGeneration = (project: string) =>
+  call<{ started: boolean }>('POST', 'quiz/generate', { project });
+
+export const getQuizStatus = (project: string) =>
+  call<RunStatus>('GET', 'quiz/status', { project });
+
+/** Saves one submitted level of expert answers (question id → answer text) as training data. */
+export const saveQuizAnswers = (
+  project: string,
+  moduleId: string,
+  level: string,
+  answers: Record<string, string>,
+  answeredBy: string,
+) =>
+  call<{ saved: number }>(
+    'POST',
+    'quiz/answers',
+    { project },
+    JSON.stringify({ moduleId, level, answers, answeredBy }),
+  );

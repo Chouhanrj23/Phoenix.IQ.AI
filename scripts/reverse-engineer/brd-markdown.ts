@@ -25,6 +25,20 @@ const table = (head: string[], rows: string[][]) =>
         ...rows.map((r) => `| ${r.map(esc).join(' | ')} |`),
       ].join('\n')
     : '_None identified._';
+/** Multi-line expert text as a Markdown block quote. */
+const quote = (s: string) =>
+  s
+    .trim()
+    .split(/\n+/)
+    .map((line) => `> ${line}`)
+    .join('\n');
+const INTENT_LABEL: Record<string, string> = {
+  confirm: 'Confirm',
+  explain: 'Explain',
+  'edge-cases': 'Edge cases',
+  'fill-gap': 'Fill a gap',
+  resolve: 'Resolve',
+};
 const mermaidId = (s: string) => s.replace(/[^A-Za-z0-9_]/g, '_');
 const mermaidText = (s: string) => s.replace(/["`]/g, "'").replace(/[:;#{}<>]/g, ' ');
 
@@ -106,6 +120,7 @@ export function renderBrd(r: ReverseEngineeringReport): string {
   const svcName = (id?: string) =>
     id ? (r.containerNodes.find((c) => c.id === id)?.name ?? id) : '';
   const stories = r.epics.flatMap((e) => e.features.flatMap((f) => f.stories));
+  const review = r.expertReview;
   const out: string[] = [];
   const h = (s: string) => out.push(s, '');
 
@@ -130,6 +145,14 @@ export function renderBrd(r: ReverseEngineeringReport): string {
           'Extracted',
           `${r.domains.length} domains · ${r.entities.length} entities · ${r.activities.length} activities · ${r.executionFlows.length} flows · ${r.personas.length} personas · ${r.journeys.length} journeys · ${r.reports.length} reports · ${r.capabilities.length} capabilities · ${r.epics.length} epics · ${stories.length} user stories`,
         ],
+        ...(review?.revisions.length
+          ? [
+              [
+                'Expert review',
+                `${review.inputs.length} expert answers · ${review.resolvedQuestions.length} open questions resolved · last updated ${new Date(review.revisions[review.revisions.length - 1]!.at).toUTCString()}`,
+              ],
+            ]
+          : []),
         [
           'Confidence legend',
           'high ≥ 80% · medium ≥ 60% · low < 60% · inferred = no direct evidence',
@@ -154,7 +177,9 @@ export function renderBrd(r: ReverseEngineeringReport): string {
       '11. [Business rules](#11-business-rules)',
       '12. [Architecture, integrations & NFRs](#12-architecture-integrations--nfrs)',
       '13. [Gaps, risks, assumptions & open questions](#13-gaps-risks-assumptions--open-questions)',
-      '14. [Glossary](#14-glossary)',
+      ...(review
+        ? ['14. [Expert review](#14-expert-review)', '15. [Glossary](#15-glossary)']
+        : ['14. [Glossary](#14-glossary)']),
     ].join('\n'),
   );
 
@@ -454,8 +479,47 @@ export function renderBrd(r: ReverseEngineeringReport): string {
   h(bullets(r.brd.constraints));
   h('**Open questions**');
   h(bullets(r.brd.openQuestions));
+  if (review?.resolvedQuestions.length) {
+    h('**Resolved questions** (answered by domain experts — see section 14)');
+    h(
+      table(
+        ['Question', 'Resolution', 'Answered by'],
+        review.resolvedQuestions.map((q) => [q.question, q.resolution, q.answeredBy ?? '—']),
+      ),
+    );
+  }
 
-  h('## 14. Glossary');
+  if (review) {
+    h('## 14. Expert review');
+    h(
+      "Answers from domain experts to the questions generated from this BRD. Each entry shows what the BRD said, the expert's answer and, where a model was available, the answer restated as requirement text. Expert input takes precedence over reverse-engineered content where they differ.",
+    );
+    h('**Version history**');
+    h(
+      table(
+        ['Date', 'Change'],
+        review.revisions.map((v) => [new Date(v.at).toUTCString(), v.summary]),
+      ),
+    );
+    for (const m of r.modules) {
+      const inputs = review.inputs.filter((i) => i.moduleId === m.id);
+      if (!inputs.length) continue;
+      h(`### ${m.name}`);
+      for (const i of inputs) {
+        h(`**${INTENT_LABEL[i.intent] ?? i.intent} · ${i.level}** — ${i.question}`);
+        h(`_What the BRD said:_ ${i.brdContext}`);
+        h(`_Expert answer${i.answeredBy ? ` (${i.answeredBy})` : ''}:_`);
+        h(quote(i.answer));
+        if (i.statement !== i.answer) {
+          h('_As requirement text:_');
+          h(quote(i.statement));
+        }
+        h(`_About:_ ${i.sourceIds.map((id) => `\`${id}\``).join(', ')}`);
+      }
+    }
+  }
+
+  h(`## ${review ? 15 : 14}. Glossary`);
   h(
     table(
       ['Term', 'Definition'],

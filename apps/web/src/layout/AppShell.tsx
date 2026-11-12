@@ -1,5 +1,5 @@
-import type { ReactNode, JSX } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useState, type ReactNode, type JSX } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils.js';
 import { GlobalSearch } from '../components/global-search.js';
 import { getCompany, type CompanyId } from '../data/index.js';
@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   Bot,
   ArrowLeftRight,
+  ChevronDown,
   House,
   Layers3,
   FileText,
@@ -79,6 +80,74 @@ const NAV_SECTIONS: Array<{ title: string | null; items: NavItem[] }> = [
   },
 ];
 
+/** Exact match for the home-style routes; other routes match on their first path segment, so /modules/* stays one group. */
+function isNavItemActive(item: NavItem, pathname: string): boolean {
+  if (item.end) return pathname === item.to;
+  return pathname.split('/')[1] === item.to.split('/')[1];
+}
+
+function NavItemLink({ item }: { item: NavItem }): JSX.Element {
+  const { to, label, icon: Icon, end } = item;
+  return (
+    <NavLink
+      to={to}
+      end={end ?? false}
+      className={({ isActive }) =>
+        cn(
+          'flex items-center gap-2 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors',
+          isActive
+            ? 'bg-[#00338D] text-white shadow-sm'
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+        )
+      }
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      {label}
+    </NavLink>
+  );
+}
+
+/**
+ * A titled sidebar section as a dropdown. It opens by default when it holds the
+ * current page; when closed, that page is still shown so the location stays visible.
+ */
+function NavGroup({ title, items }: { title: string; items: NavItem[] }): JSX.Element {
+  const { pathname } = useLocation();
+  const [open, setOpen] = useState(true);
+  const visible = open ? items : items.filter((item) => isNavItemActive(item, pathname));
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+      >
+        <span className="flex items-center gap-2">
+          {title}
+          <span className="rounded-full bg-slate-100 px-1.5 text-[10px] font-medium normal-case text-slate-500">
+            {items.length}
+          </span>
+        </span>
+        <ChevronDown
+          className={cn(
+            'h-3.5 w-3.5 text-slate-400 transition-transform duration-200',
+            open ? 'rotate-180' : '',
+          )}
+        />
+      </button>
+      {visible.length ? (
+        <div className="mt-1 space-y-0.5 border-l border-slate-200 pl-2 ml-3">
+          {visible.map((item) => (
+            <NavItemLink key={item.to} item={item} />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function AppShell({
   children,
   companyId,
@@ -131,36 +200,18 @@ export function AppShell({
           <div className="border-b border-slate-200 p-3">
             <GlobalSearch />
           </div>
-          <nav className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden p-2">
-            {NAV_SECTIONS.map((section, i) => (
-              <div key={section.title ?? `section-${i}`}>
-                {section.title ? (
-                  <div className="mb-0.5 px-3 text-[9px] font-semibold uppercase tracking-wide text-slate-400">
-                    {section.title}
-                  </div>
-                ) : null}
-                <div className="space-y-0.5">
-                  {section.items.map(({ to, label, icon: Icon, end }) => (
-                    <NavLink
-                      key={to}
-                      to={to}
-                      end={end ?? false}
-                      className={({ isActive }) =>
-                        cn(
-                          'flex items-center gap-2 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors',
-                          isActive
-                            ? 'bg-[#00338D] text-white shadow-sm'
-                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-                        )
-                      }
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      {label}
-                    </NavLink>
+          <nav className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+            {NAV_SECTIONS.map((section, i) =>
+              section.title ? (
+                <NavGroup key={section.title} title={section.title} items={section.items} />
+              ) : (
+                <div key={`section-${i}`} className="space-y-0.5 border-b border-slate-100 pb-2">
+                  {section.items.map((item) => (
+                    <NavItemLink key={item.to} item={item} />
                   ))}
                 </div>
-              </div>
-            ))}
+              ),
+            )}
           </nav>
           <div className="border-t border-slate-200 p-2">
             <NavLink

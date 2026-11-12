@@ -1,0 +1,819 @@
+{
+  "project": "indian-banking-system",
+  "sourceHash": "e802ed882c23a1e6",
+  "generatedAt": "2026-11-12T16:36:36.992Z",
+  "modules": [
+    {
+      "moduleId": "module-1",
+      "moduleName": "Overview",
+      "generatedBy": {
+        "mode": "brd-rules",
+        "provider": "none",
+        "model": "brd-rules"
+      },
+      "levels": {
+        "introductory": [
+          {
+            "id": "module-1-introductory-1",
+            "prompt": "Is this an accurate and complete description of what Overview does in your organisation? What is missing or wrong?",
+            "context": "Summary: \"Cross-cutting platform: identity, login/sign-up, sessions, security, observability, shared services\" (coverage found in the system: full).",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "module-1",
+                "label": "Overview"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-1-introductory-2",
+            "prompt": "How does a bank customer use Overview day to day, and what matters most to them?",
+            "context": "Persona John Customer (Bank Customer). Goals: Check account balance regularly; Send payments to other accounts; Deposit funds from external accounts; Manage payment contacts; View transaction history.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "per-customer",
+                "label": "John Customer"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-1-introductory-3",
+            "prompt": "Who relies on \"User Authentication\", and which business outcome does it support?",
+            "context": "Capability (implemented): Ability to authenticate users with credentials and manage sessions.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "cap-user-authentication",
+                "label": "User Authentication"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-1-introductory-4",
+            "prompt": "What does a User record represent in the business, and who is responsible for keeping it correct?",
+            "context": "Entity: Customer account information and credentials. Stored in PostgreSQL accounts-db.users.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "ent-user",
+                "label": "User"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "intermediate": [
+          {
+            "id": "module-1-intermediate-1",
+            "prompt": "Is this rule correct as written? What exceptions, limits or approvals apply in practice?",
+            "context": "Business rule: \"User sessions expire after 15 minutes of inactivity\".",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "br-auth-session",
+                "label": "User sessions expire after 15 minutes of inactivity"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-1-intermediate-2",
+            "prompt": "When \"User login\" runs, what should happen if the input is invalid or a step fails?",
+            "context": "Activity: Customer authenticates with username and password to access their account. Trigger: User enters credentials on login page. Inputs: username, password. Outputs: authentication token, user profile.",
+            "intent": "edge-cases",
+            "sources": [
+              {
+                "id": "act-user-login",
+                "label": "User login"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-1-intermediate-3",
+            "prompt": "How should \"Regulatory Compliance\" work step by step: who starts it, what is checked, and what is the outcome?",
+            "context": "Capability (gap): Ability to ensure operations meet regulatory requirements.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "cap-regulatory-compliance",
+                "label": "Regulatory Compliance"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-1-intermediate-4",
+            "prompt": "Which alternative or exception paths are missing from \"User Login Flow\"?",
+            "context": "Flow: Submit credentials → Authenticate user → Create session → Redirect to home.",
+            "intent": "edge-cases",
+            "sources": [
+              {
+                "id": "flow-user-login",
+                "label": "User Login Flow"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "indepth": [
+          {
+            "id": "module-1-indepth-1",
+            "prompt": "Requirement IN-14 was found only partly implemented. What is the intended behaviour, and should the requirement or the system change?",
+            "context": "Requirement: \"Pages load in under 2 seconds\". Finding: The system has performance monitoring but no explicit 2-second target enforcement",
+            "intent": "resolve",
+            "sources": [
+              {
+                "id": "IN-14",
+                "label": "Pages load in under 2 seconds"
+              },
+              {
+                "id": "nfr-performance",
+                "label": "nfr-performance"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-1-indepth-2",
+            "prompt": "What are the actual requirements here? Please cover: KYC/AML compliance requirements; Customer identity verification process; Transaction monitoring rules.",
+            "context": "Gap (blocking): No KYC/AML compliance implementation found in the system. Suggested action: Implement customer identity verification and transaction monitoring capabilities.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "gap-kyc-aml",
+                "label": "No KYC/AML compliance implementation found in the system"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-1-indepth-3",
+            "prompt": "\"Regulatory Compliance\" is not built. What must it do to be complete, and how important is it?",
+            "context": "Capability: Ability to ensure operations meet regulatory requirements.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "cap-regulatory-compliance",
+                "label": "Regulatory Compliance"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-1-indepth-4",
+            "prompt": "What are the specific regulatory requirements for KYC/AML?",
+            "context": "An open question the BRD leaves unanswered for Overview.",
+            "intent": "resolve",
+            "sources": [
+              {
+                "id": "module-1",
+                "label": "Overview"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ]
+      }
+    },
+    {
+      "moduleId": "module-2",
+      "moduleName": "Accounts",
+      "generatedBy": {
+        "mode": "brd-rules",
+        "provider": "none",
+        "model": "brd-rules"
+      },
+      "levels": {
+        "introductory": [
+          {
+            "id": "module-2-introductory-1",
+            "prompt": "Is this an accurate and complete description of what Accounts does in your organisation? What is missing or wrong?",
+            "context": "Summary: \"Customer and bank-account lifecycle, profile, balances, contacts/payees - but lacks full account management features\" (coverage found in the system: partial).",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "module-2",
+                "label": "Accounts"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-2-introductory-2",
+            "prompt": "How does a bank customer use Accounts day to day, and what matters most to them?",
+            "context": "Persona John Customer (Bank Customer). Goals: Check account balance regularly; Send payments to other accounts; Deposit funds from external accounts; Manage payment contacts; View transaction history.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "per-customer",
+                "label": "John Customer"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-2-introductory-3",
+            "prompt": "Who relies on \"Account Management\", and which business outcome does it support?",
+            "context": "Capability (implemented): Ability to create and manage customer accounts with personal information.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "cap-account-management",
+                "label": "Account Management"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-2-introductory-4",
+            "prompt": "What does a Account record represent in the business, and who is responsible for keeping it correct?",
+            "context": "Entity: Bank account information. Stored in PostgreSQL accounts-db.users.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "ent-account",
+                "label": "Account"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "intermediate": [
+          {
+            "id": "module-2-intermediate-1",
+            "prompt": "Is this rule correct as written? What exceptions, limits or approvals apply in practice?",
+            "context": "Business rule: \"Account numbers are 10-digit unique identifiers\".",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "br-account-numbers",
+                "label": "Account numbers are 10-digit unique identifiers"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-2-intermediate-2",
+            "prompt": "When \"View account balance\" runs, what should happen if the input is invalid or a step fails?",
+            "context": "Activity: Customer views their current account balance. Trigger: User navigates to home page. Inputs: account identifier, authentication token. Outputs: current balance amount, last updated timestamp.",
+            "intent": "edge-cases",
+            "sources": [
+              {
+                "id": "act-view-balance",
+                "label": "View account balance"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-2-intermediate-3",
+            "prompt": "Which alternative or exception paths are missing from \"View Balance Flow\"?",
+            "context": "Flow: Request balance → Retrieve balance → Display balance.",
+            "intent": "edge-cases",
+            "sources": [
+              {
+                "id": "flow-view-balance",
+                "label": "View Balance Flow"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-2-intermediate-4",
+            "prompt": "Is this rule correct as written? What exceptions, limits or approvals apply in practice?",
+            "context": "Business rule: \"Contacts must have unique labels per user\".",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "br-contact-validation",
+                "label": "Contacts must have unique labels per user"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "indepth": [
+          {
+            "id": "module-2-indepth-1",
+            "prompt": "Requirement IN-07 was found not implemented. What is the intended behaviour, and should the requirement or the system change?",
+            "context": "Requirement: \"Customers have a checking account and a savings account\". Finding: The system only implements a single account type, not separate checking and savings accounts",
+            "intent": "resolve",
+            "sources": [
+              {
+                "id": "IN-07",
+                "label": "Customers have a checking account and a savings account"
+              },
+              {
+                "id": "ent-account",
+                "label": "Account"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-2-indepth-2",
+            "prompt": "What are the actual requirements here? Please cover: Reconciliation rules; Discrepancy handling; Automated reconciliation.",
+            "context": "Gap (medium): No account reconciliation process implemented. Suggested action: Implement account reconciliation process to ensure transaction accuracy.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "gap-reconciliation",
+                "label": "No account reconciliation process implemented"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-2-indepth-3",
+            "prompt": "Is this availability target right for production, and how should it be measured?",
+            "context": "Requirement for Service health monitoring: \"Readiness and liveness probes are implemented for all services\".",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "nfr-health-probes",
+                "label": "Readiness and liveness probes are implemented for all services"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ]
+      }
+    },
+    {
+      "moduleId": "module-3",
+      "moduleName": "Payments and Transfer",
+      "generatedBy": {
+        "mode": "brd-rules",
+        "provider": "none",
+        "model": "brd-rules"
+      },
+      "levels": {
+        "introductory": [
+          {
+            "id": "module-3-introductory-1",
+            "prompt": "Is this an accurate and complete description of what Payments and Transfer does in your organisation? What is missing or wrong?",
+            "context": "Summary: \"Sending money between accounts, external transfers, validation, transaction history - but lacks advanced payment features\" (coverage found in the system: partial).",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "module-3",
+                "label": "Payments and Transfer"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-3-introductory-2",
+            "prompt": "How does a bank customer use Payments and Transfer day to day, and what matters most to them?",
+            "context": "Persona John Customer (Bank Customer). Goals: Check account balance regularly; Send payments to other accounts; Deposit funds from external accounts; Manage payment contacts; View transaction history.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "per-customer",
+                "label": "John Customer"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-3-introductory-3",
+            "prompt": "Who relies on \"Payment Processing\", and which business outcome does it support?",
+            "context": "Capability (implemented): Ability to process payments between accounts with validation.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "cap-payment-processing",
+                "label": "Payment Processing"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-3-introductory-4",
+            "prompt": "What does a Transaction record represent in the business, and who is responsible for keeping it correct?",
+            "context": "Entity: Payment transaction records. Stored in PostgreSQL ledger-db.transactions.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "ent-transaction",
+                "label": "Transaction"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "intermediate": [
+          {
+            "id": "module-3-intermediate-1",
+            "prompt": "Is this rule correct as written? What exceptions, limits or approvals apply in practice?",
+            "context": "Business rule: \"Payments must be numeric and cannot be submitted twice\".",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "br-payment-validation",
+                "label": "Payments must be numeric and cannot be submitted twice"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-3-intermediate-2",
+            "prompt": "When \"Make payment\" runs, what should happen if the input is invalid or a step fails?",
+            "context": "Activity: Customer transfers funds to another account. Trigger: User submits payment form. Inputs: destination account number, destination routing number, amount, authentication token. Outputs: transaction confirmation, transaction UUID.",
+            "intent": "edge-cases",
+            "sources": [
+              {
+                "id": "act-make-payment",
+                "label": "Make payment"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-3-intermediate-3",
+            "prompt": "How should \"Fraud Detection\" work step by step: who starts it, what is checked, and what is the outcome?",
+            "context": "Capability (gap): Ability to detect and flag potentially fraudulent transactions.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "cap-fraud-detection",
+                "label": "Fraud Detection"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-3-intermediate-4",
+            "prompt": "Which alternative or exception paths are missing from \"Make Payment Flow\"?",
+            "context": "Flow: Submit payment → Validate transaction → Process transaction → Update balance cache → Display confirmation.",
+            "intent": "edge-cases",
+            "sources": [
+              {
+                "id": "flow-make-payment",
+                "label": "Make Payment Flow"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "indepth": [
+          {
+            "id": "module-3-indepth-1",
+            "prompt": "\"Fraud Detection\" is not built. What must it do to be complete, and how important is it?",
+            "context": "Capability: Ability to detect and flag potentially fraudulent transactions.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "cap-fraud-detection",
+                "label": "Fraud Detection"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-3-indepth-2",
+            "prompt": "What are the daily payment limits and associated fees?",
+            "context": "An open question the BRD leaves unanswered for Payments and Transfer.",
+            "intent": "resolve",
+            "sources": [
+              {
+                "id": "module-3",
+                "label": "Payments and Transfer"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-3-indepth-3",
+            "prompt": "Is this availability target right for production, and how should it be measured?",
+            "context": "Requirement for Service health monitoring: \"Readiness and liveness probes are implemented for all services\".",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "nfr-health-probes",
+                "label": "Readiness and liveness probes are implemented for all services"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-3-indepth-4",
+            "prompt": "What happens during concurrent balance checks and payments?",
+            "context": "An open question the BRD leaves unanswered for Payments and Transfer.",
+            "intent": "resolve",
+            "sources": [
+              {
+                "id": "module-3",
+                "label": "Payments and Transfer"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ]
+      }
+    },
+    {
+      "moduleId": "module-4",
+      "moduleName": "Deposits",
+      "generatedBy": {
+        "mode": "brd-rules",
+        "provider": "none",
+        "model": "brd-rules"
+      },
+      "levels": {
+        "introductory": [
+          {
+            "id": "module-4-introductory-1",
+            "prompt": "Is this an accurate and complete description of what Deposits does in your organisation? What is missing or wrong?",
+            "context": "Summary: \"Money coming in: deposits from external accounts, crediting balances - but lacks comprehensive deposit processing\" (coverage found in the system: partial).",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "module-4",
+                "label": "Deposits"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-4-introductory-2",
+            "prompt": "How does a bank customer use Deposits day to day, and what matters most to them?",
+            "context": "Persona John Customer (Bank Customer). Goals: Check account balance regularly; Send payments to other accounts; Deposit funds from external accounts; Manage payment contacts; View transaction history.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "per-customer",
+                "label": "John Customer"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-4-introductory-3",
+            "prompt": "Who relies on \"Deposit Processing\", and which business outcome does it support?",
+            "context": "Capability (implemented): Ability to process deposits from external accounts.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "cap-deposit-processing",
+                "label": "Deposit Processing"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-4-introductory-4",
+            "prompt": "What does a Deposit record represent in the business, and who is responsible for keeping it correct?",
+            "context": "Entity: External deposit transaction. Stored in PostgreSQL ledger-db.transactions.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "ent-deposit",
+                "label": "Deposit"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "intermediate": [
+          {
+            "id": "module-4-intermediate-1",
+            "prompt": "Is this rule correct as written? What exceptions, limits or approvals apply in practice?",
+            "context": "Business rule: \"External deposits cannot use the local routing number\".",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "br-deposit-validation",
+                "label": "External deposits cannot use the local routing number"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-4-intermediate-2",
+            "prompt": "When \"Make deposit\" runs, what should happen if the input is invalid or a step fails?",
+            "context": "Activity: Customer deposits funds from an external account. Trigger: User submits deposit form. Inputs: external account number, external routing number, amount, authentication token. Outputs: deposit confirmation, deposit UUID.",
+            "intent": "edge-cases",
+            "sources": [
+              {
+                "id": "act-make-deposit",
+                "label": "Make deposit"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-4-intermediate-3",
+            "prompt": "Which alternative or exception paths are missing from \"Make Deposit Flow\"?",
+            "context": "Flow: Submit deposit → Process deposit → Update balance cache → Display confirmation.",
+            "intent": "edge-cases",
+            "sources": [
+              {
+                "id": "flow-make-deposit",
+                "label": "Make Deposit Flow"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "indepth": [
+          {
+            "id": "module-4-indepth-1",
+            "prompt": "How long until deposited funds are available for withdrawal?",
+            "context": "An open question the BRD leaves unanswered for Deposits.",
+            "intent": "resolve",
+            "sources": [
+              {
+                "id": "module-4",
+                "label": "Deposits"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-4-indepth-2",
+            "prompt": "Is this availability target right for production, and how should it be measured?",
+            "context": "Requirement for Service health monitoring: \"Readiness and liveness probes are implemented for all services\".",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "nfr-health-probes",
+                "label": "Readiness and liveness probes are implemented for all services"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ]
+      }
+    },
+    {
+      "moduleId": "module-5",
+      "moduleName": "Cards",
+      "generatedBy": {
+        "mode": "brd-rules",
+        "provider": "none",
+        "model": "brd-rules"
+      },
+      "levels": {
+        "introductory": [
+          {
+            "id": "module-5-introductory-1",
+            "prompt": "Is this an accurate and complete description of what Cards does in your organisation? What is missing or wrong?",
+            "context": "Summary: \"No card management functionality implemented\" (coverage found in the system: none).",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "module-5",
+                "label": "Cards"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-5-introductory-2",
+            "prompt": "Who relies on \"Card Management\", and which business outcome does it support?",
+            "context": "Capability (gap): Ability to issue, manage, and monitor credit/debit cards.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "cap-card-management",
+                "label": "Card Management"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "intermediate": [
+          {
+            "id": "module-5-intermediate-1",
+            "prompt": "How should \"Card Management\" work step by step: who starts it, what is checked, and what is the outcome?",
+            "context": "Capability (gap): Ability to issue, manage, and monitor credit/debit cards.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "cap-card-management",
+                "label": "Card Management"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "indepth": [
+          {
+            "id": "module-5-indepth-1",
+            "prompt": "What are the actual requirements here? Please cover: Card processing requirements; Card issuer integration details; Card management workflows.",
+            "context": "Gap (high): No card management functionality implemented (issue, freeze, replace). Suggested action: Develop card management system with issuance, freezing, and replacement capabilities.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "gap-card-management",
+                "label": "No card management functionality implemented (issue, freeze, replace)"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-5-indepth-2",
+            "prompt": "\"Card Management\" is not built. What must it do to be complete, and how important is it?",
+            "context": "Capability: Ability to issue, manage, and monitor credit/debit cards.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "cap-card-management",
+                "label": "Card Management"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ]
+      }
+    },
+    {
+      "moduleId": "module-6",
+      "moduleName": "Loans",
+      "generatedBy": {
+        "mode": "brd-rules",
+        "provider": "none",
+        "model": "brd-rules"
+      },
+      "levels": {
+        "introductory": [
+          {
+            "id": "module-6-introductory-1",
+            "prompt": "Is this an accurate and complete description of what Loans does in your organisation? What is missing or wrong?",
+            "context": "Summary: \"No loan origination, servicing, or credit decisioning capabilities\" (coverage found in the system: none).",
+            "intent": "confirm",
+            "sources": [
+              {
+                "id": "module-6",
+                "label": "Loans"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-6-introductory-2",
+            "prompt": "Who relies on \"Loan Processing\", and which business outcome does it support?",
+            "context": "Capability (gap): Ability to originate, service, and manage loans.",
+            "intent": "explain",
+            "sources": [
+              {
+                "id": "cap-loan-processing",
+                "label": "Loan Processing"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "intermediate": [
+          {
+            "id": "module-6-intermediate-1",
+            "prompt": "How should \"Loan Processing\" work step by step: who starts it, what is checked, and what is the outcome?",
+            "context": "Capability (gap): Ability to originate, service, and manage loans.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "cap-loan-processing",
+                "label": "Loan Processing"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ],
+        "indepth": [
+          {
+            "id": "module-6-indepth-1",
+            "prompt": "What are the actual requirements here? Please cover: Loan product requirements; Credit decisioning rules; Loan servicing workflows.",
+            "context": "Gap (medium): No loan origination or servicing capabilities implemented. Suggested action: Implement loan origination and servicing system.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "gap-loan-processing",
+                "label": "No loan origination or servicing capabilities implemented"
+              }
+            ],
+            "origin": "brd-rules"
+          },
+          {
+            "id": "module-6-indepth-2",
+            "prompt": "\"Loan Processing\" is not built. What must it do to be complete, and how important is it?",
+            "context": "Capability: Ability to originate, service, and manage loans.",
+            "intent": "fill-gap",
+            "sources": [
+              {
+                "id": "cap-loan-processing",
+                "label": "Loan Processing"
+              }
+            ],
+            "origin": "brd-rules"
+          }
+        ]
+      }
+    }
+  ]
+}

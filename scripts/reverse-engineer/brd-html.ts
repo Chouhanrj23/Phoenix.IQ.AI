@@ -42,6 +42,17 @@ function table(head: string[], rows: string[][], cls = ''): string {
     .join('')}</tbody></table>`;
 }
 
+/** Expert text keeps its line breaks. */
+const paras = (s: string) => esc(s.trim()).replace(/\n+/g, '<br>');
+
+const INTENT_LABEL: Record<string, string> = {
+  confirm: 'Confirm',
+  explain: 'Explain',
+  'edge-cases': 'Edge cases',
+  'fill-gap': 'Fill a gap',
+  resolve: 'Resolve',
+};
+
 const diagram = (src: string, caption: string) =>
   `<figure class="diagram"><pre class="mermaid">${esc(src)}</pre><figcaption>${esc(caption)}</figcaption></figure>`;
 
@@ -61,6 +72,11 @@ export function renderBrdHtml(r: ReverseEngineeringReport): string {
     year: 'numeric',
   });
   const version = r.inputBrd ? '2.0' : '1.0';
+  const review = r.expertReview;
+  // Each expert review adds a minor version on top of the generated one.
+  const currentVersion = review?.revisions.length
+    ? `${version.split('.')[0]}.${review.revisions.length}`
+    : version;
 
   // Section numbering is computed so the contents list always matches the body.
   const sections: { id: string; title: string; html: string }[] = [];
@@ -443,8 +459,46 @@ export function renderBrdHtml(r: ReverseEngineeringReport): string {
       ]),
     )}
     <div class="cols"><div><h3>Assumptions</h3>${list(r.brd.assumptions)}</div><div><h3>Constraints</h3>${list(r.brd.constraints)}</div></div>
-    <h3>Open questions</h3>${list(r.brd.openQuestions)}`,
+    <h3>Open questions</h3>${list(r.brd.openQuestions)}${
+      review?.resolvedQuestions.length
+        ? `<h3>Resolved questions</h3><p>Answered by domain experts; see Expert review.</p>${table(
+            ['Question', 'Resolution', 'Answered by'],
+            review.resolvedQuestions.map((q) => [
+              esc(q.question),
+              paras(q.resolution),
+              esc(q.answeredBy ?? '—'),
+            ]),
+          )}`
+        : ''
+    }`,
   );
+
+  if (review) {
+    add(
+      'expert-review',
+      'Expert review',
+      `<p>Answers from domain experts to the questions generated from this BRD. Each entry shows what the BRD said, the expert's answer and, where a model was available, the answer restated as requirement text. Expert input takes precedence over reverse-engineered content where they differ.</p>
+      ${r.modules
+        .map((m) => {
+          const inputs = review.inputs.filter((i) => i.moduleId === m.id);
+          if (!inputs.length) return '';
+          return `<h3>${esc(m.name)}</h3>${table(
+            ['Question', 'What the BRD said', 'Expert input'],
+            inputs.map((i) => [
+              `<b>${esc(INTENT_LABEL[i.intent] ?? i.intent)}</b> · ${esc(i.level)}<br>${esc(i.question)}`,
+              esc(i.brdContext),
+              `${paras(i.statement)}${
+                i.statement !== i.answer
+                  ? `<br><br><em>Expert's words:</em> ${paras(i.answer)}`
+                  : ''
+              }<br><em>${esc(i.answeredBy ?? 'Expert')} · ${esc(new Date(i.answeredAt).toLocaleDateString('en-GB'))}</em>`,
+            ]),
+            'dense',
+          )}`;
+        })
+        .join('')}`,
+    );
+  }
 
   add(
     'glossary',
@@ -578,7 +632,7 @@ export function renderBrdHtml(r: ReverseEngineeringReport): string {
   <h1>${esc(r.systemSummary.name)}</h1>
   <div class="sub">${esc(r.systemSummary.description)}</div>
   <div class="facts">
-    <div><b>Version</b>${version} — ${r.inputBrd ? 'enriched from the initial BRD' : 'reverse-engineered'}</div>
+    <div><b>Version</b>${currentVersion} — ${r.inputBrd ? 'enriched from the initial BRD' : 'reverse-engineered'}${review ? ', with expert review' : ''}</div>
     <div><b>Date</b>${esc(dateStr)}</div>
     <div><b>Prepared by</b>Phoenix.ai reverse-engineering pipeline</div>
     <div><b>Status</b>Draft for review</div>
@@ -594,8 +648,13 @@ export function renderBrdHtml(r: ReverseEngineeringReport): string {
     [
       ['Document', 'Business Requirements Document (BRD)'],
       ['System', esc(r.systemSummary.name)],
-      ['Version', version],
-      ['Status', 'Draft — pending business review'],
+      ['Version', currentVersion],
+      [
+        'Status',
+        review
+          ? `Draft — updated with ${review.inputs.length} expert answers`
+          : 'Draft — pending business review',
+      ],
       [
         'Initial BRD',
         r.inputBrd
@@ -620,6 +679,17 @@ export function renderBrdHtml(r: ReverseEngineeringReport): string {
           ? 'Enriched with evidence from code, data model, screens, logs and telemetry; requirements traced'
           : 'Reverse-engineered from code, data model, screens, logs and telemetry',
       ],
+      ...(review?.revisions ?? []).map((v, i) => [
+        `${version.split('.')[0]}.${i + 1}`,
+        esc(
+          new Date(v.at).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+          }),
+        ),
+        esc(v.summary),
+      ]),
     ],
   )}
   <h3>Approvals</h3>

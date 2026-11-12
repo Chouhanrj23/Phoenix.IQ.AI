@@ -263,6 +263,45 @@ export interface ReverseEngineeringReport {
   reviewItems: ReviewItem[];
   driftAlerts: DriftAlert[];
   driftHistory: DriftRun[];
+  /** Domain experts' answers to the module questions, merged in after the run. */
+  expertReview?: ReExpertReview;
+}
+
+/** One expert answer, recorded against the BRD elements the question was about. */
+export interface ReExpertInput {
+  questionId: string;
+  moduleId: string;
+  level: string;
+  intent: string;
+  question: string;
+  /** What the BRD said when the question was asked. */
+  brdContext: string;
+  /** The expert's own words. */
+  answer: string;
+  /** The answer restated as BRD requirement text by the model, or the answer itself without one. */
+  statement: string;
+  answeredBy: string | null;
+  answeredAt: string;
+  sourceIds: string[];
+}
+
+/** A BRD open question an expert has answered. */
+export interface ReResolvedQuestion {
+  question: string;
+  resolution: string;
+  answeredBy: string | null;
+  questionId: string;
+}
+
+export interface ReRevision {
+  at: string;
+  summary: string;
+}
+
+export interface ReExpertReview {
+  inputs: ReExpertInput[];
+  resolvedQuestions: ReResolvedQuestion[];
+  revisions: ReRevision[];
 }
 
 /** Capability/epic re-export kept for consumers that only need the base types. */

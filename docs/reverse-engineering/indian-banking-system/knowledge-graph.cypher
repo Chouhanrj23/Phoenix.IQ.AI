@@ -148,6 +148,104 @@ MERGE (n:Integration {id: 'int-gcp-monitoring', systemId: 'indian-banking-system
 MERGE (n:Integration {id: 'int-gcp-logging', systemId: 'indian-banking-system'}) SET n.label = 'Google Cloud Logging', n.confidence = 'high', n.protocol = 'HTTP', n.counterpart = 'Google Cloud Platform';
 MERGE (n:Integration {id: 'int-oauth', systemId: 'indian-banking-system'}) SET n.label = 'OAuth Provider', n.confidence = 'high', n.protocol = 'HTTP', n.counterpart = 'OAuth Provider';
 MERGE (n:Integration {id: 'int-external-banks', systemId: 'indian-banking-system'}) SET n.label = 'External Bank Accounts', n.confidence = 'high', n.protocol = 'HTTP', n.counterpart = 'External Banks';
+MERGE (n:ExpertInput {id: 'expert-module-1-introductory-1', systemId: 'indian-banking-system'}) SET n.label = 'Is this an accurate and complete description of what Overview does in your or...', n.module = 'module-1', n.confidence = 'high', n.question = 'Is this an accurate and complete description of what Overview does in your organisation? What is missing or wrong?', n.answer = 'Mostly accurate. Overview is the shared platform layer: sign-up, login, sessions, security and monitoring used by every other module. Two things are missing. Customer notifications (email/SMS alerts for logins and payments) are also a shared service. Multi-factor authentication should be listed under security, because the bank needs it for regulatory reasons even though it isn’t built yet.', n.statement = 'Mostly accurate. Overview is the shared platform layer: sign-up, login, sessions, security and monitoring used by every other module. Two things are missing. Customer notifications (email/SMS alerts for logins and payments) are also a shared service. Multi-factor authentication should be listed under security, because the bank needs it for regulatory reasons even though it isn’t built yet.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:47:59.387Z';
+MERGE (n:ExpertInput {id: 'expert-module-1-introductory-2', systemId: 'indian-banking-system'}) SET n.label = 'How does a bank customer use Overview day to day, and what matters most to them?', n.module = 'module-1', n.confidence = 'high', n.question = 'How does a bank customer use Overview day to day, and what matters most to them?', n.answer = 'Customers touch Overview every time they log in, usually once or twice a day to check their balance or make a payment. What matters most is a fast, reliable login and staying signed in long enough to finish a task. The 15-minute timeout is a common complaint when people are filling in payment details. They also expect to be told quickly if someone else logs into their account.', n.statement = 'Customers touch Overview every time they log in, usually once or twice a day to check their balance or make a payment. What matters most is a fast, reliable login and staying signed in long enough to finish a task. The 15-minute timeout is a common complaint when people are filling in payment details. They also expect to be told quickly if someone else logs into their account.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:47:59.387Z';
+MERGE (n:ExpertInput {id: 'expert-module-1-introductory-3', systemId: 'indian-banking-system'}) SET n.label = 'Who relies on "User Authentication", and which business outcome does it support?', n.module = 'module-1', n.confidence = 'high', n.question = 'Who relies on "User Authentication", and which business outcome does it support?', n.answer = 'Every customer, plus the payments, accounts and deposits modules, which all trust its session token. Customer support also relies on it when helping locked-out users. The outcome is secure access to accounts. That protects against fraud and account takeover, and it’s a basic regulatory requirement for online banking.', n.statement = 'Every customer, plus the payments, accounts and deposits modules, which all trust its session token. Customer support also relies on it when helping locked-out users. The outcome is secure access to accounts. That protects against fraud and account takeover, and it’s a basic regulatory requirement for online banking.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:47:59.387Z';
+MERGE (n:ExpertInput {id: 'expert-module-1-introductory-4', systemId: 'indian-banking-system'}) SET n.label = 'What does a User record represent in the business, and who is responsible for...', n.module = 'module-1', n.confidence = 'high', n.question = 'What does a User record represent in the business, and who is responsible for keeping it correct?', n.answer = 'A User record is one customer’s online banking identity: login name, password hash, name, address, date of birth and SSN. It links to the customer’s bank accounts. Customers keep their own contact details up to date, while onboarding/KYC operations own the identity data (name, date of birth, SSN) and must approve changes to it. The security team owns credential and password policies.
+
+Saving these adds them as real records in expert-answers.jsonl. If you’re only testing, delete that file afterwards so dummy answers don’t end up in the training data.', n.statement = 'A User record is one customer’s online banking identity: login name, password hash, name, address, date of birth and SSN. It links to the customer’s bank accounts. Customers keep their own contact details up to date, while onboarding/KYC operations own the identity data (name, date of birth, SSN) and must approve changes to it. The security team owns credential and password policies.
+
+Saving these adds them as real records in expert-answers.jsonl. If you’re only testing, delete that file afterwards so dummy answers don’t end up in the training data.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:47:59.387Z';
+MERGE (n:ExpertInput {id: 'expert-module-1-intermediate-1', systemId: 'indian-banking-system'}) SET n.label = 'Is this rule correct as written? What exceptions, limits or approvals apply i...', n.module = 'module-1', n.confidence = 'high', n.question = 'Is this rule correct as written? What exceptions, limits or approvals apply in practice?', n.answer = 'Broadly correct. 15 minutes of inactivity is the standard timeout for web banking. Exceptions:
+
+The mobile app can stay signed in up to 30 minutes, because it re-checks identity with fingerprint or face ID.
+Show a warning 2 minutes before logout, with an option to stay signed in.
+Never time out halfway through a payment without saving the draft.
+Even with activity, sessions should end after 8 hours.', n.statement = 'Broadly correct. 15 minutes of inactivity is the standard timeout for web banking. Exceptions:
+
+The mobile app can stay signed in up to 30 minutes, because it re-checks identity with fingerprint or face ID.
+Show a warning 2 minutes before logout, with an option to stay signed in.
+Never time out halfway through a payment without saving the draft.
+Even with activity, sessions should end after 8 hours.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:48:41.116Z';
+MERGE (n:ExpertInput {id: 'expert-module-1-intermediate-2', systemId: 'indian-banking-system'}) SET n.label = 'When "User login" runs, what should happen if the input is invalid or a step ...', n.module = 'module-1', n.confidence = 'high', n.question = 'When "User login" runs, what should happen if the input is invalid or a step fails?', n.answer = 'Wrong username or password: show one generic message (“Username or password is incorrect”) so attackers can’t tell which accounts exist.
+Lockout: lock the account for 30 minutes after 5 failed attempts in a row, email the customer, and record it in the security log.
+Locked or closed accounts: a customer whose account is locked or closed sees a message to contact support.
+Service down: if the login service is unavailable, show a friendly retry message and don’t count it as a failed attempt.
+Unusual login: if the login comes from a new device or country, ask for a one-time code before creating the session.', n.statement = 'Wrong username or password: show one generic message (“Username or password is incorrect”) so attackers can’t tell which accounts exist.
+Lockout: lock the account for 30 minutes after 5 failed attempts in a row, email the customer, and record it in the security log.
+Locked or closed accounts: a customer whose account is locked or closed sees a message to contact support.
+Service down: if the login service is unavailable, show a friendly retry message and don’t count it as a failed attempt.
+Unusual login: if the login comes from a new device or country, ask for a one-time code before creating the session.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:48:41.116Z';
+MERGE (n:ExpertInput {id: 'expert-module-1-intermediate-3', systemId: 'indian-banking-system'}) SET n.label = 'How should "Regulatory Compliance" work step by step: who starts it, what is ...', n.module = 'module-1', n.confidence = 'high', n.question = 'How should "Regulatory Compliance" work step by step: who starts it, what is checked, and what is the outcome?', n.answer = 'Onboarding: when a customer signs up, the system runs identity checks (KYC): name, date of birth, SSN and address are checked against a verification provider.
+Screening: sanctions and watch-list screening runs at sign-up and again every night for existing customers.
+Payment monitoring: every payment is checked against monitoring rules (large amounts, unusual frequency, new payees). Payments that match a rule are held for the compliance team.
+Outcome: the compliance team approves or rejects the held payments and files suspicious activity reports where needed.
+Audit: every check and every decision is logged and kept for 7 years.', n.statement = 'Onboarding: when a customer signs up, the system runs identity checks (KYC): name, date of birth, SSN and address are checked against a verification provider.
+Screening: sanctions and watch-list screening runs at sign-up and again every night for existing customers.
+Payment monitoring: every payment is checked against monitoring rules (large amounts, unusual frequency, new payees). Payments that match a rule are held for the compliance team.
+Outcome: the compliance team approves or rejects the held payments and files suspicious activity reports where needed.
+Audit: every check and every decision is logged and kept for 7 years.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:48:41.116Z';
+MERGE (n:ExpertInput {id: 'expert-module-1-intermediate-4', systemId: 'indian-banking-system'}) SET n.label = 'Which alternative or exception paths are missing from "User Login Flow"?', n.module = 'module-1', n.confidence = 'high', n.question = 'Which alternative or exception paths are missing from "User Login Flow"?', n.answer = 'Forgot password / reset by email or SMS.
+Account locked after too many failed attempts.
+Extra verification (one-time code) for a new device or unusual location.
+First login after sign-up: accept terms and set up security details.
+Password expired or too weak: force a change before entering.
+Someone else already logged in on another device: notify the customer, with the option to end the other session.
+Login service or database unavailable: show a retry message.', n.statement = 'Forgot password / reset by email or SMS.
+Account locked after too many failed attempts.
+Extra verification (one-time code) for a new device or unusual location.
+First login after sign-up: accept terms and set up security details.
+Password expired or too weak: force a change before entering.
+Someone else already logged in on another device: notify the customer, with the option to end the other session.
+Login service or database unavailable: show a retry message.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:48:41.116Z';
+MERGE (n:ExpertInput {id: 'expert-module-1-indepth-1', systemId: 'indian-banking-system'}) SET n.label = 'Requirement IN-14 was found only partly implemented. What is the intended beh...', n.module = 'module-1', n.confidence = 'high', n.question = 'Requirement IN-14 was found only partly implemented. What is the intended behaviour, and should the requirement or the system change?', n.answer = 'The intended behaviour is that the main pages (login, home/balance, transaction history, payment form) load in under 2 seconds for 95% of requests at normal traffic. The requirement should stay, but it needs to be more precise. It should say which pages are covered, measure the 95th percentile rather than every request, and allow up to 4 seconds at peak times like month-end salary days. The system should change: add alerts when page load passes 2 seconds and treat this as a release check. Monitoring alone isn’t enough.', n.statement = 'The intended behaviour is that the main pages (login, home/balance, transaction history, payment form) load in under 2 seconds for 95% of requests at normal traffic. The requirement should stay, but it needs to be more precise. It should say which pages are covered, measure the 95th percentile rather than every request, and allow up to 4 seconds at peak times like month-end salary days. The system should change: add alerts when page load passes 2 seconds and treat this as a release check. Monitoring alone isn’t enough.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:49:21.114Z';
+MERGE (n:ExpertInput {id: 'expert-module-1-indepth-2', systemId: 'indian-banking-system'}) SET n.label = 'What are the actual requirements here? Please cover: KYC/AML compliance requi...', n.module = 'module-1', n.confidence = 'high', n.question = 'What are the actual requirements here? Please cover: KYC/AML compliance requirements; Customer identity verification process; Transaction monitoring rules.', n.answer = 'KYC/AML: every customer must be verified before they can send or receive money. Sanctions and politically exposed person (PEP) screening runs at sign-up and daily after that. Records are kept for at least 7 years after the account closes.
+Identity verification: at sign-up, check name, date of birth, SSN and address with a verification provider, plus a photo ID and selfie check for higher-risk customers. If the check fails, the account stays in “pending verification” and can only view information. Manual review by the onboarding team within 2 business days.
+Transaction monitoring: flag single payments over $10,000; several payments adding up to over $10,000 within 24 hours; more than 10 payments to new payees in a day; and payments to high-risk countries. Flagged payments are held for compliance review, and confirmed suspicious activity is reported to the regulator within 30 days.', n.statement = 'KYC/AML: every customer must be verified before they can send or receive money. Sanctions and politically exposed person (PEP) screening runs at sign-up and daily after that. Records are kept for at least 7 years after the account closes.
+Identity verification: at sign-up, check name, date of birth, SSN and address with a verification provider, plus a photo ID and selfie check for higher-risk customers. If the check fails, the account stays in “pending verification” and can only view information. Manual review by the onboarding team within 2 business days.
+Transaction monitoring: flag single payments over $10,000; several payments adding up to over $10,000 within 24 hours; more than 10 payments to new payees in a day; and payments to high-risk countries. Flagged payments are held for compliance review, and confirmed suspicious activity is reported to the regulator within 30 days.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:49:21.114Z';
+MERGE (n:ExpertInput {id: 'expert-module-1-indepth-3', systemId: 'indian-banking-system'}) SET n.label = '"Regulatory Compliance" is not built. What must it do to be complete, and how...', n.module = 'module-1', n.confidence = 'high', n.question = '"Regulatory Compliance" is not built. What must it do to be complete, and how important is it?', n.answer = 'To be complete it needs:
+
+identity checks at sign-up
+sanctions screening
+transaction monitoring with a review queue for the compliance team
+regulatory reporting (suspicious activity and large cash transaction reports)
+a full audit log of every decision
+data retention controls
+
+It is the highest priority: a blocking item. The bank cannot legally open accounts or move money without it, so it must be in place before go-live, ahead of new features like Cards or Loans.', n.statement = 'To be complete it needs:
+
+identity checks at sign-up
+sanctions screening
+transaction monitoring with a review queue for the compliance team
+regulatory reporting (suspicious activity and large cash transaction reports)
+a full audit log of every decision
+data retention controls
+
+It is the highest priority: a blocking item. The bank cannot legally open accounts or move money without it, so it must be in place before go-live, ahead of new features like Cards or Loans.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:49:21.114Z';
+MERGE (n:ExpertInput {id: 'expert-module-1-indepth-4', systemId: 'indian-banking-system'}) SET n.label = 'Are there back-office or branch staff users who need access?', n.module = 'module-1', n.confidence = 'high', n.question = 'Are there back-office or branch staff users who need access?', n.answer = 'Yes. Four groups need access:
+
+Customer support agents: view customer profiles and accounts, unlock accounts and reset passwords, but not move money.
+Branch staff: onboard customers in person and verify ID documents.
+Compliance officers: review held payments and file reports.
+Operations and finance: run reconciliation and reports.
+
+All staff need separate staff logins with role-based permissions and multi-factor authentication. Every action they take on a customer’s account must be logged.
+
+Questions 3 here and 3 in Level 2 overlap: both are about “Regulatory Compliance”. The generator asks about capabilities that aren’t built at two levels (how it should work, then what it needs to be complete). If you’d rather each topic appear only once, I can change that.
+
+Same as before: saving these writes them to expert-answers.jsonl, so delete that file after testing if you don’t want dummy data in the training set.', n.statement = 'Yes. Four groups need access:
+
+Customer support agents: view customer profiles and accounts, unlock accounts and reset passwords, but not move money.
+Branch staff: onboard customers in person and verify ID documents.
+Compliance officers: review held payments and file reports.
+Operations and finance: run reconciliation and reports.
+
+All staff need separate staff logins with role-based permissions and multi-factor authentication. Every action they take on a customer’s account must be logged.
+
+Questions 3 here and 3 in Level 2 overlap: both are about “Regulatory Compliance”. The generator asks about capabilities that aren’t built at two levels (how it should work, then what it needs to be complete). If you’d rather each topic appear only once, I can change that.
+
+Same as before: saving these writes them to expert-answers.jsonl, so delete that file after testing if you don’t want dummy data in the training set.', n.answeredBy = 'Digital banking product owner', n.answeredAt = '2026-11-12T10:49:21.114Z';
 MATCH (a {id: 'indian-banking-system', systemId: 'indian-banking-system'}), (b {id: 'module-1', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_MODULE]->(b);
 MATCH (a {id: 'indian-banking-system', systemId: 'indian-banking-system'}), (b {id: 'module-2', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_MODULE]->(b);
 MATCH (a {id: 'indian-banking-system', systemId: 'indian-banking-system'}), (b {id: 'module-3', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_MODULE]->(b);
@@ -416,3 +514,24 @@ MATCH (a {id: 'indian-banking-system', systemId: 'indian-banking-system'}), (b {
 MATCH (a {id: 'indian-banking-system', systemId: 'indian-banking-system'}), (b {id: 'int-gcp-logging', systemId: 'indian-banking-system'}) MERGE (a)-[:INTEGRATES_WITH]->(b);
 MATCH (a {id: 'indian-banking-system', systemId: 'indian-banking-system'}), (b {id: 'int-oauth', systemId: 'indian-banking-system'}) MERGE (a)-[:INTEGRATES_WITH]->(b);
 MATCH (a {id: 'indian-banking-system', systemId: 'indian-banking-system'}), (b {id: 'int-external-banks', systemId: 'indian-banking-system'}) MERGE (a)-[:INTEGRATES_WITH]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-introductory-1', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'expert-module-1-introductory-1', systemId: 'indian-banking-system'}), (b {id: 'module-1', systemId: 'indian-banking-system'}) MERGE (a)-[:CLARIFIES]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-introductory-2', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'expert-module-1-introductory-2', systemId: 'indian-banking-system'}), (b {id: 'per-customer', systemId: 'indian-banking-system'}) MERGE (a)-[:CLARIFIES]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-introductory-3', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'expert-module-1-introductory-3', systemId: 'indian-banking-system'}), (b {id: 'cap-user-authentication', systemId: 'indian-banking-system'}) MERGE (a)-[:CLARIFIES]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-introductory-4', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'expert-module-1-introductory-4', systemId: 'indian-banking-system'}), (b {id: 'ent-user', systemId: 'indian-banking-system'}) MERGE (a)-[:CLARIFIES]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-intermediate-1', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-intermediate-2', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'expert-module-1-intermediate-2', systemId: 'indian-banking-system'}), (b {id: 'act-user-login', systemId: 'indian-banking-system'}) MERGE (a)-[:CLARIFIES]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-intermediate-3', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'expert-module-1-intermediate-3', systemId: 'indian-banking-system'}), (b {id: 'cap-regulatory-compliance', systemId: 'indian-banking-system'}) MERGE (a)-[:CLARIFIES]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-intermediate-4', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'expert-module-1-intermediate-4', systemId: 'indian-banking-system'}), (b {id: 'flow-user-login', systemId: 'indian-banking-system'}) MERGE (a)-[:CLARIFIES]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-indepth-1', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-indepth-2', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-indepth-3', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'expert-module-1-indepth-3', systemId: 'indian-banking-system'}), (b {id: 'cap-regulatory-compliance', systemId: 'indian-banking-system'}) MERGE (a)-[:CLARIFIES]->(b);
+MATCH (a {id: 'module-1', systemId: 'indian-banking-system'}), (b {id: 'expert-module-1-indepth-4', systemId: 'indian-banking-system'}) MERGE (a)-[:HAS_EXPERT_INPUT]->(b);
+MATCH (a {id: 'expert-module-1-indepth-4', systemId: 'indian-banking-system'}), (b {id: 'module-1', systemId: 'indian-banking-system'}) MERGE (a)-[:CLARIFIES]->(b);

@@ -729,6 +729,26 @@ export function buildKnowledgeGraph(r: ReverseEngineeringReport): {
     });
     link(r.id, i.id, 'INTEGRATES_WITH');
   }
+  // Domain experts' answers (merged by apply-expert-answers.ts), linked to what they clarify.
+  for (const x of r.expertReview?.inputs ?? []) {
+    const id = `expert-${x.questionId}`;
+    add({
+      id,
+      kind: 'ExpertInput',
+      label: x.question.length > 80 ? `${x.question.slice(0, 77)}...` : x.question,
+      module: x.moduleId,
+      confidence: 'high',
+      props: {
+        question: x.question,
+        answer: x.answer,
+        statement: x.statement,
+        answeredBy: x.answeredBy ?? '',
+        answeredAt: x.answeredAt,
+      },
+    });
+    link(x.moduleId, id, 'HAS_EXPERT_INPUT');
+    x.sourceIds.forEach((s) => link(id, s, 'CLARIFIES'));
+  }
   return { nodes, edges: edges.filter((e) => ids.has(e.source) && ids.has(e.target)) };
 }
 

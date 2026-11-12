@@ -8,6 +8,7 @@
 | Generated         | Thu, 12 Nov 2026 09:11:57 GMT (z.ai, glm-4.5-flash)                                                                                   |
 | Evidence read     | 16 files, 0 screenshots, 57 log events, 16 telemetry signals                                                                          |
 | Extracted         | 4 domains · 6 entities · 12 activities · 5 flows · 3 personas · 4 journeys · 15 reports · 12 capabilities · 6 epics · 37 user stories |
+| Expert review     | 12 expert answers · 1 open questions resolved · last updated Thu, 12 Nov 2026 10:55:41 GMT                                            |
 | Confidence legend | high ≥ 80% · medium ≥ 60% · low < 60% · inferred = no direct evidence                                                                 |
 
 ## Contents
@@ -25,7 +26,8 @@
 11. [Business rules](#11-business-rules)
 12. [Architecture, integrations & NFRs](#12-architecture-integrations--nfrs)
 13. [Gaps, risks, assumptions & open questions](#13-gaps-risks-assumptions--open-questions)
-14. [Glossary](#14-glossary)
+14. [Expert review](#14-expert-review)
+15. [Glossary](#15-glossary)
 
 ## 1. Executive summary
 
@@ -1151,11 +1153,183 @@ flowchart LR
 
 - What are the daily payment limits and associated fees?
 - How long until deposited funds are available for withdrawal?
-- Are there back-office or branch staff users who need access?
 - What are the specific regulatory requirements for KYC/AML?
 - What happens during concurrent balance checks and payments?
 
-## 14. Glossary
+**Resolved questions** (answered by domain experts — see section 14)
+
+| Question                                                     | Resolution                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Answered by                   |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Are there back-office or branch staff users who need access? | Yes. Four groups need access: Customer support agents: view customer profiles and accounts, unlock accounts and reset passwords, but not move money. Branch staff: onboard customers in person and verify ID documents. Compliance officers: review held payments and file reports. Operations and finance: run reconciliation and reports. All staff need separate staff logins with role-based permissions and multi-factor authentication. Every action they take on a customer’s account must be logged. Questions 3 here and 3 in Level 2 overlap: both are about “Regulatory Compliance”. The generator asks about capabilities that aren’t built at two levels (how it should work, then what it needs to be complete). If you’d rather each topic appear only once, I can change that. Same as before: saving these writes them to expert-answers.jsonl, so delete that file after testing if you don’t want dummy data in the training set. | Digital banking product owner |
+
+## 14. Expert review
+
+Answers from domain experts to the questions generated from this BRD. Each entry shows what the BRD said, the expert's answer and, where a model was available, the answer restated as requirement text. Expert input takes precedence over reverse-engineered content where they differ.
+
+**Version history**
+
+| Date                          | Change                                                                                              |
+| ----------------------------- | --------------------------------------------------------------------------------------------------- |
+| Thu, 12 Nov 2026 10:55:41 GMT | Expert review: 12 answers on Overview from Digital banking product owner; 1 open question resolved. |
+
+### Overview
+
+**Confirm · introductory** — Is this an accurate and complete description of what Overview does in your organisation? What is missing or wrong?
+
+_What the BRD said:_ Summary: "Cross-cutting platform: identity, login/sign-up, sessions, security, observability, shared services" (coverage found in the system: full).
+
+_Expert answer (Digital banking product owner):_
+
+> Mostly accurate. Overview is the shared platform layer: sign-up, login, sessions, security and monitoring used by every other module. Two things are missing. Customer notifications (email/SMS alerts for logins and payments) are also a shared service. Multi-factor authentication should be listed under security, because the bank needs it for regulatory reasons even though it isn’t built yet.
+
+_About:_ `module-1`
+
+**Explain · introductory** — How does a bank customer use Overview day to day, and what matters most to them?
+
+_What the BRD said:_ Persona John Customer (Bank Customer). Goals: Check account balance regularly; Send payments to other accounts; Deposit funds from external accounts; Manage payment contacts; View transaction history.
+
+_Expert answer (Digital banking product owner):_
+
+> Customers touch Overview every time they log in, usually once or twice a day to check their balance or make a payment. What matters most is a fast, reliable login and staying signed in long enough to finish a task. The 15-minute timeout is a common complaint when people are filling in payment details. They also expect to be told quickly if someone else logs into their account.
+
+_About:_ `per-customer`
+
+**Explain · introductory** — Who relies on "User Authentication", and which business outcome does it support?
+
+_What the BRD said:_ Capability (implemented): Ability to authenticate users with credentials and manage sessions.
+
+_Expert answer (Digital banking product owner):_
+
+> Every customer, plus the payments, accounts and deposits modules, which all trust its session token. Customer support also relies on it when helping locked-out users. The outcome is secure access to accounts. That protects against fraud and account takeover, and it’s a basic regulatory requirement for online banking.
+
+_About:_ `cap-user-authentication`
+
+**Explain · introductory** — What does a User record represent in the business, and who is responsible for keeping it correct?
+
+_What the BRD said:_ Entity: Customer account information and credentials. Stored in PostgreSQL accounts-db.users.
+
+_Expert answer (Digital banking product owner):_
+
+> A User record is one customer’s online banking identity: login name, password hash, name, address, date of birth and SSN. It links to the customer’s bank accounts. Customers keep their own contact details up to date, while onboarding/KYC operations own the identity data (name, date of birth, SSN) and must approve changes to it. The security team owns credential and password policies.
+> Saving these adds them as real records in expert-answers.jsonl. If you’re only testing, delete that file afterwards so dummy answers don’t end up in the training data.
+
+_About:_ `ent-user`
+
+**Confirm · intermediate** — Is this rule correct as written? What exceptions, limits or approvals apply in practice?
+
+_What the BRD said:_ Business rule: "User sessions expire after 15 minutes of inactivity".
+
+_Expert answer (Digital banking product owner):_
+
+> Broadly correct. 15 minutes of inactivity is the standard timeout for web banking. Exceptions:
+> The mobile app can stay signed in up to 30 minutes, because it re-checks identity with fingerprint or face ID.
+> Show a warning 2 minutes before logout, with an option to stay signed in.
+> Never time out halfway through a payment without saving the draft.
+> Even with activity, sessions should end after 8 hours.
+
+_About:_ `br-auth-session`
+
+**Edge cases · intermediate** — When "User login" runs, what should happen if the input is invalid or a step fails?
+
+_What the BRD said:_ Activity: Customer authenticates with username and password to access their account. Trigger: User enters credentials on login page. Inputs: username, password. Outputs: authentication token, user profile.
+
+_Expert answer (Digital banking product owner):_
+
+> Wrong username or password: show one generic message (“Username or password is incorrect”) so attackers can’t tell which accounts exist.
+> Lockout: lock the account for 30 minutes after 5 failed attempts in a row, email the customer, and record it in the security log.
+> Locked or closed accounts: a customer whose account is locked or closed sees a message to contact support.
+> Service down: if the login service is unavailable, show a friendly retry message and don’t count it as a failed attempt.
+> Unusual login: if the login comes from a new device or country, ask for a one-time code before creating the session.
+
+_About:_ `act-user-login`
+
+**Fill a gap · intermediate** — How should "Regulatory Compliance" work step by step: who starts it, what is checked, and what is the outcome?
+
+_What the BRD said:_ Capability (gap): Ability to ensure operations meet regulatory requirements.
+
+_Expert answer (Digital banking product owner):_
+
+> Onboarding: when a customer signs up, the system runs identity checks (KYC): name, date of birth, SSN and address are checked against a verification provider.
+> Screening: sanctions and watch-list screening runs at sign-up and again every night for existing customers.
+> Payment monitoring: every payment is checked against monitoring rules (large amounts, unusual frequency, new payees). Payments that match a rule are held for the compliance team.
+> Outcome: the compliance team approves or rejects the held payments and files suspicious activity reports where needed.
+> Audit: every check and every decision is logged and kept for 7 years.
+
+_About:_ `cap-regulatory-compliance`
+
+**Edge cases · intermediate** — Which alternative or exception paths are missing from "User Login Flow"?
+
+_What the BRD said:_ Flow: Submit credentials → Authenticate user → Create session → Redirect to home.
+
+_Expert answer (Digital banking product owner):_
+
+> Forgot password / reset by email or SMS.
+> Account locked after too many failed attempts.
+> Extra verification (one-time code) for a new device or unusual location.
+> First login after sign-up: accept terms and set up security details.
+> Password expired or too weak: force a change before entering.
+> Someone else already logged in on another device: notify the customer, with the option to end the other session.
+> Login service or database unavailable: show a retry message.
+
+_About:_ `flow-user-login`
+
+**Resolve · indepth** — Requirement IN-14 was found only partly implemented. What is the intended behaviour, and should the requirement or the system change?
+
+_What the BRD said:_ Requirement: "Pages load in under 2 seconds". Finding: The system has performance monitoring but no explicit 2-second target enforcement
+
+_Expert answer (Digital banking product owner):_
+
+> The intended behaviour is that the main pages (login, home/balance, transaction history, payment form) load in under 2 seconds for 95% of requests at normal traffic. The requirement should stay, but it needs to be more precise. It should say which pages are covered, measure the 95th percentile rather than every request, and allow up to 4 seconds at peak times like month-end salary days. The system should change: add alerts when page load passes 2 seconds and treat this as a release check. Monitoring alone isn’t enough.
+
+_About:_ `IN-14`, `nfr-performance`
+
+**Fill a gap · indepth** — What are the actual requirements here? Please cover: KYC/AML compliance requirements; Customer identity verification process; Transaction monitoring rules.
+
+_What the BRD said:_ Gap (blocking): No KYC/AML compliance implementation found in the system. Suggested action: Implement customer identity verification and transaction monitoring capabilities.
+
+_Expert answer (Digital banking product owner):_
+
+> KYC/AML: every customer must be verified before they can send or receive money. Sanctions and politically exposed person (PEP) screening runs at sign-up and daily after that. Records are kept for at least 7 years after the account closes.
+> Identity verification: at sign-up, check name, date of birth, SSN and address with a verification provider, plus a photo ID and selfie check for higher-risk customers. If the check fails, the account stays in “pending verification” and can only view information. Manual review by the onboarding team within 2 business days.
+> Transaction monitoring: flag single payments over $10,000; several payments adding up to over $10,000 within 24 hours; more than 10 payments to new payees in a day; and payments to high-risk countries. Flagged payments are held for compliance review, and confirmed suspicious activity is reported to the regulator within 30 days.
+
+_About:_ `gap-kyc-aml`
+
+**Fill a gap · indepth** — "Regulatory Compliance" is not built. What must it do to be complete, and how important is it?
+
+_What the BRD said:_ Capability: Ability to ensure operations meet regulatory requirements.
+
+_Expert answer (Digital banking product owner):_
+
+> To be complete it needs:
+> identity checks at sign-up
+> sanctions screening
+> transaction monitoring with a review queue for the compliance team
+> regulatory reporting (suspicious activity and large cash transaction reports)
+> a full audit log of every decision
+> data retention controls
+> It is the highest priority: a blocking item. The bank cannot legally open accounts or move money without it, so it must be in place before go-live, ahead of new features like Cards or Loans.
+
+_About:_ `cap-regulatory-compliance`
+
+**Resolve · indepth** — Are there back-office or branch staff users who need access?
+
+_What the BRD said:_ An open question the BRD leaves unanswered for Overview.
+
+_Expert answer (Digital banking product owner):_
+
+> Yes. Four groups need access:
+> Customer support agents: view customer profiles and accounts, unlock accounts and reset passwords, but not move money.
+> Branch staff: onboard customers in person and verify ID documents.
+> Compliance officers: review held payments and file reports.
+> Operations and finance: run reconciliation and reports.
+> All staff need separate staff logins with role-based permissions and multi-factor authentication. Every action they take on a customer’s account must be logged.
+> Questions 3 here and 3 in Level 2 overlap: both are about “Regulatory Compliance”. The generator asks about capabilities that aren’t built at two levels (how it should work, then what it needs to be complete). If you’d rather each topic appear only once, I can change that.
+> Same as before: saving these writes them to expert-answers.jsonl, so delete that file after testing if you don’t want dummy data in the training set.
+
+_About:_ `module-1`
+
+## 15. Glossary
 
 | Term           | Definition                                                                         |
 | -------------- | ---------------------------------------------------------------------------------- |

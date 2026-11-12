@@ -36,17 +36,11 @@ export function ModuleAnalysis({ moduleId }: { moduleId: string }): JSX.Element 
 
   return (
     <section className="mb-6 rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50/80 to-white p-4 shadow-sm">
-      <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
-        <div>
-          <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[#00338D]">
-            <Sparkles className="h-3.5 w-3.5" /> Reverse-engineered{' '}
-            {report.run.mode === 'llm' ? `by ${report.run.model}` : 'from curated input'}
-          </p>
-          <h2 className="mt-1 text-base font-semibold">
-            {mod.name}{' '}
-            <Badge variant={COVERAGE[mod.coverage].variant}>{COVERAGE[mod.coverage].label}</Badge>
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">{mod.summary}</p>
+      <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-wrap items-center gap-2">
+          <Sparkles className="h-4 w-4 text-[#00338D]" />
+          <h2 className="text-base font-semibold">{mod.name}</h2>
+          <Badge variant={COVERAGE[mod.coverage].variant}>{COVERAGE[mod.coverage].label}</Badge>
         </div>
         <NavLink
           to="/brd"
@@ -76,12 +70,13 @@ export function ModuleAnalysis({ moduleId }: { moduleId: string }): JSX.Element 
       </h3>
       <div className="mb-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
         {capabilities.map((c) => (
-          <div key={c.id} className="rounded-md border border-slate-200 bg-white p-3 text-sm">
-            <div className="flex items-start justify-between gap-2">
-              <strong>{c.name}</strong>
-              <Badge variant={STATUS[c.status]}>{c.status}</Badge>
-            </div>
-            <p className="text-slate-600">{c.description}</p>
+          <div
+            key={c.id}
+            title={c.description}
+            className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+          >
+            <strong className="truncate">{c.name}</strong>
+            <Badge variant={STATUS[c.status]}>{c.status}</Badge>
           </div>
         ))}
       </div>
@@ -103,37 +98,22 @@ export function ModuleAnalysis({ moduleId }: { moduleId: string }): JSX.Element 
               >
                 {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 <strong className="flex-1">{e.name}</strong>
-                <span className="text-xs text-slate-500">
-                  {e.features.length} features · {count} stories
-                </span>
+                <span className="text-xs text-slate-500">{count} stories</span>
               </button>
               {open ? (
                 <div className="space-y-3 border-t border-slate-100 px-3 py-3 text-sm">
-                  <p className="text-slate-600">{e.description}</p>
                   {e.features.map((f) => (
                     <div key={f.id}>
                       <div className="mb-1 font-semibold">{f.name}</div>
-                      <ul className="space-y-2">
+                      <ul className="space-y-1.5">
                         {f.stories.map((s) => (
-                          <li
-                            key={s.id}
-                            className="rounded border border-slate-100 bg-slate-50 p-2"
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span>
-                                <code className="mr-1 text-xs text-slate-500">{s.id}</code>
-                                As a <strong>{s.asA}</strong>, I want <strong>{s.iWant}</strong>, so
-                                that {s.soThat}.
-                              </span>
-                              <Badge variant={s.priority === 'must' ? 'default' : 'secondary'}>
-                                {s.priority}
-                              </Badge>
-                            </div>
-                            <ul className="mt-1 text-xs text-slate-500">
-                              {s.acceptanceCriteria.map((ac) => (
-                                <li key={ac.id}>☐ {ac.description}</li>
-                              ))}
-                            </ul>
+                          <li key={s.id} className="flex items-start justify-between gap-2">
+                            <span>
+                              As a <strong>{s.asA}</strong>, I want <strong>{s.iWant}</strong>
+                            </span>
+                            <Badge variant={s.priority === 'must' ? 'default' : 'secondary'}>
+                              {s.priority}
+                            </Badge>
                           </li>
                         ))}
                       </ul>
@@ -154,7 +134,7 @@ export function ModuleAnalysis({ moduleId }: { moduleId: string }): JSX.Element 
           <ul className="space-y-1 text-sm">
             {activities.map((a) => (
               <li key={a.id}>
-                <strong>{a.name}</strong> <span className="text-slate-500">— {a.actor}</span>
+                <strong>{a.name}</strong>
                 {a.endpoint ? (
                   <code className="ml-1 text-xs text-violet-700">{a.endpoint}</code>
                 ) : null}
@@ -172,8 +152,7 @@ export function ModuleAnalysis({ moduleId }: { moduleId: string }): JSX.Element 
           <ul className="space-y-1 text-sm">
             {flows.map((f) => (
               <li key={f.id}>
-                <strong>{f.name}</strong>{' '}
-                <span className="text-slate-500">— {f.steps.length} steps</span>
+                <strong>{f.name}</strong>
               </li>
             ))}
             {!flows.length ? <li className="text-slate-500">None in the system today.</li> : null}

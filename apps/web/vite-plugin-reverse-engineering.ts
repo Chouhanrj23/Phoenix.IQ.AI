@@ -8,8 +8,14 @@
 //   PUT    /api/re/repo?project=                         set/clear the optional git repo link ({ url })
 //   POST   /api/re/generate?project=                     start the pipeline (one run at a time)
 //   GET    /api/re/status?project=                       progress of the current/last run
+//   POST   /api/re/quiz/generate?project=                generate module quizzes from the BRD
+//   GET    /api/re/quiz/status?project=                  progress of the quiz generation
+//   POST   /api/re/quiz/answers?project=                 save submitted answers as training data
+//   POST   /api/re/brd/apply-answers?project=            merge expert answers into the BRD
+//   GET    /api/re/brd/apply-status?project=             progress of that update
 import { spawn, type ChildProcess } from 'node:child_process';
 import {
+  appendFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -42,6 +48,41 @@ const running = new Map<string, ChildProcess>();
 const inputsDir = (project: string) => join(ROOT, 'inputs', project);
 const statusFile = (project: string) =>
   join(ROOT, '.phoenix-workspace', 'reverse-engineering', project, 'status.json');
+const quizRunning = new Map<string, ChildProcess>();
+const quizFile = (project: string) =>
+  join(ROOT, 'apps', 'web', 'src', 'reverse-engineering', 'quizzes', `${project}.json`);
+const quizStatusFile = (project: string) =>
+  join(ROOT, '.phoenix-workspace', 'reverse-engineering', project, 'quiz-status.json');
+const trainingFile = (project: string) =>
+  join(
+    ROOT,
+    '.phoenix-workspace',
+    'reverse-engineering',
+    project,
+    'training',
+    'expert-answers.jsonl',
+  );
+const QUIZ_LEVELS = new Set(['introductory', 'intermediate', 'indepth']);
+const MAX_ANSWER = 5000;
+
+interface StoredQuiz {
+  sourceHash: string;
+  modules: {
+    moduleId: string;
+    moduleName: string;
+    levels: Record<
+      string,
+      {
+        id: string;
+        prompt: string;
+        context: string;
+        intent: string;
+        sources: { id: string; label: string }[];
+        origin: string;
+      }[]
+    >;
+  }[];
+}
 
 function send(res: ServerResponse, code: number, body: unknown): void {
   res.statusCode = code;
@@ -117,12 +158,120 @@ function startRun(project: string, server: ViteDevServer): void {
     { cwd: ROOT, stdio: 'ignore', windowsHide: true },
   );
   running.set(project, child);
-  child.on('exit', () => {
+  child.on('exit', (code) => {
     running.delete(project);
     // The run writes a new report the app imports; make every open page load it.
     server.moduleGraph.invalidateAll();
     server.ws.send({ type: 'full-reload' });
+    // A finished BRD feeds the module quizzes straight away.
+    if (code === 0 && !quizRunning.has(project)) startQuiz(project, server);
   });
+}
+
+function startQuiz(project: string, server: ViteDevServer): void {
+  const child = spawn(
+    process.execPath,
+    [
+      '--env-file-if-exists=.env',
+      '--env-file-if-exists=apps/api/.env',
+      'scripts/reverse-engineer/quiz.ts',
+      '--project',
+      project,
+    ],
+    { cwd: ROOT, stdio: 'ignore', windowsHide: true },
+  );
+  quizRunning.set(project, child);
+  child.on('exit', () => {
+    quizRunning.delete(project);
+    server.moduleGraph.invalidateAll();
+    server.ws.send({ type: 'full-reload' });
+  });
+}
+
+const brdUpdating = new Map<string, ChildProcess>();
+const brdUpdateStatusFile = (project: string) =>
+  join(ROOT, '.phoenix-workspace', 'reverse-engineering', project, 'brd-update-status.json');
+
+/** Merges the saved expert answers into the BRD and re-renders it (apply-expert-answers.ts). */
+function startBrdUpdate(project: string, server: ViteDevServer): void {
+  const child = spawn(
+    process.execPath,
+    [
+      '--env-file-if-exists=.env',
+      '--env-file-if-exists=apps/api/.env',
+      'scripts/reverse-engineer/apply-expert-answers.ts',
+      '--project',
+      project,
+    ],
+    { cwd: ROOT, stdio: 'ignore', windowsHide: true },
+  );
+  brdUpdating.set(project, child);
+  child.on('exit', () => {
+    brdUpdating.delete(project);
+    // The updated report and BRD files are imported by the app; reload open pages.
+    server.moduleGraph.invalidateAll();
+    server.ws.send({ type: 'full-reload' });
+  });
+}
+
+/**
+ * Appends one training record per answered question. There is no right or wrong:
+ * the expert's own words are the label. Question text and BRD context come from
+ * the stored quiz, not the client, so a record always matches what was asked.
+ */
+function saveAnswers(project: string, body: unknown): number {
+  const { moduleId, level, answers, answeredBy } = (body ?? {}) as {
+    moduleId?: string;
+    level?: string;
+    answers?: Record<string, unknown>;
+    answeredBy?: unknown;
+  };
+  if (!moduleId || !/^module-\d{1,2}$/.test(moduleId)) throw new Error('invalid module');
+  if (!level || !QUIZ_LEVELS.has(level)) throw new Error('invalid level');
+  if (!answers || typeof answers !== 'object') throw new Error('answers are required');
+  if (!existsSync(quizFile(project)))
+    throw new Error('no questions have been generated for this project');
+  const quiz = JSON.parse(readFileSync(quizFile(project), 'utf8')) as StoredQuiz;
+  const module = quiz.modules.find((m) => m.moduleId === moduleId);
+  if (!module) throw new Error('unknown module');
+  const expert = typeof answeredBy === 'string' ? answeredBy.trim().slice(0, 120) : '';
+  const answeredAt = new Date().toISOString();
+  const records = (module.levels[level] ?? []).flatMap((q) => {
+    const raw = answers[q.id];
+    const answer = typeof raw === 'string' ? raw.trim().slice(0, MAX_ANSWER) : '';
+    if (!answer) return [];
+    return [
+      JSON.stringify({
+        project,
+        moduleId,
+        moduleName: module.moduleName,
+        level,
+        questionId: q.id,
+        intent: q.intent,
+        question: q.prompt,
+        brdContext: q.context,
+        answer,
+        answeredBy: expert || null,
+        sources: q.sources,
+        origin: q.origin,
+        sourceHash: quiz.sourceHash,
+        answeredAt,
+        // Chat-format pair, ready for fine-tuning.
+        messages: [
+          {
+            role: 'user',
+            content: `Module: ${module.moduleName}\nWhat the BRD says: ${q.context}\n\n${q.prompt}`,
+          },
+          { role: 'assistant', content: answer },
+        ],
+      }),
+    ];
+  });
+  if (records.length) {
+    mkdirSync(dirname(trainingFile(project)), { recursive: true });
+    appendFileSync(trainingFile(project), `${records.join('\n')}\n`);
+  }
+  return records.length;
 }
 
 export function reverseEngineeringApi(): Plugin {
@@ -187,6 +336,49 @@ export function reverseEngineeringApi(): Plugin {
             const status = JSON.parse(readFileSync(file, 'utf8')) as { state: string };
             // A "running" status with no live process means the run was interrupted.
             if (status.state === 'running' && !running.has(project)) status.state = 'interrupted';
+            return send(res, 200, status);
+          }
+          if (url.pathname === '/api/re/quiz/generate' && req.method === 'POST') {
+            const { project } = params(url, ['project']);
+            if (running.has(project))
+              return send(res, 409, {
+                error: 'The BRD is still being generated; the quiz follows it.',
+              });
+            if (quizRunning.has(project))
+              return send(res, 409, { error: 'Questions are already being generated.' });
+            startQuiz(project, server);
+            return send(res, 202, { started: true });
+          }
+          if (url.pathname === '/api/re/quiz/status' && req.method === 'GET') {
+            const { project } = params(url, ['project']);
+            const file = quizStatusFile(project);
+            if (!existsSync(file)) return send(res, 200, { state: 'idle' });
+            const status = JSON.parse(readFileSync(file, 'utf8')) as { state: string };
+            if (status.state === 'running' && !quizRunning.has(project))
+              status.state = 'interrupted';
+            return send(res, 200, status);
+          }
+          if (url.pathname === '/api/re/quiz/answers' && req.method === 'POST') {
+            const { project } = params(url, ['project']);
+            const body = JSON.parse((await readBody(req, 100_000)).toString('utf8') || '{}');
+            return send(res, 200, { saved: saveAnswers(project, body) });
+          }
+          if (url.pathname === '/api/re/brd/apply-answers' && req.method === 'POST') {
+            const { project } = params(url, ['project']);
+            if (running.has(project))
+              return send(res, 409, { error: 'The BRD is being regenerated; try again after it.' });
+            if (brdUpdating.has(project))
+              return send(res, 409, { error: 'The BRD is already being updated.' });
+            startBrdUpdate(project, server);
+            return send(res, 202, { started: true });
+          }
+          if (url.pathname === '/api/re/brd/apply-status' && req.method === 'GET') {
+            const { project } = params(url, ['project']);
+            const file = brdUpdateStatusFile(project);
+            if (!existsSync(file)) return send(res, 200, { state: 'idle' });
+            const status = JSON.parse(readFileSync(file, 'utf8')) as { state: string };
+            if (status.state === 'running' && !brdUpdating.has(project))
+              status.state = 'interrupted';
             return send(res, 200, status);
           }
           return send(res, 404, { error: 'not found' });

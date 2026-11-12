@@ -92,43 +92,41 @@ export function GenerateBrdPanel({ project, projectName, listing, onListing }: P
           <p className="text-xs font-semibold uppercase tracking-wider text-[#00338D]">
             Generate BRD · {projectName}
           </p>
-          <h2 className="mt-1 text-base font-semibold">
-            Upload your inputs, then generate the enriched BRD
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Add a half-complete BRD, screenshots of the website, logs, data models, telemetry and
-            anything else on the cards below (any module). Nothing is analysed until you press{' '}
-            <strong>Generate BRD</strong>; the run uses only what you uploaded, plus the repository
-            if you give its link.
-          </p>
+          <h2 className="mt-1 text-base font-semibold">Generate the enriched BRD</h2>
+          <p className="mt-1 text-sm text-slate-600">Nothing starts until you press Generate.</p>
         </div>
-        <Button
-          onClick={() => void generate()}
-          disabled={running || (!files.length && !repo.trim())}
-          className="shrink-0"
-        >
-          {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-          {running ? 'Generating…' : status.state === 'done' ? 'Generate again' : 'Generate BRD'}
-        </Button>
+        <div className="group relative shrink-0">
+          <Button
+            onClick={() => void generate()}
+            disabled={running || (!files.length && !repo.trim())}
+          >
+            {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+            {running ? 'Generating…' : status.state === 'done' ? 'Generate again' : 'Generate BRD'}
+          </Button>
+          {!hasBrd ? (
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-64 rounded-md border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800 shadow-md group-hover:block"
+            >
+              No BRD uploaded yet. The run will use the other evidence alone. Upload your BRD on the
+              BRD card (.md, .txt, .docx or .html) to have it checked and enriched.
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
-        {Object.keys(KIND_LABEL).map((kind) => (
-          <span
-            key={kind}
-            className={`rounded-full border px-2.5 py-0.5 text-xs ${byKind[kind] ? 'border-blue-200 bg-blue-50 text-[#00338D]' : 'border-slate-200 text-slate-400'}`}
-          >
-            {KIND_LABEL[kind]} {byKind[kind] ? `· ${byKind[kind]}` : ''}
-          </span>
-        ))}
+        {Object.keys(KIND_LABEL)
+          .filter((kind) => byKind[kind])
+          .map((kind) => (
+            <span
+              key={kind}
+              className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs text-[#00338D]"
+            >
+              {KIND_LABEL[kind]} · {byKind[kind]}
+            </span>
+          ))}
       </div>
-      {!hasBrd ? (
-        <p className="mt-2 text-xs text-amber-700">
-          No BRD uploaded yet: the run will write the BRD from the other evidence alone. Upload your
-          half-complete BRD on the BRD card (.md, .txt, .docx or .html) to have it checked and
-          enriched.
-        </p>
-      ) : null}
 
       <label className="mt-3 block text-xs font-medium text-slate-600">
         Git repository link (optional)

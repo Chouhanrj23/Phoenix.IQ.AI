@@ -10,6 +10,7 @@ import { Badge } from '../components/ui/badge.js';
 import { Button } from '../components/ui/button.js';
 import { ConfidenceBadge } from '../components/confidence-badge.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs.js';
+import { ExpertReviewPanel, UpdateBrdButton } from '../components/brd-expert-review.js';
 
 // The BRD written by the same run, offered as downloads: the formatted PDF
 // (bundled as a static asset URL) and the Markdown source.
@@ -40,6 +41,7 @@ const SECTIONS = [
   { id: 'personas', label: '5 · Personas & journeys' },
   { id: 'reports', label: '6 · Reports' },
   { id: 'backlog', label: '7 · Capabilities, epics & stories' },
+  { id: 'experts', label: 'Expert review' },
 ] as const;
 
 const COVERAGE_VARIANT = { full: 'success', partial: 'warning', none: 'danger' } as const;
@@ -219,7 +221,8 @@ function BrdView({ report: r }: { report: ReverseEngineeringReport }): JSX.Eleme
             <Badge variant="outline">Generated {new Date(r.run.finishedAt).toLocaleString()}</Badge>
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
+        <div className="flex shrink-0 flex-wrap items-start gap-2">
+          <UpdateBrdButton project={r.id} />
           {pdfUrl ? (
             <a
               href={pdfUrl}
@@ -427,8 +430,27 @@ function BrdView({ report: r }: { report: ReverseEngineeringReport }): JSX.Eleme
               <CardHeader>
                 <CardTitle>Open questions</CardTitle>
               </CardHeader>
-              <CardContent className="text-sm">
+              <CardContent className="space-y-3 text-sm">
                 <List items={r.brd.openQuestions} />
+                {r.expertReview?.resolvedQuestions.length ? (
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                      Resolved by experts
+                    </p>
+                    <ul className="space-y-2">
+                      {r.expertReview.resolvedQuestions.map((q) => (
+                        <li key={q.questionId}>
+                          <p className="font-medium line-through decoration-muted-foreground/50">
+                            {q.question}
+                          </p>
+                          <p className="whitespace-pre-line text-muted-foreground">
+                            {q.resolution}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
           </div>
@@ -843,6 +865,10 @@ function BrdView({ report: r }: { report: ReverseEngineeringReport }): JSX.Eleme
                   ))}
               </section>
             ))}
+        </TabsContent>
+
+        <TabsContent value="experts" className="pt-4">
+          <ExpertReviewPanel report={r} moduleId={moduleId} />
         </TabsContent>
       </Tabs>
     </div>

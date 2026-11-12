@@ -6,125 +6,28 @@ export const QUIZ_LEVELS = [
 
 export type QuizLevelId = (typeof QUIZ_LEVELS)[number]['id'];
 
-export interface QuizQuestion {
-  prompt: string;
-  options: string[];
-}
-
 export interface ModuleQuizState {
-  /** Selected option index per question, keyed by level id then question index. */
-  answers: Partial<Record<QuizLevelId, Record<number, number>>>;
+  /** The expert's answer text per question, keyed by level id then question id. */
+  answers: Partial<Record<QuizLevelId, Record<string, string>>>;
   completed: QuizLevelId[];
+  /** sourceHash of the quiz the answers belong to; a regenerated quiz starts fresh. */
+  version?: string;
 }
 
 export const EMPTY_QUIZ_STATE: ModuleQuizState = { answers: {}, completed: [] };
 
-/**
- * Placeholder questions. Once the LLM is integrated these will be generated from
- * the documents uploaded in each module; until then every module gets the same
- * dummy set, worded with the module's name. The first option is the "correct" one.
- */
-export function getQuizQuestions(moduleName: string, level: QuizLevelId): QuizQuestion[] {
-  const sets: Record<QuizLevelId, QuizQuestion[]> = {
-    introductory: [
-      {
-        prompt: `What is the main purpose of the ${moduleName} module?`,
-        options: [
-          'Serve the business capability it covers',
-          'Only store logs',
-          'Only render reports',
-          'Nothing specific',
-        ],
-      },
-      {
-        prompt: `Who are the primary users of ${moduleName}?`,
-        options: ['Customers and bank staff', 'Only developers', 'Only auditors', 'Vendors only'],
-      },
-      {
-        prompt: `Which document type best describes the requirements of ${moduleName}?`,
-        options: ['BRD', 'Screenshots', 'Telemetry', 'Email notifications'],
-      },
-      {
-        prompt: `Is ${moduleName} part of the core banking system?`,
-        options: ['Yes', 'No', 'Only in test', 'Only in staging'],
-      },
-    ],
-    intermediate: [
-      {
-        prompt: `Which systems does ${moduleName} integrate with?`,
-        options: [
-          'Core ledger and payment rails',
-          'Only a spreadsheet',
-          'No other systems',
-          'A single printer',
-        ],
-      },
-      {
-        prompt: `How is data from ${moduleName} persisted?`,
-        options: [
-          'Relational database tables',
-          'Browser cookies only',
-          'Plain text emails',
-          'It is not persisted',
-        ],
-      },
-      {
-        prompt: `Which artefact best shows how ${moduleName} is structured?`,
-        options: [
-          'Technical document and data models',
-          'A logo file',
-          'A meeting invite',
-          'A press release',
-        ],
-      },
-      {
-        prompt: `What triggers the main workflow in ${moduleName}?`,
-        options: [
-          'A customer or system request',
-          'A scheduled holiday',
-          'A hardware failure',
-          'Nothing triggers it',
-        ],
-      },
-    ],
-    indepth: [
-      {
-        prompt: `Which non-functional requirement matters most for ${moduleName}?`,
-        options: ['Availability and data integrity', 'Colour theme', 'Font choice', 'Logo size'],
-      },
-      {
-        prompt: `How would a failure in ${moduleName} be traced?`,
-        options: [
-          'Through logs, tickets and telemetry',
-          'By guessing',
-          'By restarting the browser',
-          'It cannot be traced',
-        ],
-      },
-      {
-        prompt: `Which regulatory concern applies to ${moduleName}?`,
-        options: [
-          'Audit trail and compliance controls',
-          'Printer licensing',
-          'Office seating',
-          'None',
-        ],
-      },
-      {
-        prompt: `What would change in the knowledge graph if ${moduleName} changed?`,
-        options: [
-          'Linked domains, flows and capabilities',
-          'Nothing',
-          'Only the page title',
-          'Only the footer',
-        ],
-      },
-    ],
-  };
-  return sets[level];
+/** Saved progress if it belongs to this version of the quiz, otherwise a fresh start. */
+export function quizStateFor(
+  saved: ModuleQuizState | undefined,
+  version: string | undefined,
+): ModuleQuizState {
+  if (saved && saved.version === version) return saved;
+  return version === undefined ? EMPTY_QUIZ_STATE : { ...EMPTY_QUIZ_STATE, version };
 }
 
-const QUIZ_KEY = 'phoenix.module-quiz.v1';
+// v2: answers are expert text, not multiple-choice indexes.
+const QUIZ_KEY = 'phoenix.module-quiz.v2';
+const EXPERT_KEY = 'phoenix.quiz-expert.v1';
 const FINAL_KEY = 'phoenix.final-report.v1';
 const WORKSPACE_KEY = 'phoenix.module-workspace.v1';
 
@@ -153,21 +56,17 @@ export function saveQuizState(moduleId: string, state: ModuleQuizState): void {
   writeJson(QUIZ_KEY, { ...loadAllQuizStates(), [moduleId]: state });
 }
 
-export function isModuleQuizComplete(state: ModuleQuizState | undefined): boolean {
-  return QUIZ_LEVELS.every((level) => state?.completed.includes(level.id));
+/** Name or role of the expert answering, remembered so it is entered once. */
+export function loadExpertName(): string {
+  return readJson<string>(EXPERT_KEY, '');
 }
 
-export function levelScore(
-  state: ModuleQuizState | undefined,
-  moduleName: string,
-  level: QuizLevelId,
-): { correct: number; total: number } {
-  const questions = getQuizQuestions(moduleName, level);
-  const answers = state?.answers[level] ?? {};
-  return {
-    correct: questions.filter((_, index) => answers[index] === 0).length,
-    total: questions.length,
-  };
+export function saveExpertName(name: string): void {
+  writeJson(EXPERT_KEY, name);
+}
+
+export function isModuleQuizComplete(state: ModuleQuizState | undefined): boolean {
+  return QUIZ_LEVELS.every((level) => state?.completed.includes(level.id));
 }
 
 export function loadModuleUploads(): Record<string, Record<string, string[]>> {
